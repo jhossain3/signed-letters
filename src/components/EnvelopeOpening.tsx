@@ -17,7 +17,7 @@ interface EnvelopeOpeningProps {
   onClose: () => void;
 }
 
-const EMOJIS = ['✨', '☁️', '🌙', '🌟', '✉️', '🍃', '🪶', '·'];
+
 
 const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
   const [stage, setStage] = useState<"envelope" | "opening" | "letter">("envelope");
@@ -40,37 +40,6 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Floating emojis during reveal */}
-      {stage === "opening" && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {EMOJIS.map((emoji, i) => (
-            <motion.span
-              key={i}
-              className="absolute text-2xl"
-              initial={{ 
-                x: `${50 + (Math.random() - 0.5) * 20}%`,
-                y: "50%",
-                opacity: 0,
-                scale: 0
-              }}
-              animate={{ 
-                x: `${Math.random() * 100}%`,
-                y: `${Math.random() * 100}%`,
-                opacity: [0, 1, 0],
-                scale: [0, 1.5, 0]
-              }}
-              transition={{ 
-                duration: 1.5,
-                delay: i * 0.1,
-                ease: "easeOut"
-              }}
-            >
-              {emoji}
-            </motion.span>
-          ))}
-        </div>
-      )}
-
       <AnimatePresence mode="wait">
         {(stage === "envelope" || stage === "opening") && (
           <motion.div
@@ -186,17 +155,15 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
               </p>
             </div>
 
-            <p className="text-center text-muted-foreground mt-6 font-serif italic flex items-center justify-center gap-2">
-              <span>✨</span>
+            <p className="text-center text-muted-foreground mt-6 font-serif italic">
               This moment was worth waiting for.
-              <span>✨</span>
             </p>
 
             <button
               onClick={onClose}
               className="mt-6 w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-all shadow-soft"
             >
-              ✉️ Close Letter
+              Close Letter
             </button>
           </motion.div>
         )}
