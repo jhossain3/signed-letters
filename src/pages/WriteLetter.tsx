@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, Image, Mic, PenTool, Type, X } from "lucide-react";
 import Logo from "@/components/Logo";
 import SketchCanvas from "@/components/SketchCanvas";
-import FloatingEmojis from "@/components/FloatingEmojis";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,7 +36,7 @@ const WriteLetter = () => {
     if (!files) return;
 
     if (photos.length + files.length > 3) {
-      toast.error("You can only attach up to 3 photos 🌸");
+      toast.error("You can only attach up to 3 photos");
       return;
     }
 
@@ -56,27 +55,27 @@ const WriteLetter = () => {
 
   const handleSealLetter = () => {
     if (!title.trim()) {
-      toast.error("Please add a title to your letter ✨");
+      toast.error("Please add a title to your letter");
       return;
     }
     
     if (inputMode === "type" && !body.trim()) {
-      toast.error("Please write something in your letter 🌷");
+      toast.error("Please write something in your letter");
       return;
     }
     
     if (!deliveryDate) {
-      toast.error("Please select a delivery date 🌙");
+      toast.error("Please select a delivery date");
       return;
     }
     
     if (recipientType === "someone" && !recipientEmail.trim()) {
-      toast.error("Please enter the recipient's email 💌");
+      toast.error("Please enter the recipient's email");
       return;
     }
     
     if (!signature.trim()) {
-      toast.error("Please add your signature 🦋");
+      toast.error("Please add your signature");
       return;
     }
 
@@ -97,17 +96,14 @@ const WriteLetter = () => {
     };
 
     addLetter(newLetter);
-    toast.success("Your letter has been sealed! ✨🌸");
+    toast.success("Your letter has been sealed!");
     navigate("/vault");
   };
 
   return (
     <div className="min-h-screen bg-gradient-soft relative overflow-hidden">
-      {/* Floating Emojis Background */}
-      <FloatingEmojis count={6} />
-
       {/* Decorative gradient orbs */}
-      <div className="absolute top-40 left-10 w-48 h-48 rounded-full bg-pastel-rose/20 blur-3xl" />
+      <div className="absolute top-40 left-10 w-48 h-48 rounded-full bg-pastel-sand/20 blur-3xl" />
       <div className="absolute bottom-20 right-20 w-64 h-64 rounded-full bg-pastel-sky/20 blur-3xl" />
 
       {/* Header */}
@@ -132,7 +128,7 @@ const WriteLetter = () => {
           <h1 className="font-serif text-3xl md:text-4xl text-foreground mb-2">
             {letterTitle}
           </h1>
-          <p className="text-muted-foreground mb-8">🕊️ Take your time, make it special</p>
+          <p className="text-muted-foreground mb-8">Take your time, make it special</p>
 
           {/* Recipient Toggle */}
           <div className="flex gap-3 mb-6">
@@ -141,14 +137,14 @@ const WriteLetter = () => {
               onClick={() => setRecipientType("myself")}
               className="shadow-soft"
             >
-              🌙 To myself
+              To myself
             </Button>
             <Button
               variant={recipientType === "someone" ? "default" : "outline"}
               onClick={() => setRecipientType("someone")}
               className="shadow-soft"
             >
-              💌 To someone else
+              To someone else
             </Button>
           </div>
 
@@ -173,7 +169,7 @@ const WriteLetter = () => {
           </div>
 
           {/* Letter Writing Area */}
-          <div className="bg-card/80 backdrop-blur-sm border border-pastel-rose/50 rounded-2xl p-6 shadow-dreamy mb-8">
+          <div className="bg-card/80 backdrop-blur-sm border border-primary/30 rounded-2xl p-6 shadow-dreamy mb-8">
             {/* Title Input */}
             <Input
               placeholder="Letter title..."
@@ -205,8 +201,8 @@ const WriteLetter = () => {
 
           {/* Photo Attachments */}
           <div className="mb-8">
-            <label className="text-sm font-medium text-foreground mb-3 block flex items-center gap-2">
-              📸 Photo Attachments (max 3)
+            <label className="text-sm font-medium text-foreground mb-3 block">
+              Photo Attachments (max 3)
             </label>
             <div className="flex gap-3 flex-wrap">
               {photos.map((photo, index) => (
@@ -214,11 +210,11 @@ const WriteLetter = () => {
                   <img
                     src={photo}
                     alt={`Attachment ${index + 1}`}
-                    className="w-full h-full object-cover rounded-xl border-2 border-pastel-rose shadow-soft"
+                    className="w-full h-full object-cover rounded-xl border-2 border-primary shadow-soft"
                   />
                   <button
                     onClick={() => removePhoto(index)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-pastel-rose text-foreground rounded-full flex items-center justify-center shadow-soft"
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-muted text-foreground rounded-full flex items-center justify-center shadow-soft"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -227,7 +223,7 @@ const WriteLetter = () => {
               {photos.length < 3 && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-20 h-20 border-2 border-dashed border-pastel-rose rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-seal transition-colors bg-card/50"
+                  className="w-20 h-20 border-2 border-dashed border-primary rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-seal transition-colors bg-card/50"
                 >
                   <Image className="w-6 h-6" />
                 </button>
@@ -247,8 +243,8 @@ const WriteLetter = () => {
           <div className="space-y-6 mb-8">
             {/* Delivery Date */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block flex items-center gap-2">
-                🌙 Delivery Date
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Delivery Date
               </label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -272,8 +268,8 @@ const WriteLetter = () => {
             {/* Recipient Email */}
             {recipientType === "someone" && (
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block flex items-center gap-2">
-                  💌 Recipient Email
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Recipient Email
                 </label>
                 <Input
                   type="email"
@@ -287,8 +283,8 @@ const WriteLetter = () => {
 
             {/* Signature */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block flex items-center gap-2">
-                ✍️ Your Signature
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Your Signature
               </label>
               <Input
                 placeholder="With love..."
@@ -305,13 +301,11 @@ const WriteLetter = () => {
             size="lg" 
             className="w-full text-lg py-6 shadow-dreamy"
           >
-            🌸 Seal Your Letter
+            Seal Your Letter
           </Button>
           
-          <p className="text-center text-muted-foreground text-sm mt-4 flex items-center justify-center gap-2">
-            <span>☁️</span>
+          <p className="text-center text-muted-foreground text-sm mt-4">
             Once sealed, this letter will be tucked away until the delivery date.
-            <span>☁️</span>
           </p>
         </motion.div>
       </main>

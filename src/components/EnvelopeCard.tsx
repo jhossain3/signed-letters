@@ -64,16 +64,16 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
           animate={{ opacity: isHovered && isOpenable ? 1 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <span className="text-background font-serif text-lg font-medium flex items-center gap-2">
-            ✨ Open Letter
+          <span className="text-background font-serif text-lg font-medium">
+            Open Letter
           </span>
         </motion.div>
 
         {/* Locked overlay */}
         {!isOpenable && (
           <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-pastel-stone/90 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs text-foreground/70 shadow-soft">
-            🌙 Sealed until {date}
+            <div className="bg-pastel-stone/90 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs text-foreground/70 shadow-soft">
+              Sealed until {date}
           </div>
         </div>
       )}

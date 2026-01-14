@@ -5,7 +5,6 @@ import { ArrowLeft, Inbox, Send } from "lucide-react";
 import Logo from "@/components/Logo";
 import EnvelopeCard from "@/components/EnvelopeCard";
 import EnvelopeOpening from "@/components/EnvelopeOpening";
-import FloatingEmojis from "@/components/FloatingEmojis";
 import { Button } from "@/components/ui/button";
 import { useLetterStore, Letter } from "@/stores/letterStore";
 import { format } from "date-fns";
@@ -29,12 +28,9 @@ const Vault = () => {
 
   return (
     <div className="min-h-screen bg-gradient-soft relative overflow-hidden">
-      {/* Floating Emojis Background */}
-      <FloatingEmojis count={8} />
-
       {/* Decorative gradient orbs */}
-      <div className="absolute top-20 right-10 w-48 h-48 rounded-full bg-pastel-lavender/30 blur-3xl" />
-      <div className="absolute bottom-40 left-20 w-64 h-64 rounded-full bg-pastel-mint/30 blur-3xl" />
+      <div className="absolute top-20 right-10 w-48 h-48 rounded-full bg-pastel-lavender/20 blur-3xl" />
+      <div className="absolute bottom-40 left-20 w-64 h-64 rounded-full bg-pastel-sage/20 blur-3xl" />
 
       {/* Header */}
       <header className="container mx-auto px-4 py-6 relative z-10">
@@ -57,7 +53,7 @@ const Vault = () => {
           <h1 className="font-serif text-3xl md:text-4xl text-foreground text-center mb-2">
             Your Vault
           </h1>
-          <p className="text-center text-muted-foreground mb-8">🦋 Where your letters wait</p>
+          <p className="text-center text-muted-foreground mb-8">Where your letters wait</p>
 
           {/* Tab Toggle */}
           <div className="flex justify-center gap-3 mb-12">
@@ -106,8 +102,8 @@ const Vault = () => {
               </div>
               <p className="text-muted-foreground text-lg mb-2">
                 {activeTab === "sent" 
-                  ? "No letters sent yet ☁️"
-                  : "No letters received yet 🌙"}
+                  ? "No letters sent yet"
+                  : "No letters received yet"}
               </p>
               <p className="text-muted-foreground text-sm">
                 {activeTab === "sent" 
@@ -116,7 +112,7 @@ const Vault = () => {
               </p>
               {activeTab === "sent" && (
                 <Button asChild className="mt-6 shadow-soft">
-                  <Link to="/write">✨ Write a Letter</Link>
+                  <Link to="/write">Write a Letter</Link>
                 </Button>
               )}
             </div>
