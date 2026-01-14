@@ -9,7 +9,7 @@ interface EnvelopeCardProps {
   onClick: () => void;
 }
 
-const COLORS = ['#fecdd3', '#fef3c7', '#dcfce7', '#d1fae5', '#e0f2fe', '#f3e8ff', '#fae8ff'];
+const COLORS = ['#f5f0e8', '#e8ebe4', '#e5ecf0', '#ede8f2', '#f0ebe5', '#eaece9', '#e8eef2'];
 
 const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -35,7 +35,7 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
             height="65"
             rx="6"
             fill="hsl(var(--envelope-cream))"
-            stroke="hsl(var(--pastel-rose))"
+            stroke="hsl(var(--primary))"
             strokeWidth="1.5"
           />
           
@@ -43,13 +43,13 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
           <path
             d="M 5 20 L 60 55 L 115 20"
             fill="hsl(var(--pastel-cream))"
-            stroke="hsl(var(--pastel-rose))"
+            stroke="hsl(var(--primary))"
             strokeWidth="1.5"
           />
           
           {/* Heart seal */}
           <g transform="translate(60, 50)">
-            <circle cx="0" cy="0" r="10" fill="hsl(var(--seal-rose))" />
+            <circle cx="0" cy="0" r="10" fill="hsl(var(--seal-warm))" />
             <path
               d="M 0 -4 C -2.5 -6.5 -5.5 -5.5 -5.5 -2.5 C -5.5 0.5 0 5 0 5 C 0 5 5.5 0.5 5.5 -2.5 C 5.5 -5.5 2.5 -6.5 0 -4"
               fill="white"
@@ -72,11 +72,11 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
         {/* Locked overlay */}
         {!isOpenable && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-pastel-lavender/90 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs text-foreground/70 shadow-soft">
-              🌙 Sealed until {date}
-            </div>
+          <div className="bg-pastel-stone/90 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs text-foreground/70 shadow-soft">
+            🌙 Sealed until {date}
           </div>
-        )}
+        </div>
+      )}
       </div>
 
       <div className="text-center mt-3">
