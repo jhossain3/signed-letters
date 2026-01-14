@@ -50,9 +50,9 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
             exit={{ scale: 0.5, opacity: 0, y: -100 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="relative w-80 h-56">
+            <div className="relative w-80 h-56" style={{ perspective: "800px" }}>
               {/* Envelope body */}
-              <svg viewBox="0 0 160 110" className="w-full h-full drop-shadow-2xl">
+              <svg viewBox="0 0 160 110" className="w-full h-full drop-shadow-2xl" style={{ overflow: "visible" }}>
                 {/* Envelope back */}
                 <rect
                   x="5"
@@ -75,30 +75,34 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   fill="hsl(var(--background))"
                   stroke="hsl(var(--pastel-lavender))"
                   strokeWidth="1"
-                  animate={stage === "opening" ? { y: 0 } : { y: 35 }}
+                  animate={stage === "opening" ? { y: 5 } : { y: 35 }}
                   transition={{ duration: 1, delay: 0.5 }}
                 />
                 
-                {/* Envelope flap */}
-                <motion.path
-                  d="M 5 30 L 80 70 L 155 30 L 155 35 L 80 75 L 5 35 Z"
-                  fill="hsl(var(--pastel-cream))"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
+                {/* Envelope flap - simplified triangle */}
+                <motion.g
                   style={{ transformOrigin: "80px 30px" }}
-                  animate={stage === "opening" ? { rotateX: -180 } : { rotateX: 0 }}
+                  animate={stage === "opening" ? { rotateX: -180, opacity: 0 } : { rotateX: 0, opacity: 1 }}
                   transition={{ duration: 0.8 }}
-                />
+                >
+                  <path
+                    d="M 5 30 L 80 65 L 155 30 Z"
+                    fill="hsl(var(--pastel-cream))"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                </motion.g>
                 
                 {/* Heart seal */}
                 <motion.g 
-                  transform="translate(80, 60)"
+                  transform="translate(80, 50)"
                   animate={stage === "opening" ? { opacity: 0, scale: 0 } : { opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <circle cx="0" cy="0" r="12" fill="hsl(var(--seal-warm))" />
+                  <circle cx="0" cy="0" r="10" fill="hsl(var(--seal-warm))" />
                   <path
-                    d="M 0 -5 C -3 -8 -7 -7 -7 -3 C -7 1 0 6 0 6 C 0 6 7 1 7 -3 C 7 -7 3 -8 0 -5"
+                    d="M 0 -4 C -2.5 -6.5 -5.5 -5.5 -5.5 -2 C -5.5 1 0 5 0 5 C 0 5 5.5 1 5.5 -2 C 5.5 -5.5 2.5 -6.5 0 -4"
                     fill="white"
                   />
                 </motion.g>
