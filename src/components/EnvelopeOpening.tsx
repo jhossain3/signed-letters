@@ -17,7 +17,7 @@ interface EnvelopeOpeningProps {
   onClose: () => void;
 }
 
-const EMOJIS = ['✨', '🌸', '🕊️', '☁️', '🌙', '🌷', '🦋', '🦢', '🌟'];
+const EMOJIS = ['✨', '☁️', '🌙', '🌟', '✉️', '🍃', '🪶', '·'];
 
 const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
   const [stage, setStage] = useState<"envelope" | "opening" | "letter">("envelope");
@@ -92,7 +92,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   height="75"
                   rx="6"
                   fill="hsl(var(--envelope-cream))"
-                  stroke="hsl(var(--pastel-rose))"
+                  stroke="hsl(var(--primary))"
                   strokeWidth="2"
                 />
                 
@@ -114,7 +114,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                 <motion.path
                   d="M 5 30 L 80 70 L 155 30 L 155 35 L 80 75 L 5 35 Z"
                   fill="hsl(var(--pastel-cream))"
-                  stroke="hsl(var(--pastel-rose))"
+                  stroke="hsl(var(--primary))"
                   strokeWidth="2"
                   style={{ transformOrigin: "80px 30px" }}
                   animate={stage === "opening" ? { rotateX: -180 } : { rotateX: 0 }}
@@ -127,7 +127,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   animate={stage === "opening" ? { opacity: 0, scale: 0 } : { opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <circle cx="0" cy="0" r="12" fill="hsl(var(--seal-rose))" />
+                  <circle cx="0" cy="0" r="12" fill="hsl(var(--seal-warm))" />
                   <path
                     d="M 0 -5 C -3 -8 -7 -7 -7 -3 C -7 1 0 6 0 6 C 0 6 7 1 7 -3 C 7 -7 3 -8 0 -5"
                     fill="white"
@@ -146,7 +146,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
         {stage === "letter" && (
           <motion.div
             key="letter"
-            className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-pastel-rose/50"
+            className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-primary/30"
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -175,7 +175,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                       key={index}
                       src={photo} 
                       alt={`Attachment ${index + 1}`}
-                      className="w-24 h-24 object-cover rounded-lg border-2 border-pastel-rose shadow-soft"
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-primary shadow-soft"
                     />
                   ))}
                 </div>
@@ -196,7 +196,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
               onClick={onClose}
               className="mt-6 w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-all shadow-soft"
             >
-              🌸 Close Letter
+              ✉️ Close Letter
             </button>
           </motion.div>
         )}

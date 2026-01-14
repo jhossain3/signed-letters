@@ -30,7 +30,7 @@ const Logo = ({ size = "md", animate = true }: LogoProps) => {
           height="55"
           rx="6"
           fill="hsl(var(--envelope-cream))"
-          stroke="hsl(var(--pastel-rose))"
+          stroke="hsl(var(--primary))"
           strokeWidth="1.5"
         />
         
@@ -38,7 +38,7 @@ const Logo = ({ size = "md", animate = true }: LogoProps) => {
         <path
           d="M 5 20 L 50 50 L 95 20"
           fill="none"
-          stroke="hsl(var(--pastel-rose))"
+          stroke="hsl(var(--primary))"
           strokeWidth="1"
           opacity="0.5"
         />
@@ -47,17 +47,17 @@ const Logo = ({ size = "md", animate = true }: LogoProps) => {
         <path
           d="M 5 15 L 50 45 L 95 15 L 95 20 L 50 50 L 5 20 Z"
           fill="hsl(var(--pastel-cream))"
-          stroke="hsl(var(--pastel-rose))"
+          stroke="hsl(var(--primary))"
           strokeWidth="1.5"
         />
         
-        {/* Heart seal - now soft rose pink */}
+        {/* Heart seal - warm neutral */}
         <g transform="translate(50, 45)">
           <circle
             cx="0"
             cy="0"
             r="12"
-            fill="hsl(var(--seal-rose))"
+            fill="hsl(var(--seal-warm))"
             className="drop-shadow-md"
           />
           <path

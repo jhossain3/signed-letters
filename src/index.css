@@ -6,58 +6,58 @@
 
 @layer base {
   :root {
-    /* Soft dreamy pastel backgrounds */
-    --background: 30 50% 98%;
-    --foreground: 280 20% 25%;
+    /* Warm neutral dreamy backgrounds */
+    --background: 40 30% 98%;
+    --foreground: 220 15% 25%;
 
     /* Soft cream card surfaces */
-    --card: 45 80% 96%;
-    --card-foreground: 280 20% 25%;
+    --card: 40 50% 96%;
+    --card-foreground: 220 15% 25%;
 
-    --popover: 45 80% 96%;
-    --popover-foreground: 280 20% 25%;
+    --popover: 40 50% 96%;
+    --popover-foreground: 220 15% 25%;
 
-    /* Soft rose pink - primary */
-    --primary: 350 80% 85%;
-    --primary-foreground: 350 60% 30%;
+    /* Warm taupe - primary */
+    --primary: 30 35% 78%;
+    --primary-foreground: 30 40% 25%;
 
-    /* Soft lavender */
-    --secondary: 280 60% 95%;
-    --secondary-foreground: 280 40% 35%;
+    /* Soft sage */
+    --secondary: 150 25% 92%;
+    --secondary-foreground: 150 30% 30%;
 
     /* Soft muted tones */
-    --muted: 45 40% 94%;
-    --muted-foreground: 280 15% 50%;
+    --muted: 40 25% 94%;
+    --muted-foreground: 220 10% 50%;
 
-    /* Soft mint accent */
-    --accent: 150 50% 92%;
-    --accent-foreground: 150 40% 30%;
+    /* Soft sky accent */
+    --accent: 200 40% 92%;
+    --accent-foreground: 200 35% 30%;
 
-    --destructive: 0 70% 70%;
+    --destructive: 0 60% 70%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 30% 90%;
-    --input: 350 30% 92%;
-    --ring: 350 60% 80%;
+    --border: 40 20% 88%;
+    --input: 40 20% 90%;
+    --ring: 200 35% 75%;
 
     --radius: 1rem;
 
-    /* Custom pastel palette */
-    --pastel-rose: 350 80% 90%;
-    --pastel-cream: 45 80% 93%;
-    --pastel-mint: 140 50% 92%;
-    --pastel-teal: 160 50% 91%;
-    --pastel-sky: 200 70% 93%;
-    --pastel-lavender: 280 60% 95%;
-    --pastel-pink: 300 70% 95%;
+    /* Neutral pastel palette */
+    --pastel-cream: 40 50% 93%;
+    --pastel-sand: 35 40% 90%;
+    --pastel-sage: 150 25% 90%;
+    --pastel-mist: 180 20% 92%;
+    --pastel-sky: 200 40% 92%;
+    --pastel-lavender: 250 30% 93%;
+    --pastel-stone: 220 15% 92%;
 
     /* Envelope and seal */
-    --envelope-cream: 45 80% 94%;
-    --envelope-shadow: 350 30% 80%;
-    --seal-rose: 350 70% 80%;
-    --seal-rose-dark: 350 65% 70%;
-    --paper-texture: 45 60% 97%;
-    --ink: 280 25% 25%;
+    --envelope-cream: 40 50% 94%;
+    --envelope-shadow: 30 20% 75%;
+    --seal-warm: 30 40% 70%;
+    --seal-warm-dark: 30 45% 55%;
+    --paper-texture: 40 40% 97%;
+    --ink: 220 20% 25%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -70,48 +70,48 @@
   }
 
   .dark {
-    --background: 280 20% 10%;
-    --foreground: 45 60% 95%;
+    --background: 220 15% 10%;
+    --foreground: 40 40% 95%;
 
-    --card: 280 18% 14%;
-    --card-foreground: 45 60% 95%;
+    --card: 220 12% 14%;
+    --card-foreground: 40 40% 95%;
 
-    --popover: 280 18% 14%;
-    --popover-foreground: 45 60% 95%;
+    --popover: 220 12% 14%;
+    --popover-foreground: 40 40% 95%;
 
-    --primary: 350 60% 70%;
-    --primary-foreground: 280 20% 10%;
+    --primary: 30 35% 60%;
+    --primary-foreground: 220 15% 10%;
 
-    --secondary: 280 30% 25%;
-    --secondary-foreground: 280 40% 85%;
+    --secondary: 150 20% 25%;
+    --secondary-foreground: 150 25% 85%;
 
-    --muted: 280 15% 20%;
-    --muted-foreground: 45 30% 70%;
+    --muted: 220 10% 20%;
+    --muted-foreground: 40 25% 70%;
 
-    --accent: 150 35% 30%;
-    --accent-foreground: 150 40% 85%;
+    --accent: 200 30% 30%;
+    --accent-foreground: 200 35% 85%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 280 15% 25%;
-    --input: 280 15% 25%;
-    --ring: 350 50% 60%;
+    --border: 220 10% 25%;
+    --input: 220 10% 25%;
+    --ring: 200 35% 50%;
 
-    --pastel-rose: 350 50% 35%;
-    --pastel-cream: 45 40% 25%;
-    --pastel-mint: 140 30% 25%;
-    --pastel-teal: 160 30% 25%;
-    --pastel-sky: 200 40% 25%;
-    --pastel-lavender: 280 35% 30%;
-    --pastel-pink: 300 40% 30%;
+    --pastel-cream: 40 30% 25%;
+    --pastel-sand: 35 25% 22%;
+    --pastel-sage: 150 15% 25%;
+    --pastel-mist: 180 12% 25%;
+    --pastel-sky: 200 25% 25%;
+    --pastel-lavender: 250 18% 28%;
+    --pastel-stone: 220 10% 25%;
 
-    --envelope-cream: 45 30% 20%;
-    --envelope-shadow: 280 15% 15%;
-    --seal-rose: 350 50% 55%;
-    --seal-rose-dark: 350 55% 45%;
-    --paper-texture: 280 18% 12%;
-    --ink: 45 50% 90%;
+    --envelope-cream: 40 25% 20%;
+    --envelope-shadow: 220 10% 15%;
+    --seal-warm: 30 35% 45%;
+    --seal-warm-dark: 30 40% 35%;
+    --paper-texture: 220 12% 12%;
+    --ink: 40 35% 90%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -169,25 +169,25 @@
   }
 
   /* Pastel utilities */
-  .bg-pastel-rose { background-color: hsl(var(--pastel-rose)); }
   .bg-pastel-cream { background-color: hsl(var(--pastel-cream)); }
-  .bg-pastel-mint { background-color: hsl(var(--pastel-mint)); }
-  .bg-pastel-teal { background-color: hsl(var(--pastel-teal)); }
+  .bg-pastel-sand { background-color: hsl(var(--pastel-sand)); }
+  .bg-pastel-sage { background-color: hsl(var(--pastel-sage)); }
+  .bg-pastel-mist { background-color: hsl(var(--pastel-mist)); }
   .bg-pastel-sky { background-color: hsl(var(--pastel-sky)); }
   .bg-pastel-lavender { background-color: hsl(var(--pastel-lavender)); }
-  .bg-pastel-pink { background-color: hsl(var(--pastel-pink)); }
+  .bg-pastel-stone { background-color: hsl(var(--pastel-stone)); }
 
   .shadow-envelope {
     box-shadow: 0 8px 30px -10px hsl(var(--envelope-shadow) / 0.4);
   }
 
   .shadow-soft {
-    box-shadow: 0 4px 20px -5px hsl(var(--pastel-rose) / 0.5);
+    box-shadow: 0 4px 20px -5px hsl(var(--pastel-sand) / 0.5);
   }
 
   .shadow-dreamy {
     box-shadow: 
-      0 10px 40px -10px hsl(var(--pastel-rose) / 0.3),
+      0 10px 40px -10px hsl(var(--pastel-sand) / 0.3),
       0 4px 15px -5px hsl(var(--pastel-lavender) / 0.2);
   }
 }
@@ -280,9 +280,9 @@
 .animate-shimmer {
   background: linear-gradient(
     90deg,
-    hsl(var(--pastel-rose)) 0%,
+    hsl(var(--pastel-cream)) 0%,
     hsl(var(--pastel-lavender)) 50%,
-    hsl(var(--pastel-rose)) 100%
+    hsl(var(--pastel-cream)) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 3s ease-in-out infinite;
@@ -296,13 +296,13 @@
   background-size: 24px 24px;
 }
 
-/* Wax seal effect - now rose pink */
+/* Wax seal effect - warm neutral */
 .wax-seal {
-  background: radial-gradient(circle at 30% 30%, hsl(var(--seal-rose)), hsl(var(--seal-rose-dark)));
+  background: radial-gradient(circle at 30% 30%, hsl(var(--seal-warm)), hsl(var(--seal-warm-dark)));
   box-shadow: 
-    inset 2px 2px 4px hsl(350 70% 85% / 0.3),
-    inset -2px -2px 4px hsl(350 60% 60% / 0.3),
-    0 4px 12px hsl(var(--seal-rose) / 0.4);
+    inset 2px 2px 4px hsl(30 45% 80% / 0.3),
+    inset -2px -2px 4px hsl(30 50% 45% / 0.3),
+    0 4px 12px hsl(var(--seal-warm) / 0.4);
 }
 
 /* Sketch canvas styling */
@@ -322,11 +322,11 @@
 .bg-gradient-dreamy {
   background: linear-gradient(
     135deg,
-    hsl(var(--pastel-rose)) 0%,
-    hsl(var(--pastel-cream)) 25%,
+    hsl(var(--pastel-cream)) 0%,
+    hsl(var(--pastel-sand)) 25%,
     hsl(var(--pastel-lavender)) 50%,
     hsl(var(--pastel-sky)) 75%,
-    hsl(var(--pastel-mint)) 100%
+    hsl(var(--pastel-sage)) 100%
   );
 }
 
@@ -335,6 +335,6 @@
     180deg,
     hsl(var(--background)) 0%,
     hsl(var(--pastel-cream) / 0.5) 50%,
-    hsl(var(--pastel-rose) / 0.3) 100%
+    hsl(var(--pastel-sand) / 0.3) 100%
   );
 }
