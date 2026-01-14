@@ -12,7 +12,7 @@ const Logo = ({ size = "md", animate = true }: LogoProps) => {
     lg: { wrapper: "w-32 h-24", heart: "w-10 h-10" },
   };
 
-  const { wrapper, heart } = sizes[size];
+  const { wrapper } = sizes[size];
 
   return (
     <motion.div
@@ -21,16 +21,16 @@ const Logo = ({ size = "md", animate = true }: LogoProps) => {
       transition={animate ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : undefined}
     >
       {/* Envelope body */}
-      <svg viewBox="0 0 100 75" className="w-full h-full">
+      <svg viewBox="0 0 100 75" className="w-full h-full drop-shadow-soft">
         {/* Envelope back */}
         <rect
           x="5"
           y="15"
           width="90"
           height="55"
-          rx="4"
+          rx="6"
           fill="hsl(var(--envelope-cream))"
-          stroke="hsl(var(--border))"
+          stroke="hsl(var(--pastel-rose))"
           strokeWidth="1.5"
         />
         
@@ -38,7 +38,7 @@ const Logo = ({ size = "md", animate = true }: LogoProps) => {
         <path
           d="M 5 20 L 50 50 L 95 20"
           fill="none"
-          stroke="hsl(var(--border))"
+          stroke="hsl(var(--pastel-rose))"
           strokeWidth="1"
           opacity="0.5"
         />
@@ -46,23 +46,23 @@ const Logo = ({ size = "md", animate = true }: LogoProps) => {
         {/* Envelope front flap */}
         <path
           d="M 5 15 L 50 45 L 95 15 L 95 20 L 50 50 L 5 20 Z"
-          fill="hsl(var(--envelope-cream))"
-          stroke="hsl(var(--border))"
+          fill="hsl(var(--pastel-cream))"
+          stroke="hsl(var(--pastel-rose))"
           strokeWidth="1.5"
         />
         
-        {/* Heart seal */}
+        {/* Heart seal - now soft rose pink */}
         <g transform="translate(50, 45)">
           <circle
             cx="0"
             cy="0"
             r="12"
-            className="wax-seal"
-            fill="hsl(var(--seal-burgundy))"
+            fill="hsl(var(--seal-rose))"
+            className="drop-shadow-md"
           />
           <path
             d="M 0 -5 C -3 -8 -7 -7 -7 -3 C -7 1 0 6 0 6 C 0 6 7 1 7 -3 C 7 -7 3 -8 0 -5"
-            fill="hsl(var(--primary-foreground))"
+            fill="white"
           />
         </g>
       </svg>

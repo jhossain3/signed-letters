@@ -6,50 +6,58 @@
 
 @layer base {
   :root {
-    /* Warm paper-like backgrounds */
-    --background: 40 33% 97%;
-    --foreground: 220 20% 20%;
+    /* Soft dreamy pastel backgrounds */
+    --background: 30 50% 98%;
+    --foreground: 280 20% 25%;
 
-    /* Cream card surfaces */
-    --card: 40 40% 95%;
-    --card-foreground: 220 20% 20%;
+    /* Soft cream card surfaces */
+    --card: 45 80% 96%;
+    --card-foreground: 280 20% 25%;
 
-    --popover: 40 40% 95%;
-    --popover-foreground: 220 20% 20%;
+    --popover: 45 80% 96%;
+    --popover-foreground: 280 20% 25%;
 
-    /* Deep burgundy/wine - the heart seal */
-    --primary: 350 60% 40%;
-    --primary-foreground: 40 33% 97%;
+    /* Soft rose pink - primary */
+    --primary: 350 80% 85%;
+    --primary-foreground: 350 60% 30%;
 
-    /* Soft rose */
-    --secondary: 350 30% 90%;
-    --secondary-foreground: 350 60% 35%;
+    /* Soft lavender */
+    --secondary: 280 60% 95%;
+    --secondary-foreground: 280 40% 35%;
 
-    /* Muted warm grays */
-    --muted: 40 20% 92%;
-    --muted-foreground: 220 10% 45%;
+    /* Soft muted tones */
+    --muted: 45 40% 94%;
+    --muted-foreground: 280 15% 50%;
 
-    /* Rose accent */
-    --accent: 350 45% 85%;
-    --accent-foreground: 350 60% 30%;
+    /* Soft mint accent */
+    --accent: 150 50% 92%;
+    --accent-foreground: 150 40% 30%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 70%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 40 25% 85%;
-    --input: 40 25% 88%;
-    --ring: 350 60% 40%;
+    --border: 350 30% 90%;
+    --input: 350 30% 92%;
+    --ring: 350 60% 80%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Custom tokens */
-    --envelope-cream: 45 50% 94%;
-    --envelope-shadow: 40 30% 70%;
-    --seal-burgundy: 350 60% 40%;
-    --seal-burgundy-dark: 350 65% 32%;
-    --paper-texture: 40 33% 97%;
-    --ink: 220 20% 18%;
-    --rose-gold: 15 50% 70%;
+    /* Custom pastel palette */
+    --pastel-rose: 350 80% 90%;
+    --pastel-cream: 45 80% 93%;
+    --pastel-mint: 140 50% 92%;
+    --pastel-teal: 160 50% 91%;
+    --pastel-sky: 200 70% 93%;
+    --pastel-lavender: 280 60% 95%;
+    --pastel-pink: 300 70% 95%;
+
+    /* Envelope and seal */
+    --envelope-cream: 45 80% 94%;
+    --envelope-shadow: 350 30% 80%;
+    --seal-rose: 350 70% 80%;
+    --seal-rose-dark: 350 65% 70%;
+    --paper-texture: 45 60% 97%;
+    --ink: 280 25% 25%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -62,41 +70,48 @@
   }
 
   .dark {
-    --background: 220 20% 12%;
-    --foreground: 40 33% 95%;
+    --background: 280 20% 10%;
+    --foreground: 45 60% 95%;
 
-    --card: 220 18% 16%;
-    --card-foreground: 40 33% 95%;
+    --card: 280 18% 14%;
+    --card-foreground: 45 60% 95%;
 
-    --popover: 220 18% 16%;
-    --popover-foreground: 40 33% 95%;
+    --popover: 280 18% 14%;
+    --popover-foreground: 45 60% 95%;
 
-    --primary: 350 55% 55%;
-    --primary-foreground: 220 20% 10%;
+    --primary: 350 60% 70%;
+    --primary-foreground: 280 20% 10%;
 
-    --secondary: 350 25% 25%;
-    --secondary-foreground: 350 40% 80%;
+    --secondary: 280 30% 25%;
+    --secondary-foreground: 280 40% 85%;
 
-    --muted: 220 15% 20%;
-    --muted-foreground: 40 15% 65%;
+    --muted: 280 15% 20%;
+    --muted-foreground: 45 30% 70%;
 
-    --accent: 350 35% 30%;
-    --accent-foreground: 350 40% 85%;
+    --accent: 150 35% 30%;
+    --accent-foreground: 150 40% 85%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 25%;
-    --ring: 350 55% 55%;
+    --border: 280 15% 25%;
+    --input: 280 15% 25%;
+    --ring: 350 50% 60%;
 
-    --envelope-cream: 40 20% 25%;
-    --envelope-shadow: 220 15% 15%;
-    --seal-burgundy: 350 55% 50%;
-    --seal-burgundy-dark: 350 60% 40%;
-    --paper-texture: 220 18% 14%;
-    --ink: 40 30% 90%;
-    --rose-gold: 15 40% 55%;
+    --pastel-rose: 350 50% 35%;
+    --pastel-cream: 45 40% 25%;
+    --pastel-mint: 140 30% 25%;
+    --pastel-teal: 160 30% 25%;
+    --pastel-sky: 200 40% 25%;
+    --pastel-lavender: 280 35% 30%;
+    --pastel-pink: 300 40% 30%;
+
+    --envelope-cream: 45 30% 20%;
+    --envelope-shadow: 280 15% 15%;
+    --seal-rose: 350 50% 55%;
+    --seal-rose-dark: 350 55% 45%;
+    --paper-texture: 280 18% 12%;
+    --ink: 45 50% 90%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -146,19 +161,34 @@
   }
 
   .text-seal {
-    color: hsl(var(--seal-burgundy));
+    color: hsl(var(--seal-rose));
   }
 
   .bg-seal {
-    background-color: hsl(var(--seal-burgundy));
+    background-color: hsl(var(--seal-rose));
   }
+
+  /* Pastel utilities */
+  .bg-pastel-rose { background-color: hsl(var(--pastel-rose)); }
+  .bg-pastel-cream { background-color: hsl(var(--pastel-cream)); }
+  .bg-pastel-mint { background-color: hsl(var(--pastel-mint)); }
+  .bg-pastel-teal { background-color: hsl(var(--pastel-teal)); }
+  .bg-pastel-sky { background-color: hsl(var(--pastel-sky)); }
+  .bg-pastel-lavender { background-color: hsl(var(--pastel-lavender)); }
+  .bg-pastel-pink { background-color: hsl(var(--pastel-pink)); }
 
   .shadow-envelope {
     box-shadow: 0 8px 30px -10px hsl(var(--envelope-shadow) / 0.4);
   }
 
-  .shadow-seal {
-    box-shadow: 0 4px 15px -3px hsl(var(--seal-burgundy) / 0.3);
+  .shadow-soft {
+    box-shadow: 0 4px 20px -5px hsl(var(--pastel-rose) / 0.5);
+  }
+
+  .shadow-dreamy {
+    box-shadow: 
+      0 10px 40px -10px hsl(var(--pastel-rose) / 0.3),
+      0 4px 15px -5px hsl(var(--pastel-lavender) / 0.2);
   }
 }
 
@@ -181,32 +211,29 @@
   }
 }
 
-@keyframes seal-pulse {
+@keyframes twinkle {
   0%, 100% {
+    opacity: 1;
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    opacity: 0.6;
+    transform: scale(0.9);
   }
 }
 
-@keyframes envelope-open {
+@keyframes drift {
   0% {
-    transform: rotateX(0deg);
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) translateX(5px) rotate(5deg);
+  }
+  66% {
+    transform: translateY(-5px) translateX(-5px) rotate(-3deg);
   }
   100% {
-    transform: rotateX(-180deg);
-  }
-}
-
-@keyframes letter-rise {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(-20px);
-    opacity: 1;
+    transform: translateY(0) translateX(0) rotate(0deg);
   }
 }
 
@@ -221,6 +248,15 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .animate-bounce-gentle {
   animation: bounce-gentle 2s ease-in-out infinite;
 }
@@ -229,12 +265,27 @@
   animation: float 3s ease-in-out infinite;
 }
 
-.animate-seal-pulse {
-  animation: seal-pulse 2s ease-in-out infinite;
+.animate-twinkle {
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.animate-drift {
+  animation: drift 6s ease-in-out infinite;
 }
 
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--pastel-rose)) 0%,
+    hsl(var(--pastel-lavender)) 50%,
+    hsl(var(--pastel-rose)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
 }
 
 /* Letter paper texture effect */
@@ -245,18 +296,13 @@
   background-size: 24px 24px;
 }
 
-/* Envelope styling */
-.envelope-flap {
-  clip-path: polygon(0 0, 50% 60%, 100% 0);
-}
-
-/* Wax seal effect */
+/* Wax seal effect - now rose pink */
 .wax-seal {
-  background: radial-gradient(circle at 30% 30%, hsl(var(--seal-burgundy)), hsl(var(--seal-burgundy-dark)));
+  background: radial-gradient(circle at 30% 30%, hsl(var(--seal-rose)), hsl(var(--seal-rose-dark)));
   box-shadow: 
-    inset 2px 2px 4px hsl(350 60% 50% / 0.3),
-    inset -2px -2px 4px hsl(350 70% 25% / 0.3),
-    0 4px 12px hsl(var(--seal-burgundy) / 0.4);
+    inset 2px 2px 4px hsl(350 70% 85% / 0.3),
+    inset -2px -2px 4px hsl(350 60% 60% / 0.3),
+    0 4px 12px hsl(var(--seal-rose) / 0.4);
 }
 
 /* Sketch canvas styling */
@@ -270,4 +316,25 @@
       hsl(var(--border) / 0.3) 31px,
       hsl(var(--border) / 0.3) 32px
     );
+}
+
+/* Dreamy gradient backgrounds */
+.bg-gradient-dreamy {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--pastel-rose)) 0%,
+    hsl(var(--pastel-cream)) 25%,
+    hsl(var(--pastel-lavender)) 50%,
+    hsl(var(--pastel-sky)) 75%,
+    hsl(var(--pastel-mint)) 100%
+  );
+}
+
+.bg-gradient-soft {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--background)) 0%,
+    hsl(var(--pastel-cream) / 0.5) 50%,
+    hsl(var(--pastel-rose) / 0.3) 100%
+  );
 }
