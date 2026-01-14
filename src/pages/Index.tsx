@@ -1,12 +1,87 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Camera, Clock, Mail } from "lucide-react";
+import Logo from "@/components/Logo";
+import FeatureCard from "@/components/FeatureCard";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-16 md:py-24">
+        <div className="flex flex-col items-center text-center">
+          {/* Animated Logo */}
+          <Logo size="lg" animate />
+          
+          {/* Tagline */}
+          <motion.h1
+            className="font-serif text-4xl md:text-6xl font-bold text-foreground mt-8 mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Sign it off.
+          </motion.h1>
+          
+          <motion.p
+            className="text-muted-foreground text-lg md:text-xl max-w-2xl leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            Your digital space to write and send meaningful letters to your future self 
+            and the people you love. Write something special today, and I'll keep it safe.
+          </motion.p>
+          
+          {/* CTA Buttons */}
+          <motion.div
+            className="flex flex-col sm:flex-row gap-4 mt-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <Button asChild size="lg" className="text-lg px-8 py-6">
+              <Link to="/write">Write a Letter</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
+              <Link to="/vault">Explore Vault</Link>
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-3 gap-6">
+          <FeatureCard
+            icon={<Camera className="w-6 h-6" />}
+            title="Capture Moments"
+            description="Attach your favorite photos to capture more than just words."
+            delay={0.2}
+          />
+          <FeatureCard
+            icon={<Mail className="w-6 h-6" />}
+            title="Beautiful Reveal"
+            description="A beautiful, slow-reveal experience designed to feel like opening a real letter."
+            delay={0.4}
+          />
+          <FeatureCard
+            icon={<Clock className="w-6 h-6" />}
+            title="Time Capsule"
+            description="Your message travels through time safely, arriving exactly when you promised it."
+            delay={0.6}
+          />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="container mx-auto px-4 py-8 text-center">
+        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+          <Logo size="sm" animate={false} />
+          <span className="font-serif text-lg">Signed</span>
+        </div>
+      </footer>
     </div>
   );
 };
