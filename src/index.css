@@ -6,58 +6,58 @@
 
 @layer base {
   :root {
-    /* Warm stone background - #fafaf9 */
-    --background: 60 9% 98%;
-    --foreground: 217 33% 17%;
+    /* Warm off-white paper background - #FAF7F2 */
+    --background: 40 33% 96%;
+    --foreground: 220 20% 20%;
 
-    /* Glass card surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 217 33% 17%;
+    /* Cream card surfaces */
+    --card: 40 40% 98%;
+    --card-foreground: 220 20% 20%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 217 33% 17%;
+    --popover: 40 40% 98%;
+    --popover-foreground: 220 20% 20%;
 
-    /* Slate primary */
-    --primary: 217 33% 25%;
-    --primary-foreground: 0 0% 100%;
+    /* Warm brown primary */
+    --primary: 25 25% 45%;
+    --primary-foreground: 40 40% 98%;
 
-    /* Soft secondary */
-    --secondary: 60 10% 95%;
-    --secondary-foreground: 217 33% 20%;
+    /* Soft beige secondary - #F1E6DC */
+    --secondary: 30 35% 92%;
+    --secondary-foreground: 220 20% 25%;
 
-    /* Soft muted tones */
-    --muted: 60 8% 94%;
-    --muted-foreground: 217 20% 45%;
+    /* Muted warm tones */
+    --muted: 35 25% 93%;
+    --muted-foreground: 220 15% 45%;
 
-    /* Subtle accent */
-    --accent: 60 12% 92%;
-    --accent-foreground: 217 33% 20%;
+    /* Subtle warm accent */
+    --accent: 30 30% 90%;
+    --accent-foreground: 220 20% 25%;
 
     --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 95%;
-    --input: 0 0% 93%;
-    --ring: 217 33% 30%;
+    --border: 30 20% 90%;
+    --input: 30 20% 88%;
+    --ring: 25 25% 40%;
 
     --radius: 1rem;
 
-    /* Glass palette */
-    --pastel-cream: 60 9% 98%;
-    --pastel-sand: 60 10% 95%;
-    --pastel-sage: 60 8% 93%;
-    --pastel-mist: 0 0% 97%;
-    --pastel-sky: 60 6% 94%;
-    --pastel-lavender: 60 12% 92%;
-    --pastel-stone: 60 5% 90%;
+    /* Warm paper palette */
+    --pastel-cream: 40 33% 96%;
+    --pastel-sand: 30 35% 92%;
+    --pastel-sage: 35 20% 90%;
+    --pastel-mist: 40 25% 95%;
+    --pastel-sky: 35 20% 93%;
+    --pastel-lavender: 30 25% 91%;
+    --pastel-stone: 25 15% 88%;
 
-    /* Envelope and seal */
-    --envelope-cream: 60 9% 97%;
-    --envelope-shadow: 217 15% 70%;
-    --seal-warm: 217 33% 35%;
-    --seal-warm-dark: 217 33% 25%;
-    --paper-texture: 60 9% 98%;
-    --ink: 217 33% 17%;
+    /* Envelope and seal - terracotta #D8B4A0 */
+    --envelope-cream: 40 35% 95%;
+    --envelope-shadow: 25 20% 65%;
+    --seal-warm: 20 35% 55%;
+    --seal-warm-dark: 20 35% 45%;
+    --paper-texture: 40 33% 96%;
+    --ink: 220 20% 20%;
 
     --sidebar-background: 60 9% 98%;
     --sidebar-foreground: 217 33% 20%;
