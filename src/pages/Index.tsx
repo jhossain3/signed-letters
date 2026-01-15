@@ -1,13 +1,23 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Camera, Clock, Mail } from "lucide-react";
 import Logo from "@/components/Logo";
 import FeatureCard from "@/components/FeatureCard";
+import WaitlistForm from "@/components/WaitlistForm";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const FEATURE_COLORS = ["#f5f0e8", "#ede8f2", "#e8eef2"];
-
 const Index = () => {
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-soft relative overflow-hidden">
       {/* Decorative gradient orbs */}
@@ -54,6 +64,30 @@ const Index = () => {
             <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6 bg-card/50 backdrop-blur-sm">
               <Link to="/vault">Explore Vault</Link>
             </Button>
+          </motion.div>
+
+          {/* Join Waitlist Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="mt-6"
+          >
+            <Dialog open={isWaitlistOpen} onOpenChange={setIsWaitlistOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="lg" className="text-lg text-muted-foreground hover:text-foreground">
+                  Join Waitlist
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-serif text-2xl text-center">
+                    Join the Waitlist
+                  </DialogTitle>
+                </DialogHeader>
+                <WaitlistForm onSuccess={() => {}} />
+              </DialogContent>
+            </Dialog>
           </motion.div>
         </div>
       </section>
