@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 // Configuration constants - replace with your actual Google Form values
-const FORM_ACTION_URL = "YOUR_GOOGLE_FORM_ACTION_URL";
-const EMAIL_ENTRY_ID = "YOUR_EMAIL_ENTRY_ID";
-const NAME_ENTRY_ID = "YOUR_NAME_ENTRY_ID";
+const FORM_ACTION_URL =
+  "https://docs.google.com/forms/u/0/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse";
+const EMAIL_ENTRY_ID = "entry.1045781291";
+const NAME_ENTRY_ID = "entry.2005620554 ";
 
 interface WaitlistFormProps {
   onSuccess?: () => void;
@@ -63,12 +64,8 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
         >
           🎉
         </motion.span>
-        <h3 className="font-serif text-2xl font-bold text-foreground mb-2">
-          You're on the list!
-        </h3>
-        <p className="text-muted-foreground">
-          We'll send you an email when we launch.
-        </p>
+        <h3 className="font-serif text-2xl font-bold text-foreground mb-2">You're on the list!</h3>
+        <p className="text-muted-foreground">We'll send you an email when we launch.</p>
       </motion.div>
     );
   }
@@ -127,9 +124,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground mt-4">
-        We respect your privacy. No spam, ever. 🔒
-      </p>
+      <p className="text-center text-sm text-muted-foreground mt-4">We respect your privacy. No spam, ever. 🔒</p>
     </motion.div>
   );
 };
