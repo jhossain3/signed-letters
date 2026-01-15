@@ -5,7 +5,7 @@ import Logo from "@/components/Logo";
 import FeatureCard from "@/components/FeatureCard";
 import { Button } from "@/components/ui/button";
 
-const FEATURE_COLORS = ['#f5f0e8', '#ede8f2', '#e8eef2'];
+const FEATURE_COLORS = ["#f5f0e8", "#ede8f2", "#e8eef2"];
 
 const Index = () => {
   return (
@@ -20,7 +20,7 @@ const Index = () => {
         <div className="flex flex-col items-center text-center">
           {/* Animated Logo */}
           <Logo size="lg" animate />
-          
+
           {/* Tagline */}
           <motion.h1
             className="font-serif text-4xl md:text-6xl font-bold text-foreground mt-8 mb-4"
@@ -28,19 +28,19 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Sign it off.
+            sign it off.
           </motion.h1>
-          
+
           <motion.p
             className="text-muted-foreground text-lg md:text-xl max-w-2xl leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Your digital space to write and send meaningful letters to your future self 
-            and the people you love. Write something special today, and I'll keep it safe.
+            Your digital space to write and send meaningful letters to your future self and the people you love. Write
+            something special today, and I'll keep it safe.
           </motion.p>
-          
+
           {/* CTA Buttons */}
           <motion.div
             className="flex flex-col sm:flex-row gap-4 mt-10"
