@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 const FORM_ACTION_URL =
   "https://docs.google.com/forms/u/0/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse";
 const EMAIL_ENTRY_ID = "entry.1045781291";
-const NAME_ENTRY_ID = "entry.2005620554 ";
+const NAME_ENTRY_ID = "entry.2005620554";
 
 interface WaitlistFormProps {
   onSuccess?: () => void;
