@@ -129,8 +129,8 @@ export default {
       },
       boxShadow: {
         "envelope": "0 8px 30px -10px hsl(var(--envelope-shadow) / 0.4)",
-        "soft": "0 4px 20px -5px hsl(var(--pastel-sand) / 0.5)",
-        "dreamy": "0 10px 40px -10px hsl(var(--pastel-sand) / 0.3), 0 4px 15px -5px hsl(var(--pastel-lavender) / 0.2)",
+        "soft": "0 4px 20px -5px hsl(var(--pastel-sage) / 0.5)",
+        "dreamy": "0 10px 40px -10px hsl(var(--pastel-sage) / 0.3), 0 4px 15px -5px hsl(var(--pastel-mist) / 0.2)",
       },
     },
   },
