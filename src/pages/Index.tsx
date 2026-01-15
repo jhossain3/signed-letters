@@ -75,7 +75,7 @@ const Index = () => {
           >
             <Dialog open={isWaitlistOpen} onOpenChange={setIsWaitlistOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="lg" className="text-lg text-muted-foreground hover:text-foreground">
+                <Button variant="secondary" size="lg" className="text-lg">
                   Join Waitlist
                 </Button>
               </DialogTrigger>
