@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 
 // Configuration constants - replace with your actual Google Form values
 const FORM_ACTION_URL =
-  "https://docs.google.com/forms/u/0/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse";
+  "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse";
 const EMAIL_ENTRY_ID = "entry.1045781291";
 const NAME_ENTRY_ID = "entry.2005620554";
 
