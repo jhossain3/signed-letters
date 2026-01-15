@@ -6,121 +6,121 @@
 
 @layer base {
   :root {
-    /* Soft blush pink dreamy backgrounds */
-    --background: 350 35% 97%;
-    --foreground: 350 20% 22%;
+    /* Multi-pastel dreamy backgrounds */
+    --background: 48 80% 97%;
+    --foreground: 270 20% 25%;
 
-    /* Soft rose card surfaces */
-    --card: 350 40% 95%;
-    --card-foreground: 350 20% 22%;
+    /* Soft cream card surfaces */
+    --card: 48 85% 95%;
+    --card-foreground: 270 20% 25%;
 
-    --popover: 350 40% 95%;
-    --popover-foreground: 350 20% 22%;
+    --popover: 48 85% 95%;
+    --popover-foreground: 270 20% 25%;
 
-    /* Dusty rose - primary */
-    --primary: 350 40% 75%;
-    --primary-foreground: 350 45% 20%;
+    /* Lavender - primary */
+    --primary: 270 60% 82%;
+    --primary-foreground: 270 45% 22%;
 
-    /* Soft mauve */
-    --secondary: 340 30% 90%;
-    --secondary-foreground: 340 35% 28%;
+    /* Soft mint */
+    --secondary: 142 65% 90%;
+    --secondary-foreground: 152 40% 28%;
 
     /* Soft muted tones */
-    --muted: 350 25% 93%;
-    --muted-foreground: 350 18% 45%;
+    --muted: 48 50% 93%;
+    --muted-foreground: 270 15% 45%;
 
-    /* Blush accent */
-    --accent: 355 38% 88%;
-    --accent-foreground: 355 38% 28%;
+    /* Sky accent */
+    --accent: 204 85% 92%;
+    --accent-foreground: 204 50% 28%;
 
-    --destructive: 0 55% 65%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 350 70% 75%;
+    --destructive-foreground: 350 50% 20%;
 
-    --border: 350 22% 86%;
-    --input: 350 25% 88%;
-    --ring: 350 35% 70%;
+    --border: 270 30% 88%;
+    --input: 270 25% 90%;
+    --ring: 270 50% 75%;
 
     --radius: 1rem;
 
-    /* Pastel pink palette */
-    --pastel-cream: 350 30% 94%;
-    --pastel-sand: 345 25% 91%;
-    --pastel-sage: 355 28% 89%;
-    --pastel-mist: 340 28% 92%;
-    --pastel-sky: 350 35% 90%;
-    --pastel-lavender: 330 30% 91%;
-    --pastel-stone: 350 18% 90%;
+    /* Rainbow pastel palette from provided colors */
+    --pastel-cream: 48 96% 89%;      /* #fef3c7 */
+    --pastel-sand: 350 96% 90%;      /* #fecdd3 */
+    --pastel-sage: 142 77% 93%;      /* #dcfce7 */
+    --pastel-mist: 152 76% 90%;      /* #d1fae5 */
+    --pastel-sky: 204 94% 94%;       /* #e0f2fe */
+    --pastel-lavender: 270 100% 95%; /* #f3e8ff */
+    --pastel-stone: 295 100% 95%;    /* #fae8ff */
 
     /* Envelope and seal */
-    --envelope-cream: 350 35% 93%;
-    --envelope-shadow: 350 22% 72%;
-    --seal-warm: 350 45% 68%;
-    --seal-warm-dark: 350 50% 55%;
-    --paper-texture: 350 35% 96%;
-    --ink: 350 28% 22%;
+    --envelope-cream: 48 90% 93%;
+    --envelope-shadow: 270 25% 75%;
+    --seal-warm: 350 75% 78%;
+    --seal-warm-dark: 350 65% 65%;
+    --paper-texture: 48 85% 96%;
+    --ink: 270 25% 22%;
 
-    --sidebar-background: 350 25% 97%;
-    --sidebar-foreground: 350 18% 28%;
-    --sidebar-primary: 350 35% 28%;
-    --sidebar-primary-foreground: 350 30% 97%;
-    --sidebar-accent: 350 30% 93%;
-    --sidebar-accent-foreground: 350 35% 28%;
-    --sidebar-border: 350 22% 88%;
-    --sidebar-ring: 350 40% 65%;
+    --sidebar-background: 48 70% 97%;
+    --sidebar-foreground: 270 18% 28%;
+    --sidebar-primary: 270 40% 30%;
+    --sidebar-primary-foreground: 48 80% 97%;
+    --sidebar-accent: 270 50% 93%;
+    --sidebar-accent-foreground: 270 40% 30%;
+    --sidebar-border: 270 28% 88%;
+    --sidebar-ring: 270 55% 70%;
   }
 
   .dark {
-    --background: 350 18% 8%;
-    --foreground: 350 35% 92%;
+    --background: 270 18% 8%;
+    --foreground: 48 70% 92%;
 
-    --card: 350 15% 12%;
-    --card-foreground: 350 35% 92%;
+    --card: 270 15% 12%;
+    --card-foreground: 48 70% 92%;
 
-    --popover: 350 15% 12%;
-    --popover-foreground: 350 35% 92%;
+    --popover: 270 15% 12%;
+    --popover-foreground: 48 70% 92%;
 
-    --primary: 350 40% 58%;
-    --primary-foreground: 350 22% 8%;
+    --primary: 270 50% 60%;
+    --primary-foreground: 270 20% 8%;
 
-    --secondary: 340 25% 22%;
-    --secondary-foreground: 340 30% 82%;
+    --secondary: 142 35% 25%;
+    --secondary-foreground: 142 50% 82%;
 
-    --muted: 350 12% 18%;
-    --muted-foreground: 350 22% 65%;
+    --muted: 270 12% 18%;
+    --muted-foreground: 48 40% 65%;
 
-    --accent: 355 28% 28%;
-    --accent-foreground: 355 32% 82%;
+    --accent: 204 45% 28%;
+    --accent-foreground: 204 60% 85%;
 
-    --destructive: 0 55% 35%;
-    --destructive-foreground: 0 0% 95%;
+    --destructive: 350 55% 38%;
+    --destructive-foreground: 350 30% 95%;
 
-    --border: 350 12% 22%;
-    --input: 350 12% 22%;
-    --ring: 350 35% 48%;
+    --border: 270 12% 22%;
+    --input: 270 12% 22%;
+    --ring: 270 45% 50%;
 
-    --pastel-cream: 350 20% 20%;
-    --pastel-sand: 345 16% 18%;
-    --pastel-sage: 355 18% 22%;
-    --pastel-mist: 340 16% 20%;
-    --pastel-sky: 350 20% 22%;
-    --pastel-lavender: 330 16% 22%;
-    --pastel-stone: 350 10% 20%;
+    --pastel-cream: 48 50% 22%;
+    --pastel-sand: 350 45% 22%;
+    --pastel-sage: 142 35% 20%;
+    --pastel-mist: 152 35% 20%;
+    --pastel-sky: 204 45% 22%;
+    --pastel-lavender: 270 45% 25%;
+    --pastel-stone: 295 45% 25%;
 
-    --envelope-cream: 350 18% 16%;
-    --envelope-shadow: 350 10% 12%;
-    --seal-warm: 350 35% 42%;
-    --seal-warm-dark: 350 40% 32%;
-    --paper-texture: 350 15% 10%;
-    --ink: 350 28% 88%;
+    --envelope-cream: 48 35% 16%;
+    --envelope-shadow: 270 10% 12%;
+    --seal-warm: 350 45% 45%;
+    --seal-warm-dark: 350 50% 35%;
+    --paper-texture: 270 12% 10%;
+    --ink: 48 60% 88%;
 
-    --sidebar-background: 350 15% 8%;
-    --sidebar-foreground: 350 28% 90%;
-    --sidebar-primary: 350 40% 52%;
-    --sidebar-primary-foreground: 350 18% 95%;
-    --sidebar-accent: 350 12% 15%;
-    --sidebar-accent-foreground: 350 28% 90%;
-    --sidebar-border: 350 10% 18%;
-    --sidebar-ring: 350 40% 52%;
+    --sidebar-background: 270 15% 8%;
+    --sidebar-foreground: 48 55% 90%;
+    --sidebar-primary: 270 50% 55%;
+    --sidebar-primary-foreground: 270 15% 95%;
+    --sidebar-accent: 270 12% 15%;
+    --sidebar-accent-foreground: 48 55% 90%;
+    --sidebar-border: 270 10% 18%;
+    --sidebar-ring: 270 50% 55%;
   }
 }
 
@@ -296,12 +296,12 @@
   background-size: 24px 24px;
 }
 
-/* Wax seal effect - dusty rose */
+/* Wax seal effect - rose pink */
 .wax-seal {
   background: radial-gradient(circle at 30% 30%, hsl(var(--seal-warm)), hsl(var(--seal-warm-dark)));
   box-shadow: 
-    inset 2px 2px 4px hsl(350 45% 78% / 0.3),
-    inset -2px -2px 4px hsl(350 50% 45% / 0.3),
+    inset 2px 2px 4px hsl(350 80% 85% / 0.3),
+    inset -2px -2px 4px hsl(350 70% 55% / 0.3),
     0 4px 12px hsl(var(--seal-warm) / 0.4);
 }
 
