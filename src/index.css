@@ -17,20 +17,20 @@
     --popover: 40 40% 98%;
     --popover-foreground: 220 20% 20%;
 
-    /* Warm brown primary */
-    --primary: 25 25% 45%;
-    --primary-foreground: 40 40% 98%;
+    /* Pastel pink primary */
+    --primary: 350 60% 75%;
+    --primary-foreground: 220 20% 15%;
 
-    /* Soft beige secondary - #F1E6DC */
-    --secondary: 30 35% 92%;
+    /* Soft blush secondary */
+    --secondary: 350 40% 94%;
     --secondary-foreground: 220 20% 25%;
 
     /* Muted warm tones */
     --muted: 35 25% 93%;
     --muted-foreground: 220 15% 45%;
 
-    /* Subtle warm accent */
-    --accent: 30 30% 90%;
+    /* Soft pink accent */
+    --accent: 350 45% 92%;
     --accent-foreground: 220 20% 25%;
 
     --destructive: 0 65% 55%;
@@ -38,24 +38,24 @@
 
     --border: 30 20% 90%;
     --input: 30 20% 88%;
-    --ring: 25 25% 40%;
+    --ring: 350 50% 70%;
 
     --radius: 1rem;
 
-    /* Warm paper palette */
+    /* Warm paper palette with pink accents */
     --pastel-cream: 40 33% 96%;
     --pastel-sand: 30 35% 92%;
     --pastel-sage: 35 20% 90%;
     --pastel-mist: 40 25% 95%;
     --pastel-sky: 35 20% 93%;
-    --pastel-lavender: 30 25% 91%;
+    --pastel-lavender: 350 40% 92%;
     --pastel-stone: 25 15% 88%;
 
-    /* Envelope and seal - terracotta #D8B4A0 */
+    /* Envelope and seal - rose pink */
     --envelope-cream: 40 35% 95%;
-    --envelope-shadow: 25 20% 65%;
-    --seal-warm: 20 35% 55%;
-    --seal-warm-dark: 20 35% 45%;
+    --envelope-shadow: 350 20% 70%;
+    --seal-warm: 350 55% 65%;
+    --seal-warm-dark: 350 55% 55%;
     --paper-texture: 40 33% 96%;
     --ink: 220 20% 20%;
 
