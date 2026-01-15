@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -18,11 +20,11 @@
     --popover-foreground: 220 20% 20%;
 
     /* Pastel pink primary */
-    --primary: 350 60% 75%;
-    --primary-foreground: 220 20% 15%;
+    --primary: 0 96.2963% 89.4118%;
+    --primary-foreground: 229 84% 4.902%;
 
     /* Soft blush secondary */
-    --secondary: 350 40% 94%;
+    --secondary: 215 25% 26.6667%;
     --secondary-foreground: 220 20% 25%;
 
     /* Muted warm tones */
