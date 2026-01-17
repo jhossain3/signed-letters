@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import WriteLetter from "./pages/WriteLetter";
 import Vault from "./pages/Vault";
 import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
 import Navbar from "./components/Navbar";
 
 const queryClient = new QueryClient();
@@ -20,25 +19,15 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="*"
-              element={
-                <>
-                  <Navbar />
-                  <div className="pt-16">
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/write" element={<WriteLetter />} />
-                      <Route path="/vault" element={<Vault />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </div>
-                </>
-              }
-            />
-          </Routes>
+          <Navbar />
+          <div className="pt-16">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/write" element={<WriteLetter />} />
+              <Route path="/vault" element={<Vault />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
