@@ -174,10 +174,10 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
           Clear
         </Button>
       </div>
-      <div className="overflow-y-auto max-h-[60vh] rounded-lg border border-border">
+      <div className="overflow-y-auto max-h-[70vh] rounded-lg border border-border">
         <canvas
           ref={canvasRef}
-          className="w-full h-[500px] cursor-crosshair touch-none"
+          className="w-full h-[700px] cursor-crosshair touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
