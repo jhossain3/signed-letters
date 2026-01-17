@@ -54,14 +54,14 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-
+    
     if ("touches" in e) {
       return {
         x: e.touches[0].clientX - rect.left,
         y: e.touches[0].clientY - rect.top,
       };
     }
-
+    
     return {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
@@ -74,7 +74,7 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
     if (!ctx || !canvas) return;
 
     // Save state for undo
-    setHistory((prev) => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+    setHistory(prev => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
 
     const { x, y } = getCoordinates(e);
     ctx.beginPath();
@@ -84,7 +84,7 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing) return;
-
+    
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!ctx) return;
@@ -144,7 +144,7 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
 
     const lastState = history[history.length - 1];
     ctx.putImageData(lastState, 0, 0);
-    setHistory((prev) => prev.slice(0, -1));
+    setHistory(prev => prev.slice(0, -1));
 
     if (onChange) {
       onChange(canvas.toDataURL());
@@ -154,16 +154,27 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={undo} disabled={history.length === 0}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={undo}
+          disabled={history.length === 0}
+        >
           <Undo2 className="w-4 h-4 mr-1" />
           Undo
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={clearCanvas}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={clearCanvas}
+        >
           <Eraser className="w-4 h-4 mr-1" />
           Clear
         </Button>
       </div>
-      <div className="overflow-y-auto max-h-[80vh] rounded-lg border border-border">
+      <div className="overflow-y-auto max-h-[60vh] rounded-lg border border-border">
         <canvas
           ref={canvasRef}
           className="w-full h-[500px] cursor-crosshair touch-none"
