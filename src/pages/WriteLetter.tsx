@@ -387,36 +387,38 @@ const WriteLetter = () => {
 
           {/* Letter Writing Area */}
           <div 
-            className="rounded-2xl p-6 md:p-8 shadow-dreamy mb-8 border border-border/50 transition-colors"
+            className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[70vh] overflow-y-auto"
             style={{ backgroundColor: paperColor.value }}
           >
-            {/* Title Input */}
-            <Input
-              placeholder="Letter title..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-xl font-editorial border-0 border-b border-border/50 rounded-none px-0 mb-6 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
-              style={{ color: inkColor.value }}
-            />
-
-            {/* Content Area */}
-            {inputMode === "type" ? (
-              <Textarea
-                placeholder="Dear future me..."
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className={`min-h-[600px] max-h-[70vh] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 overflow-y-auto ${
-                  showLines ? "lined-paper" : ""
-                }`}
+            <div className="p-6 md:p-8">
+              {/* Title Input */}
+              <Input
+                placeholder="Letter title..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-xl font-editorial border-0 border-b border-border/50 rounded-none px-0 mb-6 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
                 style={{ color: inkColor.value }}
               />
-            ) : (
-              <SketchCanvas 
-                onChange={setSketchData} 
-                inkColor={inkColor.value}
-                showLines={showLines}
-              />
-            )}
+
+              {/* Content Area */}
+              {inputMode === "type" ? (
+                <Textarea
+                  placeholder="Dear future me..."
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  className={`min-h-[600px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
+                    showLines ? "lined-paper" : ""
+                  }`}
+                  style={{ color: inkColor.value }}
+                />
+              ) : (
+                <SketchCanvas 
+                  onChange={setSketchData} 
+                  inkColor={inkColor.value}
+                  showLines={showLines}
+                />
+              )}
+            </div>
           </div>
 
           {/* Photo Attachments */}
