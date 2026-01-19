@@ -9,7 +9,7 @@ import heroImage from "@/assets/hero-editorial.jpg";
 
 const TikTokIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
   </svg>
 );
 
@@ -21,13 +21,22 @@ const Index = () => {
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
+    console.log("🚀 STARTING SUBMISSION");
+    console.log("📧 Email value:", email);
+
     setIsSubmitting(true);
-    
+
     // Google Form submission
     const formData = new URLSearchParams();
     formData.append("entry.1045781291", email);
-    
+
+    console.log("📦 FormData contents:", formData.toString());
+    console.log(
+      "🌐 Submitting to URL:",
+      "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
+    );
+
     try {
       await fetch(
         "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
@@ -36,8 +45,12 @@ const Index = () => {
           mode: "no-cors",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData,
-        }
+        },
       );
+
+      console.log("✅ Fetch completed");
+      console.log("📡 Response (will be opaque due to no-cors):", response);
+
       setIsSubscribed(true);
     } catch (error) {
       console.error("Error:", error);
@@ -50,18 +63,18 @@ const Index = () => {
     {
       icon: PenLine,
       title: "Write",
-      description: "Pour your thoughts into a letter — typed or handwritten."
+      description: "Pour your thoughts into a letter — typed or handwritten.",
     },
     {
       icon: Clock,
       title: "Seal",
-      description: "Choose when it arrives. Tomorrow, next year, or beyond."
+      description: "Choose when it arrives. Tomorrow, next year, or beyond.",
     },
     {
       icon: Mail,
       title: "Receive",
-      description: "When the time comes, your words find their way back."
-    }
+      description: "When the time comes, your words find their way back.",
+    },
   ];
 
   return (
@@ -95,7 +108,8 @@ const Index = () => {
 
               {/* Description */}
               <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-md font-body">
-                A quiet space to write letters across time. Reflect, remember, and send words to your future self or someone you hold dear.
+                A quiet space to write letters across time. Reflect, remember, and send words to your future self or
+                someone you hold dear.
               </p>
 
               {/* Waitlist Form - Primary CTA */}
@@ -106,10 +120,7 @@ const Index = () => {
               >
                 {!isSubscribed ? (
                   <div className="space-y-4">
-                    <form 
-                      onSubmit={handleWaitlistSubmit}
-                      className="flex flex-col sm:flex-row gap-3 max-w-md"
-                    >
+                    <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md">
                       <Input
                         type="email"
                         placeholder="your@email.com"
@@ -118,8 +129,8 @@ const Index = () => {
                         required
                         className="flex-1 h-12 rounded-lg px-5 bg-card/80 border-border focus:border-primary transition-colors"
                       />
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={isSubmitting}
                         className="h-12 px-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                       >
@@ -137,13 +148,9 @@ const Index = () => {
               </motion.div>
 
               {/* Explore link - Secondary */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-              >
-                <Link 
-                  to="/write" 
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }}>
+                <Link
+                  to="/write"
                   className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group border-b border-transparent hover:border-muted-foreground/30 pb-0.5"
                 >
                   <span>Explore the demo</span>
@@ -162,11 +169,7 @@ const Index = () => {
               <div className="relative aspect-[4/5] max-w-xl ml-auto -mr-8 overflow-hidden rounded-sm">
                 {/* Soft overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent z-10" />
-                <img 
-                  src={heroImage} 
-                  alt="Person writing in a notebook" 
-                  className="w-full h-full object-cover"
-                />
+                <img src={heroImage} alt="Person writing in a notebook" className="w-full h-full object-cover" />
               </div>
               {/* Subtle decorative accent */}
               <div className="absolute -bottom-4 -left-4 w-24 h-24 border border-border/30 rounded-sm -z-10" />
@@ -185,9 +188,7 @@ const Index = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="font-editorial text-3xl md:text-4xl text-foreground mb-4">
-              How it works
-            </h2>
+            <h2 className="font-editorial text-3xl md:text-4xl text-foreground mb-4">How it works</h2>
             <div className="w-12 h-px bg-foreground/20 mx-auto" />
           </motion.div>
 
@@ -204,9 +205,7 @@ const Index = () => {
                 <div className="w-12 h-12 mx-auto flex items-center justify-center text-muted-foreground">
                   <step.icon className="w-6 h-6" strokeWidth={1.5} />
                 </div>
-                <h3 className="font-editorial text-xl text-foreground">
-                  {step.title}
-                </h3>
+                <h3 className="font-editorial text-xl text-foreground">{step.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto font-body">
                   {step.description}
                 </p>
