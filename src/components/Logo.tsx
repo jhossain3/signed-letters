@@ -3,69 +3,66 @@ import { motion } from "framer-motion";
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   animate?: boolean;
+  showText?: boolean;
 }
 
-const Logo = ({ size = "md", animate = true }: LogoProps) => {
+const Logo = ({ size = "md", animate = true, showText = false }: LogoProps) => {
   const sizes = {
-    sm: { wrapper: "w-12 h-10", heart: "w-4 h-4" },
-    md: { wrapper: "w-20 h-16", heart: "w-6 h-6" },
-    lg: { wrapper: "w-32 h-24", heart: "w-10 h-10" },
+    sm: { wrapper: "h-6", line: 40, dot: 6, text: "text-lg" },
+    md: { wrapper: "h-8", line: 50, dot: 8, text: "text-xl" },
+    lg: { wrapper: "h-12", line: 70, dot: 10, text: "text-3xl" },
   };
 
-  const { wrapper } = sizes[size];
+  const { wrapper, line, dot, text } = sizes[size];
 
   return (
     <motion.div
-      className={`relative ${wrapper}`}
-      animate={animate ? { y: [0, -12, 0] } : undefined}
-      transition={animate ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : undefined}
+      className={`flex items-center gap-2 ${wrapper}`}
+      animate={animate ? { y: [0, -4, 0] } : undefined}
+      transition={animate ? { duration: 3, repeat: Infinity, ease: "easeInOut" } : undefined}
     >
-      {/* Envelope body */}
-      <svg viewBox="0 0 100 75" className="w-full h-full drop-shadow-soft">
-        {/* Envelope back */}
-        <rect
-          x="5"
-          y="15"
-          width="90"
-          height="55"
-          rx="6"
-          fill="hsl(var(--envelope-cream))"
+      {/* Signature-inspired logo: horizontal line + dot */}
+      <svg 
+        width={line} 
+        height={dot * 2} 
+        viewBox={`0 0 ${line} ${dot * 2}`} 
+        className="flex-shrink-0"
+      >
+        {/* Horizontal signature line */}
+        <motion.line
+          x1="0"
+          y1={dot}
+          x2={line - dot - 4}
+          y2={dot}
           stroke="hsl(var(--primary))"
-          strokeWidth="1.5"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         />
-        
-        {/* Envelope flap (back part visible) */}
-        <path
-          d="M 5 20 L 50 50 L 95 20"
-          fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="1"
-          opacity="0.5"
+        {/* Dot at the end */}
+        <motion.circle
+          cx={line - dot / 2}
+          cy={dot}
+          r={dot / 2}
+          fill="hsl(var(--primary))"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.6 }}
         />
-        
-        {/* Envelope front flap */}
-        <path
-          d="M 5 15 L 50 45 L 95 15 L 95 20 L 50 50 L 5 20 Z"
-          fill="hsl(var(--pastel-cream))"
-          stroke="hsl(var(--primary))"
-          strokeWidth="1.5"
-        />
-        
-        {/* Heart seal - warm neutral */}
-        <g transform="translate(50, 45)">
-          <circle
-            cx="0"
-            cy="0"
-            r="12"
-            fill="hsl(var(--seal-warm))"
-            className="drop-shadow-md"
-          />
-          <path
-            d="M 0 -5 C -3 -8 -7 -7 -7 -3 C -7 1 0 6 0 6 C 0 6 7 1 7 -3 C 7 -7 3 -8 0 -5"
-            fill="white"
-          />
-        </g>
       </svg>
+      
+      {showText && (
+        <motion.span 
+          className={`font-editorial font-medium text-foreground ${text}`}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          signed
+        </motion.span>
+      )}
     </motion.div>
   );
 };

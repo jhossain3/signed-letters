@@ -4,9 +4,11 @@ import { Button } from "./ui/button";
 
 interface SketchCanvasProps {
   onChange?: (dataUrl: string) => void;
+  inkColor?: string;
+  showLines?: boolean;
 }
 
-const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
+const SketchCanvas = ({ onChange, inkColor = "hsl(15, 20%, 18%)", showLines = true }: SketchCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [history, setHistory] = useState<ImageData[]>([]);
@@ -18,36 +20,35 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * 2;
     canvas.height = rect.height * 2;
     ctx.scale(2, 2);
 
-    // Set drawing style
-    ctx.strokeStyle = "hsl(220, 20%, 18%)";
+    ctx.strokeStyle = inkColor;
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
     // Fill with paper color
-    ctx.fillStyle = "hsl(40, 33%, 97%)";
+    ctx.fillStyle = "hsl(38, 35%, 97%)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw lines
-    ctx.strokeStyle = "hsl(40, 25%, 85%)";
-    ctx.lineWidth = 1;
-    for (let y = 32; y < rect.height; y += 32) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(rect.width, y);
-      ctx.stroke();
+    // Draw lines if enabled
+    if (showLines) {
+      ctx.strokeStyle = "hsl(30, 15%, 88%)";
+      ctx.lineWidth = 1;
+      for (let y = 32; y < rect.height; y += 32) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(rect.width, y);
+        ctx.stroke();
+      }
     }
 
-    // Reset stroke style
-    ctx.strokeStyle = "hsl(220, 20%, 18%)";
+    ctx.strokeStyle = inkColor;
     ctx.lineWidth = 2;
-  }, []);
+  }, [inkColor, showLines]);
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
@@ -73,7 +74,6 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
     const ctx = canvas?.getContext("2d");
     if (!ctx || !canvas) return;
 
-    // Save state for undo
     setHistory(prev => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
 
     const { x, y } = getCoordinates(e);
@@ -114,22 +114,21 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
 
     const rect = canvas.getBoundingClientRect();
 
-    // Fill with paper color
-    ctx.fillStyle = "hsl(40, 33%, 97%)";
+    ctx.fillStyle = "hsl(38, 35%, 97%)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw lines
-    ctx.strokeStyle = "hsl(40, 25%, 85%)";
-    ctx.lineWidth = 1;
-    for (let y = 32; y < rect.height; y += 32) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(rect.width, y);
-      ctx.stroke();
+    if (showLines) {
+      ctx.strokeStyle = "hsl(30, 15%, 88%)";
+      ctx.lineWidth = 1;
+      for (let y = 32; y < rect.height; y += 32) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(rect.width, y);
+        ctx.stroke();
+      }
     }
 
-    // Reset stroke style
-    ctx.strokeStyle = "hsl(220, 20%, 18%)";
+    ctx.strokeStyle = inkColor;
     ctx.lineWidth = 2;
 
     if (onChange) {
@@ -154,30 +153,19 @@ const SketchCanvas = ({ onChange }: SketchCanvasProps) => {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={undo}
-          disabled={history.length === 0}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={undo} disabled={history.length === 0} className="rounded-full">
           <Undo2 className="w-4 h-4 mr-1" />
           Undo
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={clearCanvas}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={clearCanvas} className="rounded-full">
           <Eraser className="w-4 h-4 mr-1" />
           Clear
         </Button>
       </div>
-      <div className="overflow-y-auto max-h-[70vh] rounded-lg border border-border">
+      <div className="overflow-y-auto max-h-[70vh] rounded-xl border border-border">
         <canvas
           ref={canvasRef}
-          className="w-full h-[700px] cursor-crosshair touch-none"
+          className="w-full h-[500px] cursor-crosshair touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}

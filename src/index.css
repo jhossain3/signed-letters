@@ -1,6 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=DM+Sans:wght@300;400;500;600&family=Caveat:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,127 +6,137 @@
 
 @layer base {
   :root {
-    /* Warm off-white paper background - #FAF7F2 */
-    --background: 40 33% 96%;
-    --foreground: 220 20% 20%;
+    /* Warm cream/beige background */
+    --background: 35 30% 96%;
+    --foreground: 15 20% 18%;
 
-    /* Cream card surfaces */
-    --card: 40 40% 98%;
-    --card-foreground: 220 20% 20%;
+    /* Card surfaces - slightly warmer */
+    --card: 38 35% 97%;
+    --card-foreground: 15 20% 18%;
 
-    --popover: 40 40% 98%;
-    --popover-foreground: 220 20% 20%;
+    --popover: 38 35% 97%;
+    --popover-foreground: 15 20% 18%;
 
-    /* Pastel pink primary */
-    --primary: 0 96.2963% 89.4118%;
-    --primary-foreground: 229 84% 4.902%;
+    /* Burnt maroon primary */
+    --primary: 358 45% 35%;
+    --primary-foreground: 35 30% 96%;
 
-    /* Soft blush secondary */
-    --secondary: 215 25% 26.6667%;
-    --secondary-foreground: 220 20% 25%;
+    /* Warm charcoal secondary */
+    --secondary: 20 8% 30%;
+    --secondary-foreground: 35 30% 96%;
 
     /* Muted warm tones */
-    --muted: 35 25% 93%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 30 20% 92%;
+    --muted-foreground: 20 12% 45%;
 
-    /* Soft pink accent */
-    --accent: 350 45% 92%;
-    --accent-foreground: 220 20% 25%;
+    /* Dusty rose accent */
+    --accent: 5 30% 88%;
+    --accent-foreground: 15 20% 18%;
 
-    --destructive: 0 65% 55%;
+    --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 90%;
-    --input: 30 20% 88%;
-    --ring: 350 50% 70%;
+    --border: 30 15% 88%;
+    --input: 30 15% 86%;
+    --ring: 358 45% 40%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    /* Warm paper palette with pink accents */
-    --pastel-cream: 40 33% 96%;
-    --pastel-sand: 30 35% 92%;
-    --pastel-sage: 35 20% 90%;
-    --pastel-mist: 40 25% 95%;
-    --pastel-sky: 35 20% 93%;
-    --pastel-lavender: 350 40% 92%;
-    --pastel-stone: 25 15% 88%;
+    /* Editorial palette */
+    --cream: 38 40% 95%;
+    --cream-dark: 35 30% 90%;
+    --beige: 30 25% 88%;
+    --taupe: 25 15% 75%;
+    --charcoal: 20 8% 30%;
+    --maroon: 358 45% 35%;
+    --maroon-dark: 358 50% 28%;
+    --dusty-rose: 5 30% 75%;
+    --gold-muted: 40 35% 55%;
 
-    /* Envelope and seal - rose pink */
-    --envelope-cream: 40 35% 95%;
-    --envelope-shadow: 350 20% 70%;
-    --seal-warm: 350 55% 65%;
-    --seal-warm-dark: 350 55% 55%;
-    --paper-texture: 40 33% 96%;
-    --ink: 220 20% 20%;
+    /* Envelope and seal */
+    --envelope-cream: 35 35% 93%;
+    --envelope-shadow: 25 20% 50%;
+    --seal-maroon: 358 50% 38%;
+    --seal-maroon-dark: 358 55% 30%;
+    --paper-texture: 38 35% 96%;
+    --ink: 15 20% 18%;
 
-    --sidebar-background: 60 9% 98%;
-    --sidebar-foreground: 217 33% 20%;
-    --sidebar-primary: 217 33% 25%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 60 10% 94%;
-    --sidebar-accent-foreground: 217 33% 20%;
-    --sidebar-border: 0 0% 95%;
-    --sidebar-ring: 217 33% 30%;
+    /* Lined paper */
+    --line-color: 20 15% 85%;
+
+    --sidebar-background: 35 30% 96%;
+    --sidebar-foreground: 15 20% 18%;
+    --sidebar-primary: 358 45% 35%;
+    --sidebar-primary-foreground: 35 30% 96%;
+    --sidebar-accent: 30 20% 92%;
+    --sidebar-accent-foreground: 15 20% 18%;
+    --sidebar-border: 30 15% 88%;
+    --sidebar-ring: 358 45% 40%;
   }
 
   .dark {
-    /* Deep indigo background - #1e1b4b */
-    --background: 244 45% 20%;
-    --foreground: 326 78% 97%;
+    /* Deep rich maroon-tinted dark background */
+    --background: 358 25% 10%;
+    --foreground: 35 25% 92%;
 
     /* Glass dark card surfaces */
-    --card: 244 40% 25%;
-    --card-foreground: 326 78% 97%;
+    --card: 358 20% 13%;
+    --card-foreground: 35 25% 92%;
 
-    --popover: 244 40% 25%;
-    --popover-foreground: 326 78% 97%;
+    --popover: 358 20% 13%;
+    --popover-foreground: 35 25% 92%;
 
-    /* Pink-tinted primary */
-    --primary: 326 60% 75%;
-    --primary-foreground: 244 45% 15%;
+    /* Warm dusty rose primary */
+    --primary: 5 35% 65%;
+    --primary-foreground: 358 25% 10%;
 
-    /* Indigo secondary */
-    --secondary: 244 35% 28%;
-    --secondary-foreground: 326 70% 92%;
+    /* Muted taupe secondary */
+    --secondary: 25 12% 22%;
+    --secondary-foreground: 35 25% 90%;
 
-    /* Muted indigo */
-    --muted: 244 30% 25%;
-    --muted-foreground: 326 40% 70%;
+    /* Muted dark tones */
+    --muted: 358 15% 18%;
+    --muted-foreground: 30 20% 60%;
 
-    /* Soft accent */
-    --accent: 244 38% 32%;
-    --accent-foreground: 326 70% 92%;
+    /* Soft warm accent */
+    --accent: 358 18% 20%;
+    --accent-foreground: 35 25% 90%;
 
-    --destructive: 0 55% 45%;
+    --destructive: 0 50% 45%;
     --destructive-foreground: 0 0% 95%;
 
-    --border: 244 25% 30%;
-    --input: 244 25% 28%;
-    --ring: 326 60% 70%;
+    --border: 358 15% 20%;
+    --input: 358 15% 18%;
+    --ring: 5 35% 60%;
 
-    --pastel-cream: 244 35% 22%;
-    --pastel-sand: 244 30% 24%;
-    --pastel-sage: 244 28% 26%;
-    --pastel-mist: 244 32% 23%;
-    --pastel-sky: 244 30% 25%;
-    --pastel-lavender: 326 40% 35%;
-    --pastel-stone: 244 25% 28%;
+    /* Dark editorial palette */
+    --cream: 358 20% 15%;
+    --cream-dark: 358 18% 12%;
+    --beige: 25 12% 20%;
+    --taupe: 25 10% 35%;
+    --charcoal: 20 8% 70%;
+    --maroon: 5 35% 60%;
+    --maroon-dark: 5 40% 50%;
+    --dusty-rose: 5 30% 55%;
+    --gold-muted: 40 30% 50%;
 
-    --envelope-cream: 244 38% 22%;
-    --envelope-shadow: 244 20% 15%;
-    --seal-warm: 326 50% 55%;
-    --seal-warm-dark: 326 55% 45%;
-    --paper-texture: 244 40% 18%;
-    --ink: 326 78% 95%;
+    --envelope-cream: 358 18% 16%;
+    --envelope-shadow: 358 15% 8%;
+    --seal-maroon: 5 40% 50%;
+    --seal-maroon-dark: 5 45% 42%;
+    --paper-texture: 358 18% 14%;
+    --ink: 35 25% 92%;
 
-    --sidebar-background: 244 45% 18%;
-    --sidebar-foreground: 326 70% 95%;
-    --sidebar-primary: 326 60% 75%;
-    --sidebar-primary-foreground: 244 45% 15%;
-    --sidebar-accent: 244 30% 25%;
-    --sidebar-accent-foreground: 326 70% 92%;
-    --sidebar-border: 244 25% 28%;
-    --sidebar-ring: 326 60% 70%;
+    --line-color: 358 12% 25%;
+
+    --sidebar-background: 358 25% 10%;
+    --sidebar-foreground: 35 25% 92%;
+    --sidebar-primary: 5 35% 65%;
+    --sidebar-primary-foreground: 358 25% 10%;
+    --sidebar-accent: 358 15% 18%;
+    --sidebar-accent-foreground: 35 25% 90%;
+    --sidebar-border: 358 15% 20%;
+    --sidebar-ring: 5 35% 60%;
   }
 }
 
@@ -139,21 +147,31 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Playfair Display', serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
-  .font-serif {
-    font-family: 'Cormorant Garamond', serif;
+  .font-editorial {
+    font-family: 'Playfair Display', serif;
   }
 
-  .font-sans {
-    font-family: 'Inter', sans-serif;
+  .font-body {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .font-signature {
+    font-family: 'Dancing Script', cursive;
+  }
+
+  .font-handwritten {
+    font-family: 'Caveat', cursive;
   }
 
   .text-ink {
@@ -164,39 +182,46 @@
     background-color: hsl(var(--paper-texture));
   }
 
+  .bg-cream {
+    background-color: hsl(var(--cream));
+  }
+
   .bg-envelope {
     background-color: hsl(var(--envelope-cream));
   }
 
-  .text-seal {
-    color: hsl(var(--seal-rose));
+  .text-maroon {
+    color: hsl(var(--maroon));
   }
 
-  .bg-seal {
-    background-color: hsl(var(--seal-rose));
+  .bg-maroon {
+    background-color: hsl(var(--maroon));
   }
 
-  /* Pastel utilities */
-  .bg-pastel-cream { background-color: hsl(var(--pastel-cream)); }
-  .bg-pastel-sand { background-color: hsl(var(--pastel-sand)); }
-  .bg-pastel-sage { background-color: hsl(var(--pastel-sage)); }
-  .bg-pastel-mist { background-color: hsl(var(--pastel-mist)); }
-  .bg-pastel-sky { background-color: hsl(var(--pastel-sky)); }
-  .bg-pastel-lavender { background-color: hsl(var(--pastel-lavender)); }
-  .bg-pastel-stone { background-color: hsl(var(--pastel-stone)); }
+  /* Editorial shadows */
+  .shadow-editorial {
+    box-shadow: 0 2px 8px -2px hsl(var(--envelope-shadow) / 0.15);
+  }
 
   .shadow-envelope {
-    box-shadow: 0 8px 30px -10px hsl(var(--envelope-shadow) / 0.4);
+    box-shadow: 0 8px 30px -10px hsl(var(--envelope-shadow) / 0.3);
   }
 
   .shadow-soft {
-    box-shadow: 0 4px 20px -5px hsl(var(--pastel-sand) / 0.5);
+    box-shadow: 0 4px 20px -5px hsl(var(--envelope-shadow) / 0.15);
   }
 
   .shadow-dreamy {
     box-shadow: 
-      0 10px 40px -10px hsl(var(--pastel-sand) / 0.3),
-      0 4px 15px -5px hsl(var(--pastel-lavender) / 0.2);
+      0 10px 40px -10px hsl(var(--envelope-shadow) / 0.2),
+      0 4px 15px -5px hsl(var(--dusty-rose) / 0.1);
+  }
+
+  .shadow-wax {
+    box-shadow: 
+      inset 2px 2px 4px hsl(var(--dusty-rose) / 0.3),
+      inset -2px -2px 4px hsl(var(--seal-maroon-dark) / 0.4),
+      0 4px 12px hsl(var(--seal-maroon) / 0.3);
   }
 }
 
@@ -206,7 +231,7 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-12px);
+    transform: translateY(-8px);
   }
 }
 
@@ -215,33 +240,7 @@
     transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-8px) rotate(2deg);
-  }
-}
-
-@keyframes twinkle {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(0.9);
-  }
-}
-
-@keyframes drift {
-  0% {
-    transform: translateY(0) translateX(0) rotate(0deg);
-  }
-  33% {
-    transform: translateY(-10px) translateX(5px) rotate(5deg);
-  }
-  66% {
-    transform: translateY(-5px) translateX(-5px) rotate(-3deg);
-  }
-  100% {
-    transform: translateY(0) translateX(0) rotate(0deg);
+    transform: translateY(-6px) rotate(1deg);
   }
 }
 
@@ -256,85 +255,120 @@
   }
 }
 
-@keyframes shimmer {
+@keyframes seal-break {
   0% {
-    background-position: -200% 0;
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1) rotate(5deg);
   }
   100% {
-    background-position: 200% 0;
+    transform: scale(0) rotate(-10deg);
+    opacity: 0;
   }
+}
+
+@keyframes envelope-open {
+  0% {
+    transform: rotateX(0deg);
+  }
+  100% {
+    transform: rotateX(-180deg);
+  }
+}
+
+@keyframes letter-emerge {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-40px);
+  }
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
 }
 
 .animate-bounce-gentle {
-  animation: bounce-gentle 2s ease-in-out infinite;
+  animation: bounce-gentle 2.5s ease-in-out infinite;
 }
 
 .animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-twinkle {
-  animation: twinkle 2s ease-in-out infinite;
-}
-
-.animate-drift {
-  animation: drift 6s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
 }
 
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out forwards;
 }
 
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--pastel-cream)) 0%,
-    hsl(var(--pastel-lavender)) 50%,
-    hsl(var(--pastel-cream)) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s ease-in-out infinite;
+.animate-seal-break {
+  animation: seal-break 0.5s ease-out forwards;
 }
 
-/* Letter paper texture effect */
+/* Paper texture effect - subtle grain */
 .paper-texture {
-  background-image: 
-    linear-gradient(to right, hsl(var(--border) / 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, hsl(var(--border) / 0.1) 1px, transparent 1px);
-  background-size: 24px 24px;
+  position: relative;
 }
 
-/* Wax seal effect - rose pink */
+.paper-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Lined paper for writing */
+.lined-paper {
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    hsl(var(--line-color)) 31px,
+    hsl(var(--line-color)) 32px
+  );
+  background-position: 0 8px;
+  line-height: 32px;
+}
+
+/* Wax seal effect */
 .wax-seal {
-  background: radial-gradient(circle at 30% 30%, hsl(var(--seal-warm)), hsl(var(--seal-warm-dark)));
+  background: radial-gradient(
+    circle at 35% 35%, 
+    hsl(var(--seal-maroon)), 
+    hsl(var(--seal-maroon-dark))
+  );
   box-shadow: 
-    inset 2px 2px 4px hsl(350 80% 85% / 0.3),
-    inset -2px -2px 4px hsl(350 70% 55% / 0.3),
-    0 4px 12px hsl(var(--seal-warm) / 0.4);
+    inset 2px 2px 6px hsl(var(--dusty-rose) / 0.4),
+    inset -2px -2px 6px hsl(var(--seal-maroon-dark) / 0.5),
+    0 4px 12px hsl(var(--seal-maroon) / 0.4),
+    0 2px 4px hsl(var(--seal-maroon-dark) / 0.3);
 }
 
 /* Sketch canvas styling */
 .sketch-canvas {
   background-color: hsl(var(--paper-texture));
-  background-image: 
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 31px,
-      hsl(var(--border) / 0.3) 31px,
-      hsl(var(--border) / 0.3) 32px
-    );
 }
 
-/* Dreamy gradient backgrounds */
-.bg-gradient-dreamy {
+/* Gradient backgrounds */
+.bg-gradient-editorial {
   background: linear-gradient(
-    135deg,
-    hsl(var(--pastel-cream)) 0%,
-    hsl(var(--pastel-sand)) 25%,
-    hsl(var(--pastel-lavender)) 50%,
-    hsl(var(--pastel-sky)) 75%,
-    hsl(var(--pastel-sage)) 100%
+    180deg,
+    hsl(var(--background)) 0%,
+    hsl(var(--cream) / 0.6) 50%,
+    hsl(var(--beige) / 0.3) 100%
   );
 }
 
@@ -342,7 +376,36 @@
   background: linear-gradient(
     180deg,
     hsl(var(--background)) 0%,
-    hsl(var(--pastel-cream) / 0.5) 50%,
-    hsl(var(--pastel-sand) / 0.3) 100%
+    hsl(var(--cream) / 0.4) 100%
   );
+}
+
+/* Button soft corners */
+.btn-soft {
+  @apply rounded-full px-6 py-3 font-medium transition-all duration-300;
+}
+
+/* Geometric accents */
+.accent-line {
+  width: 60px;
+  height: 3px;
+  background: hsl(var(--maroon));
+  border-radius: 2px;
+}
+
+.accent-dot {
+  width: 8px;
+  height: 8px;
+  background: hsl(var(--maroon));
+  border-radius: 50%;
+}
+
+/* Editorial spacing */
+.editorial-section {
+  @apply py-16 md:py-24 lg:py-32;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
 }
