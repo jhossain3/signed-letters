@@ -48,8 +48,7 @@ const Index = () => {
         },
       );
 
-      console.log("✅ Fetch completed");
-      console.log("📡 Response (will be opaque due to no-cors):", response);
+      console.log("✅ Fetch completed successfully");
 
       setIsSubscribed(true);
     } catch (error) {
