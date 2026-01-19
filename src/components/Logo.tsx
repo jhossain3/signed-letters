@@ -8,56 +8,63 @@ interface LogoProps {
 
 const Logo = ({ size = "md", animate = true, showText = false }: LogoProps) => {
   const sizes = {
-    sm: { wrapper: "h-6", line: 40, dot: 6, text: "text-lg" },
-    md: { wrapper: "h-8", line: 50, dot: 8, text: "text-xl" },
-    lg: { wrapper: "h-12", line: 70, dot: 10, text: "text-3xl" },
+    sm: { wrapper: "h-6", width: 24, height: 16, lineWidth: 18, dotSize: 3, text: "text-lg" },
+    md: { wrapper: "h-8", width: 32, height: 20, lineWidth: 24, dotSize: 4, text: "text-xl" },
+    lg: { wrapper: "h-12", width: 40, height: 26, lineWidth: 30, dotSize: 5, text: "text-3xl" },
   };
 
-  const { wrapper, line, dot, text } = sizes[size];
+  const { wrapper, width, height, lineWidth, dotSize, text } = sizes[size];
+
+  // Line positioned in lower half, dot above and to the right
+  const lineY = height * 0.7;
+  const dotX = lineWidth + dotSize + 2;
+  const dotY = height * 0.3;
 
   return (
     <motion.div
-      className={`flex items-center gap-2 ${wrapper}`}
-      animate={animate ? { y: [0, -4, 0] } : undefined}
-      transition={animate ? { duration: 3, repeat: Infinity, ease: "easeInOut" } : undefined}
+      className={`flex items-center gap-3 ${wrapper}`}
+      animate={animate ? { y: [0, -2, 0] } : undefined}
+      transition={animate ? { duration: 4, repeat: Infinity, ease: "easeInOut" } : undefined}
     >
-      {/* Signature-inspired logo: horizontal line + dot */}
+      {/* Minimalist logo mark: horizontal line + dot above right */}
       <svg 
-        width={line} 
-        height={dot * 2} 
-        viewBox={`0 0 ${line} ${dot * 2}`} 
+        width={width} 
+        height={height} 
+        viewBox={`0 0 ${width} ${height}`} 
         className="flex-shrink-0"
       >
-        {/* Horizontal signature line */}
+        {/* Thin horizontal line with squared ends */}
         <motion.line
           x1="0"
-          y1={dot}
-          x2={line - dot - 4}
-          y2={dot}
-          stroke="hsl(var(--primary))"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          y1={lineY}
+          x2={lineWidth}
+          y2={lineY}
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="square"
+          className="text-foreground"
+          initial={animate ? { pathLength: 0, opacity: 0 } : undefined}
+          animate={animate ? { pathLength: 1, opacity: 1 } : undefined}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         />
-        {/* Dot at the end */}
+        {/* Small solid dot - above and to the right, not touching */}
         <motion.circle
-          cx={line - dot / 2}
-          cy={dot}
-          r={dot / 2}
-          fill="hsl(var(--primary))"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.3, delay: 0.6 }}
+          cx={dotX}
+          cy={dotY}
+          r={dotSize}
+          fill="currentColor"
+          className="text-foreground"
+          initial={animate ? { scale: 0, opacity: 0 } : undefined}
+          animate={animate ? { scale: 1, opacity: 1 } : undefined}
+          transition={{ duration: 0.3, delay: 0.5 }}
         />
       </svg>
       
       {showText && (
         <motion.span 
-          className={`font-editorial font-medium text-foreground ${text}`}
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
+          className={`font-editorial font-normal tracking-wide text-foreground lowercase ${text}`}
+          initial={animate ? { opacity: 0, x: -8 } : undefined}
+          animate={animate ? { opacity: 1, x: 0 } : undefined}
           transition={{ duration: 0.4, delay: 0.3 }}
         >
           signed

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { PenTool, Type, Instagram } from "lucide-react";
+import { Instagram, PenLine, Clock, Mail } from "lucide-react";
 import Logo from "@/components/Logo";
-import WaitlistForm from "@/components/WaitlistForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import heroImage from "@/assets/hero-editorial.jpg";
 
 const TikTokIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -46,48 +46,63 @@ const Index = () => {
     }
   };
 
+  const steps = [
+    {
+      icon: PenLine,
+      title: "Write",
+      description: "Pour your thoughts into a letter — typed or handwritten."
+    },
+    {
+      icon: Clock,
+      title: "Seal",
+      description: "Choose when it arrives. Tomorrow, next year, or beyond."
+    },
+    {
+      icon: Mail,
+      title: "Receive",
+      description: "When the time comes, your words find their way back."
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-editorial relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Subtle paper texture overlay */}
-      <div className="absolute inset-0 paper-texture pointer-events-none" />
+      <div className="absolute inset-0 paper-texture pointer-events-none opacity-50" />
 
       {/* Hero Section */}
-      <section className="relative z-10 min-h-[90vh] flex flex-col">
+      <section className="relative z-10 min-h-[85vh] flex flex-col">
         <div className="container mx-auto px-6 md:px-12 flex-1 flex items-center">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center w-full py-16">
-            {/* Left side - Editorial headline */}
+            {/* Left side - Editorial content */}
             <motion.div
               className="space-y-8"
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
             >
               {/* Logo */}
-              <div className="mb-8">
+              <div className="mb-6">
                 <Logo size="lg" animate={false} showText />
               </div>
 
               {/* Main headline */}
-              <h1 className="font-editorial text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.1] tracking-tight">
-                <span className="italic">sign</span> it off
+              <h1 className="font-editorial text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.05] tracking-tight">
+                sign it off
               </h1>
 
               {/* Accent line */}
-              <div className="accent-line" />
+              <div className="w-16 h-px bg-foreground/20" />
 
               {/* Description */}
-              <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-lg font-body">
-                Your digital space to write and send meaningful letters to your future self and the people you love. 
-                <span className="block mt-2 text-foreground/80">
-                  Write something special today — we'll keep it safe.
-                </span>
+              <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-md font-body">
+                A quiet space to write letters across time. Reflect, remember, and send words to your future self or someone you hold dear.
               </p>
 
               {/* Waitlist Form - Primary CTA */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
               >
                 {!isSubscribed ? (
                   <div className="space-y-4">
@@ -101,12 +116,12 @@ const Index = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="flex-1 h-12 rounded-full px-5 bg-card/80 border-border focus:border-primary transition-colors"
+                        className="flex-1 h-12 rounded-lg px-5 bg-card/80 border-border focus:border-primary transition-colors"
                       />
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}
-                        className="h-12 px-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-dreamy"
+                        className="h-12 px-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                       >
                         {isSubmitting ? "Joining..." : "Join Waitlist"}
                       </Button>
@@ -116,151 +131,94 @@ const Index = () => {
                 ) : (
                   <div className="flex items-center gap-3 text-primary font-medium">
                     <span className="text-xl">✓</span>
-                    <span>You're on the list! We'll be in touch.</span>
+                    <span>You're on the list. We'll be in touch.</span>
                   </div>
                 )}
               </motion.div>
 
               {/* Explore link - Secondary */}
               <motion.div
-                className="pt-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
               >
                 <Link 
                   to="/write" 
-                  className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group"
+                  className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group border-b border-transparent hover:border-muted-foreground/30 pb-0.5"
                 >
-                  <span>Explore how it works</span>
+                  <span>Explore the demo</span>
                   <span className="group-hover:translate-x-1 transition-transform">→</span>
                 </Link>
               </motion.div>
-
-              {/* Callouts - subtle indicators for typed/sketched */}
-              <motion.div 
-                className="flex items-center gap-8 pt-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              >
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Type className="w-4 h-4" />
-                  <span>Type your thoughts</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <PenTool className="w-4 h-4" />
-                  <span>Or sketch by hand</span>
-                </div>
-              </motion.div>
             </motion.div>
 
-            {/* Right side - Editorial image or decorative element */}
+            {/* Right side - Editorial photograph */}
             <motion.div
-              className="relative hidden lg:flex items-center justify-center"
-              initial={{ opacity: 0, scale: 0.95 }}
+              className="relative hidden lg:block"
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             >
-              {/* Decorative envelope illustration */}
-              <div className="relative w-full max-w-md aspect-square">
-                {/* Background circles */}
-                <div className="absolute inset-0">
-                  <div className="absolute top-1/4 right-1/4 w-48 h-48 rounded-full bg-accent/40 blur-2xl" />
-                  <div className="absolute bottom-1/4 left-1/4 w-32 h-32 rounded-full bg-dusty-rose/20 blur-xl" />
-                </div>
-                
-                {/* Main envelope */}
-                <motion.div 
-                  className="relative z-10 w-full h-full flex items-center justify-center"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <svg viewBox="0 0 200 150" className="w-80 h-60 drop-shadow-xl">
-                    {/* Envelope back */}
-                    <rect
-                      x="20"
-                      y="40"
-                      width="160"
-                      height="100"
-                      rx="8"
-                      fill="hsl(var(--envelope-cream))"
-                      stroke="hsl(var(--border))"
-                      strokeWidth="1"
-                    />
-                    
-                    {/* Envelope inner shadow */}
-                    <rect
-                      x="30"
-                      y="50"
-                      width="140"
-                      height="80"
-                      rx="4"
-                      fill="hsl(var(--background))"
-                      opacity="0.5"
-                    />
-                    
-                    {/* Envelope flap */}
-                    <path
-                      d="M 20 40 L 100 85 L 180 40"
-                      fill="hsl(var(--cream))"
-                      stroke="hsl(var(--border))"
-                      strokeWidth="1"
-                    />
-                    
-                    {/* Wax seal */}
-                    <g transform="translate(100, 80)">
-                      <circle 
-                        cx="0" 
-                        cy="0" 
-                        r="18" 
-                        className="wax-seal"
-                        fill="hsl(var(--seal-maroon))"
-                      />
-                      {/* Logo mark on seal - line and dot */}
-                      <line
-                        x1="-8"
-                        y1="0"
-                        x2="5"
-                        y2="0"
-                        stroke="hsl(var(--primary-foreground))"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                      <circle
-                        cx="9"
-                        cy="0"
-                        r="3"
-                        fill="hsl(var(--primary-foreground))"
-                      />
-                    </g>
-                  </svg>
-                </motion.div>
-
-                {/* Decorative geometric accents */}
-                <div className="absolute -top-4 -right-4 w-8 h-8 border-2 border-primary/30 rounded-full" />
-                <div className="absolute -bottom-8 left-8 w-4 h-4 bg-primary/20 rounded-full" />
+              <div className="relative aspect-[4/5] max-w-lg ml-auto overflow-hidden rounded-sm">
+                {/* Soft overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent z-10" />
+                <img 
+                  src={heroImage} 
+                  alt="Person writing in a notebook" 
+                  className="w-full h-full object-cover"
+                />
               </div>
+              {/* Subtle decorative accent */}
+              <div className="absolute -bottom-4 -left-4 w-24 h-24 border border-border/30 rounded-sm -z-10" />
             </motion.div>
           </div>
         </div>
+      </section>
 
-        {/* Sealed letter notice */}
-        <motion.div 
-          className="container mx-auto px-6 md:px-12 pb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-        >
-          <p className="text-center text-muted-foreground text-sm italic">
-            Once sealed, letters cannot be viewed, edited, or rewritten until their delivery date.
-          </p>
-        </motion.div>
+      {/* How it works Section */}
+      <section className="relative z-10 py-24 bg-card/30">
+        <div className="container mx-auto px-6 md:px-12">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="font-editorial text-3xl md:text-4xl text-foreground mb-4">
+              How it works
+            </h2>
+            <div className="w-12 h-px bg-foreground/20 mx-auto" />
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-12 md:gap-8 max-w-4xl mx-auto">
+            {steps.map((step, index) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                className="text-center space-y-4"
+              >
+                <div className="w-12 h-12 mx-auto flex items-center justify-center text-muted-foreground">
+                  <step.icon className="w-6 h-6" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-editorial text-xl text-foreground">
+                  {step.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto font-body">
+                  {step.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border/50 bg-card/30 backdrop-blur-sm">
-        <div className="container mx-auto px-6 md:px-12 py-8">
+      <footer className="relative z-10 border-t border-border/50 bg-card/20">
+        <div className="container mx-auto px-6 md:px-12 py-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             {/* Logo and tagline */}
             <div className="flex items-center gap-4">
