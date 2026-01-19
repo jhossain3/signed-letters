@@ -61,40 +61,8 @@ const WriteLetter = () => {
   const [inkColor, setInkColor] = useState(INK_COLORS[0]);
   const [showLines, setShowLines] = useState(true);
   const [isSealing, setIsSealing] = useState(false);
-  const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
-  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleDemoWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!waitlistEmail) return;
-
-    setWaitlistSubmitting(true);
-
-    const formData = new URLSearchParams();
-    formData.append("entry.1045781291", waitlistEmail);
-
-    try {
-      await fetch(
-        "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
-        {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData,
-        },
-      );
-      setWaitlistSubmitted(true);
-      toast.success("You're on the list!");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setWaitlistSubmitting(false);
-    }
-  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -328,7 +296,7 @@ const WriteLetter = () => {
           </div>
 
           {/* Recipient Toggle */}
-          <div className="flex justify-center gap-3 mb-4">
+          <div className="flex justify-center gap-3 mb-8">
             <Button
               variant={recipientType === "myself" ? "default" : "outline"}
               onClick={() => setRecipientType("myself")}
@@ -343,34 +311,6 @@ const WriteLetter = () => {
             >
               To Someone Else
             </Button>
-          </div>
-
-          {/* Waitlist Signup */}
-          <div className="flex justify-center mb-8">
-            <form onSubmit={handleDemoWaitlistSubmit} className="flex flex-col items-center gap-2 w-full max-w-sm">
-              <label htmlFor="demo-waitlist-email" className="text-sm font-body text-muted-foreground">
-                Join waiting list
-              </label>
-              <div className="flex gap-2 w-full">
-                <Input
-                  id="demo-waitlist-email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={waitlistEmail}
-                  onChange={(e) => setWaitlistEmail(e.target.value)}
-                  className="flex-1 rounded-full px-4"
-                  disabled={waitlistSubmitted}
-                />
-                <Button
-                  type="submit"
-                  variant="outline"
-                  className="rounded-full px-5"
-                  disabled={waitlistSubmitting || waitlistSubmitted || !waitlistEmail}
-                >
-                  {waitlistSubmitted ? "Joined!" : waitlistSubmitting ? "..." : "Join"}
-                </Button>
-              </div>
-            </form>
           </div>
 
           {/* Input Mode Toggle */}
