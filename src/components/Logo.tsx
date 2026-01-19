@@ -16,9 +16,9 @@ const Logo = ({ size = "md", animate = true, showText = false }: LogoProps) => {
   const { wrapper, width, height, lineWidth, dotSize, text } = sizes[size];
 
   // Line positioned in lower half, dot above and to the right with safe padding
-  const padding = dotSize + 5;
+  const padding = dotSize;
   const lineY = height * 0.65;
-  const dotX = lineWidth + dotSize + 4;
+  const dotX = lineWidth + dotSize + 10;
   const dotY = height * 0.35;
 
   return (
