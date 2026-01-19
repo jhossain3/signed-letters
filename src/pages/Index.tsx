@@ -83,31 +83,14 @@ const Index = () => {
                 </span>
               </p>
 
-              {/* CTA Button */}
+              {/* Waitlist Form - Primary CTA */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                <Button 
-                  asChild
-                  size="lg"
-                  className="h-14 px-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-dreamy text-lg"
-                >
-                  <Link to="/write">Start Writing</Link>
-                </Button>
-              </motion.div>
-
-              {/* Waitlist Form - below CTA */}
-              <motion.div
-                className="pt-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-              >
                 {!isSubscribed ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">Or join the waitlist for early access & updates</p>
+                  <div className="space-y-4">
                     <form 
                       onSubmit={handleWaitlistSubmit}
                       className="flex flex-col sm:flex-row gap-3 max-w-md"
@@ -118,17 +101,17 @@ const Index = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="flex-1 h-11 rounded-full px-5 bg-card/80 border-border focus:border-primary transition-colors"
+                        className="flex-1 h-12 rounded-full px-5 bg-card/80 border-border focus:border-primary transition-colors"
                       />
                       <Button 
                         type="submit" 
-                        variant="outline"
                         disabled={isSubmitting}
-                        className="h-11 px-6 rounded-full font-medium"
+                        className="h-12 px-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-dreamy"
                       >
-                        {isSubmitting ? "Joining..." : "Join"}
+                        {isSubmitting ? "Joining..." : "Join Waitlist"}
                       </Button>
                     </form>
+                    <p className="text-sm text-muted-foreground">Be the first to know when we launch.</p>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 text-primary font-medium">
@@ -136,6 +119,22 @@ const Index = () => {
                     <span>You're on the list! We'll be in touch.</span>
                   </div>
                 )}
+              </motion.div>
+
+              {/* Explore link - Secondary */}
+              <motion.div
+                className="pt-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                <Link 
+                  to="/write" 
+                  className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group"
+                >
+                  <span>Explore how it works</span>
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </Link>
               </motion.div>
 
               {/* Callouts - subtle indicators for typed/sketched */}
