@@ -16,7 +16,7 @@ const Logo = ({ size = "md", animate = true, showText = false }: LogoProps) => {
   const { wrapper, width, height, lineWidth, dotSize, text } = sizes[size];
 
   // Line positioned in lower half, dot above and to the right with safe padding
-  const padding = dotSize;
+  const padding = dotSize + 5;
   const lineY = height * 0.65;
   const dotX = lineWidth + dotSize + 4;
   const dotY = height * 0.35;
@@ -28,12 +28,7 @@ const Logo = ({ size = "md", animate = true, showText = false }: LogoProps) => {
       transition={animate ? { duration: 4, repeat: Infinity, ease: "easeInOut" } : undefined}
     >
       {/* Minimalist logo mark: horizontal line + dot above right */}
-      <svg 
-        width={width} 
-        height={height} 
-        viewBox={`0 0 ${width} ${height}`} 
-        className="flex-shrink-0"
-      >
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="flex-shrink-0">
         {/* Thin horizontal line with squared ends */}
         <motion.line
           x1="0"
@@ -60,9 +55,9 @@ const Logo = ({ size = "md", animate = true, showText = false }: LogoProps) => {
           transition={{ duration: 0.3, delay: 0.5 }}
         />
       </svg>
-      
+
       {showText && (
-        <motion.span 
+        <motion.span
           className={`font-editorial font-normal tracking-wide text-foreground lowercase ${text}`}
           initial={animate ? { opacity: 0, x: -8 } : undefined}
           animate={animate ? { opacity: 1, x: 0 } : undefined}
