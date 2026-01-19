@@ -83,41 +83,60 @@ const Index = () => {
                 </span>
               </p>
 
-              {/* Waitlist Form - inline in hero */}
-              {!isSubscribed ? (
-                <motion.form 
-                  onSubmit={handleWaitlistSubmit}
-                  className="flex flex-col sm:flex-row gap-3 max-w-md"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.6 }}
+              {/* CTA Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                <Button 
+                  asChild
+                  size="lg"
+                  className="h-14 px-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-dreamy text-lg"
                 >
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="flex-1 h-12 rounded-full px-5 bg-card/80 border-border focus:border-primary transition-colors"
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="h-12 px-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-editorial"
-                  >
-                    {isSubmitting ? "Joining..." : "Join Waitlist"}
-                  </Button>
-                </motion.form>
-              ) : (
-                <motion.div 
-                  className="flex items-center gap-3 text-primary font-medium"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                >
-                  <span className="text-2xl">✓</span>
-                  <span>You're on the list! We'll be in touch.</span>
-                </motion.div>
-              )}
+                  <Link to="/write">Start Writing</Link>
+                </Button>
+              </motion.div>
+
+              {/* Waitlist Form - below CTA */}
+              <motion.div
+                className="pt-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                {!isSubscribed ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">Or join the waitlist for early access & updates</p>
+                    <form 
+                      onSubmit={handleWaitlistSubmit}
+                      className="flex flex-col sm:flex-row gap-3 max-w-md"
+                    >
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="flex-1 h-11 rounded-full px-5 bg-card/80 border-border focus:border-primary transition-colors"
+                      />
+                      <Button 
+                        type="submit" 
+                        variant="outline"
+                        disabled={isSubmitting}
+                        className="h-11 px-6 rounded-full font-medium"
+                      >
+                        {isSubmitting ? "Joining..." : "Join"}
+                      </Button>
+                    </form>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 text-primary font-medium">
+                    <span className="text-xl">✓</span>
+                    <span>You're on the list! We'll be in touch.</span>
+                  </div>
+                )}
+              </motion.div>
 
               {/* Callouts - subtle indicators for typed/sketched */}
               <motion.div 
