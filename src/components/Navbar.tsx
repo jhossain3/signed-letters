@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Moon, Sun, Archive, User } from "lucide-react";
+import { Moon, Sun, Archive, PenLine } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Left - Logo */}
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <Logo size="sm" animate={false} />
-          <span className="font-serif text-xl font-semibold text-foreground">Signed</span>
+          <Logo size="sm" animate={false} showText />
         </Link>
 
         {/* Right - Navigation items */}
@@ -37,16 +36,18 @@ const Navbar = () => {
             )}
           </Button>
 
+          {/* Write letter link */}
+          <Button variant="ghost" size="icon" asChild className="rounded-full">
+            <Link to="/write" aria-label="Write a letter">
+              <PenLine className="h-5 w-5" />
+            </Link>
+          </Button>
+
           {/* Vault link */}
           <Button variant="ghost" size="icon" asChild className="rounded-full">
             <Link to="/vault" aria-label="Vault">
               <Archive className="h-5 w-5" />
             </Link>
-          </Button>
-
-          {/* Profile */}
-          <Button variant="ghost" size="icon" className="rounded-full" aria-label="Profile">
-            <User className="h-5 w-5" />
           </Button>
         </div>
       </div>
