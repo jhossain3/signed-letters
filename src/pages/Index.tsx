@@ -35,7 +35,7 @@ const Index = () => {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData.toString(),
+          body: formData,
         }
       );
       setIsSubscribed(true);
@@ -87,7 +87,7 @@ const Index = () => {
 
               {/* Main headline */}
               <h1 className="font-editorial text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.05] tracking-tight">
-                sign it off
+                <em className="italic">sign</em> it off
               </h1>
 
               {/* Accent line */}
@@ -159,7 +159,7 @@ const Index = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             >
-              <div className="relative aspect-[4/5] max-w-lg ml-auto overflow-hidden rounded-sm">
+              <div className="relative aspect-[4/5] max-w-xl ml-auto -mr-8 overflow-hidden rounded-sm">
                 {/* Soft overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent z-10" />
                 <img 

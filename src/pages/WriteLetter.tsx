@@ -405,7 +405,7 @@ const WriteLetter = () => {
                 placeholder="Dear future me..."
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
+                className={`min-h-[600px] max-h-[70vh] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 overflow-y-auto ${
                   showLines ? "lined-paper" : ""
                 }`}
                 style={{ color: inkColor.value }}

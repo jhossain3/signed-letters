@@ -38,7 +38,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: formData.toString(),
+        body: formData,
       });
 
       setIsSuccess(true);

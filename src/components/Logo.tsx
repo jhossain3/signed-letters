@@ -15,10 +15,11 @@ const Logo = ({ size = "md", animate = true, showText = false }: LogoProps) => {
 
   const { wrapper, width, height, lineWidth, dotSize, text } = sizes[size];
 
-  // Line positioned in lower half, dot above and to the right
-  const lineY = height * 0.7;
-  const dotX = lineWidth + dotSize + 2;
-  const dotY = height * 0.3;
+  // Line positioned in lower half, dot above and to the right with safe padding
+  const padding = dotSize;
+  const lineY = height * 0.65;
+  const dotX = lineWidth + dotSize + 4;
+  const dotY = height * 0.35;
 
   return (
     <motion.div
