@@ -93,7 +93,7 @@ const Index = () => {
               transition={{ duration: 0.7, ease: "easeOut" }}
             >
               {/* Logo */}
-              <div className="mb-6 gap-3">
+              <div className="mb-6 px-10">
                 <Logo size="lg" animate={false} showText />
               </div>
 
