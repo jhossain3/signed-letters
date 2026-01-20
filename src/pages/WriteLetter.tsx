@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, addMonths, addYears } from "date-fns";
-import { useLetterStore } from "@/stores/letterStore";
+import { useLetters } from "@/hooks/useLetters";
 import { toast } from "sonner";
 
 // Signature font options
@@ -45,7 +45,7 @@ const TikTokIcon = () => (
 
 const WriteLetter = () => {
   const navigate = useNavigate();
-  const addLetter = useLetterStore((state) => state.addLetter);
+  const { addLetter, isAddingLetter } = useLetters();
   
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
   const [inputMode, setInputMode] = useState<"type" | "sketch">("type");
@@ -134,31 +134,31 @@ const WriteLetter = () => {
     setIsSealing(true);
   };
 
-  const completeSeal = () => {
-    const newLetter = {
-      id: crypto.randomUUID(),
-      title,
-      body,
-      date: format(new Date(), "MMMM d, yyyy"),
-      deliveryDate: deliveryDate!.toISOString(),
-      signature,
-      signatureFont: signatureFont.class,
-      recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
-      recipientType,
-      photos,
-      sketchData: inputMode === "sketch" ? sketchData : undefined,
-      isTyped: inputMode === "type",
-      createdAt: new Date().toISOString(),
-      type: "sent" as const,
-      paperColor: paperColor.value,
-      inkColor: inkColor.value,
-    };
-
-    addLetter(newLetter);
-    
-    setTimeout(() => {
-      navigate("/vault");
-    }, 500);
+  const completeSeal = async () => {
+    try {
+      await addLetter({
+        title,
+        body,
+        date: format(new Date(), "MMMM d, yyyy"),
+        deliveryDate: deliveryDate!.toISOString(),
+        signature,
+        signatureFont: signatureFont.class,
+        recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
+        recipientType,
+        photos,
+        sketchData: inputMode === "sketch" ? sketchData : undefined,
+        isTyped: inputMode === "type",
+        type: "sent" as const,
+        paperColor: paperColor.value,
+        inkColor: inkColor.value,
+      });
+      
+      setTimeout(() => {
+        navigate("/vault");
+      }, 500);
+    } catch (error) {
+      setIsSealing(false);
+    }
   };
 
   return (

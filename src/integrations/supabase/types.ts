@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      letters: {
+        Row: {
+          body: string | null
+          created_at: string
+          date: string
+          delivery_date: string
+          id: string
+          ink_color: string | null
+          is_typed: boolean | null
+          paper_color: string | null
+          photos: string[] | null
+          recipient_email: string | null
+          recipient_type: string
+          signature: string
+          signature_font: string | null
+          sketch_data: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          date: string
+          delivery_date: string
+          id?: string
+          ink_color?: string | null
+          is_typed?: boolean | null
+          paper_color?: string | null
+          photos?: string[] | null
+          recipient_email?: string | null
+          recipient_type: string
+          signature: string
+          signature_font?: string | null
+          sketch_data?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          date?: string
+          delivery_date?: string
+          id?: string
+          ink_color?: string | null
+          is_typed?: boolean | null
+          paper_color?: string | null
+          photos?: string[] | null
+          recipient_email?: string | null
+          recipient_type?: string
+          signature?: string
+          signature_font?: string | null
+          sketch_data?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
