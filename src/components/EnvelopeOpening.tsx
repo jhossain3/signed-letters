@@ -1,17 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-
-interface Letter {
-  id: string;
-  title: string;
-  body: string;
-  date: string;
-  signature: string;
-  signatureFont?: string;
-  photos?: string[];
-  sketchData?: string;
-  isTyped: boolean;
-}
+import { Letter } from "@/hooks/useLetters";
 
 interface EnvelopeOpeningProps {
   letter: Letter;
@@ -68,7 +57,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
             <div className="paper-texture min-h-[300px] p-6 rounded-xl border border-border bg-paper">
               <h2 className="font-editorial text-2xl text-foreground mb-6">{letter.title}</h2>
               {letter.isTyped ? (
-                <p className="text-foreground leading-relaxed whitespace-pre-wrap font-body">{letter.body}</p>
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap font-body">{letter.body || ""}</p>
               ) : (
                 letter.sketchData && <img src={letter.sketchData} alt="Handwritten letter" className="w-full rounded-lg" />
               )}

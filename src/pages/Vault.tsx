@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram } from "lucide-react";
+import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut } from "lucide-react";
 import Logo from "@/components/Logo";
 import EnvelopeCard from "@/components/EnvelopeCard";
 import EnvelopeOpening from "@/components/EnvelopeOpening";
 import { Button } from "@/components/ui/button";
-import { useLetterStore, Letter } from "@/stores/letterStore";
+import { useLetters, Letter } from "@/hooks/useLetters";
+import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 
 const TikTokIcon = () => (
@@ -20,7 +21,8 @@ const Vault = () => {
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   
-  const { letters, isLetterOpenable } = useLetterStore();
+  const { letters, isLoading, isLetterOpenable } = useLetters();
+  const { signOut, user } = useAuth();
 
   const filteredLetters = letters.filter((letter) => {
     if (activeTab === "sent") return letter.type === "sent";
@@ -33,6 +35,21 @@ const Vault = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-editorial">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground font-body">Loading your letters...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-editorial relative overflow-hidden">
       <div className="absolute inset-0 paper-texture pointer-events-none" />
@@ -44,7 +61,17 @@ const Vault = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </Link>
-          <Logo size="sm" animate={false} showText />
+          <div className="flex items-center gap-4">
+            <Logo size="sm" animate={false} showText />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -54,6 +81,9 @@ const Vault = () => {
           <div className="text-center mb-10">
             <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Your Vault</h1>
             <p className="text-muted-foreground font-body">Where your letters wait</p>
+            {user?.email && (
+              <p className="text-xs text-muted-foreground/70 mt-1">{user.email}</p>
+            )}
           </div>
 
           {/* Controls */}
