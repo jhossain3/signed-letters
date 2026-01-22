@@ -119,7 +119,11 @@ export const useLetters = () => {
   const isLetterOpenable = (letter: Letter) => {
     const deliveryDate = new Date(letter.deliveryDate);
     const now = new Date();
-    return now >= deliveryDate;
+    // Allow opening on the same day (compare dates only, not time)
+    deliveryDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today >= deliveryDate;
   };
 
   return {

@@ -721,9 +721,10 @@ const WriteLetter = () => {
               href="https://www.instagram.com/signed_letters"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
             >
               <Instagram className="h-5 w-5" />
+              <span className="text-sm font-body">@signed_letters</span>
             </a>
             <a
               href="https://www.tiktok.com/@letters_for_later"

@@ -37,29 +37,77 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
           
           {isOpenable ? (
             <>
-              {/* Open flap - folded back at top */}
+              {/* Elegant open envelope with letter peeking out */}
+              {/* Letter paper emerging from envelope */}
+              <g>
+                {/* Letter shadow for depth */}
+                <rect
+                  x="18"
+                  y="5"
+                  width="84"
+                  height="50"
+                  rx="1"
+                  fill="hsl(var(--envelope-shadow))"
+                  opacity="0.1"
+                  transform="translate(2, 2)"
+                />
+                {/* Main letter paper */}
+                <rect
+                  x="18"
+                  y="5"
+                  width="84"
+                  height="50"
+                  rx="1"
+                  fill="hsl(var(--background))"
+                  stroke="hsl(var(--border))"
+                  strokeWidth="0.5"
+                />
+                {/* Elegant handwritten-style lines */}
+                <path 
+                  d="M 28 18 Q 45 16, 72 18" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  strokeWidth="0.6" 
+                  fill="none" 
+                  opacity="0.35"
+                />
+                <path 
+                  d="M 28 26 Q 55 24, 88 26" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  strokeWidth="0.6" 
+                  fill="none" 
+                  opacity="0.35"
+                />
+                <path 
+                  d="M 28 34 Q 50 32, 78 34" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  strokeWidth="0.6" 
+                  fill="none" 
+                  opacity="0.35"
+                />
+                {/* Subtle signature flourish */}
+                <path 
+                  d="M 55 44 Q 62 42, 70 44 Q 74 45, 72 46" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  strokeWidth="0.5" 
+                  fill="none" 
+                  opacity="0.3"
+                />
+              </g>
+              {/* Open envelope flap - gracefully folded back */}
               <path
-                d="M 5 20 L 60 -5 L 115 20"
+                d="M 5 24 Q 5 18, 12 15 L 60 -8 L 108 15 Q 115 18, 115 24"
                 fill="hsl(var(--cream))"
                 stroke="hsl(var(--border))"
-                strokeWidth="1"
+                strokeWidth="0.8"
               />
-              {/* Letter peeking out of open envelope */}
-              <rect
-                x="15"
-                y="10"
-                width="90"
-                height="55"
-                rx="2"
-                fill="hsl(var(--background))"
+              {/* Inner flap shadow line */}
+              <path
+                d="M 12 18 L 60 -2 L 108 18"
                 stroke="hsl(var(--border))"
-                strokeWidth="0.5"
+                strokeWidth="0.4"
+                fill="none"
+                opacity="0.5"
               />
-              {/* Lines on letter to indicate text */}
-              <line x1="22" y1="22" x2="75" y2="22" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
-              <line x1="22" y1="30" x2="88" y2="30" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
-              <line x1="22" y1="38" x2="80" y2="38" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
-              <line x1="22" y1="46" x2="60" y2="46" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
             </>
           ) : (
             <>
