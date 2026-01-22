@@ -88,9 +88,9 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
         ctx.putImageData(existingImage, 0, 0);
       }
 
-      // Set drawing styles
+      // Set drawing styles - thicker, more solid ink
       ctx.strokeStyle = currentInkColor.current;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 3.5;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       
@@ -216,9 +216,9 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
         points.current = points.current.slice(-4);
       }
 
-      // Use current ink color for drawing
+      // Use current ink color for drawing - thicker, more solid ink
       ctx.strokeStyle = currentInkColor.current;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 3.5;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
@@ -268,7 +268,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       drawLines(ctx, rect.width, rect.height);
 
       ctx.strokeStyle = currentInkColor.current;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 3.5;
 
       setHistory([]);
 
