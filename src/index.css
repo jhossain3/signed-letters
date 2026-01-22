@@ -75,16 +75,16 @@
   }
 
   .dark {
-    /* Deep rich maroon-tinted dark background */
-    --background: 358 25% 10%;
-    --foreground: 35 25% 92%;
+    /* Deep rich maroon-tinted dark background - softer for less harshness */
+    --background: 358 22% 8%;
+    --foreground: 35 20% 88%;
 
-    /* Glass dark card surfaces */
-    --card: 358 20% 13%;
-    --card-foreground: 35 25% 92%;
+    /* Glass dark card surfaces - slightly darker */
+    --card: 358 18% 10%;
+    --card-foreground: 35 20% 88%;
 
-    --popover: 358 20% 13%;
-    --popover-foreground: 35 25% 92%;
+    --popover: 358 18% 10%;
+    --popover-foreground: 35 20% 88%;
 
     /* Warm dusty rose primary */
     --primary: 5 35% 65%;
