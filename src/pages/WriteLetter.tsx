@@ -51,7 +51,6 @@ const WriteLetter = () => {
   const [title, setTitle] = useState("");
   // Multi-page support: array of page content
   const [pages, setPages] = useState<Array<{ body: string; sketchData: string }>>([{ body: "", sketchData: "" }]);
-  const [currentPage, setCurrentPage] = useState(0);
   const [deliveryDate, setDeliveryDate] = useState<Date>();
   const [recipientEmail, setRecipientEmail] = useState("");
   const [signature, setSignature] = useState("");
@@ -63,34 +62,31 @@ const WriteLetter = () => {
   const [isSealing, setIsSealing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const sketchCanvasRef = useRef<SketchCanvasRef>(null);
+  const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
+  const pagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Helper to update current page body
-  const updateCurrentPageBody = useCallback((newBody: string) => {
+  // Helper to update a specific page's body
+  const updatePageBody = useCallback((pageIndex: number, newBody: string) => {
     setPages(prev => prev.map((page, idx) => 
-      idx === currentPage ? { ...page, body: newBody } : page
+      idx === pageIndex ? { ...page, body: newBody } : page
     ));
-  }, [currentPage]);
+  }, []);
 
-  // Helper to update current page sketch
-  const updateCurrentPageSketch = useCallback((newSketch: string) => {
+  // Helper to update a specific page's sketch
+  const updatePageSketch = useCallback((pageIndex: number, newSketch: string) => {
     setPages(prev => prev.map((page, idx) => 
-      idx === currentPage ? { ...page, sketchData: newSketch } : page
+      idx === pageIndex ? { ...page, sketchData: newSketch } : page
     ));
-  }, [currentPage]);
+  }, []);
 
-  // Add a new page
+  // Add a new page and scroll to it
   const addNewPage = useCallback(() => {
-    // Save current sketch data before adding new page
-    if (inputMode === "sketch" && sketchCanvasRef.current) {
-      const currentSketchData = sketchCanvasRef.current.getDataUrl();
-      setPages(prev => prev.map((page, idx) => 
-        idx === currentPage ? { ...page, sketchData: currentSketchData } : page
-      ));
-    }
     setPages(prev => [...prev, { body: "", sketchData: "" }]);
-    setCurrentPage(prev => prev + 1);
-  }, [inputMode, currentPage]);
+    // Scroll to the new page after it renders
+    setTimeout(() => {
+      pagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, []);
 
   // Get combined content for saving
   const getCombinedBody = () => pages.map(p => p.body).join("\n\n--- Page Break ---\n\n");
@@ -168,10 +164,13 @@ const WriteLetter = () => {
   };
 
   const completeSeal = async () => {
-    // Get final sketch data if in sketch mode
+    // Get final sketch data from all pages if in sketch mode
     let finalSketchData = getCombinedSketch();
-    if (inputMode === "sketch" && sketchCanvasRef.current) {
-      finalSketchData = sketchCanvasRef.current.getDataUrl();
+    if (inputMode === "sketch") {
+      const firstRef = sketchCanvasRefs.current.get(0);
+      if (firstRef) {
+        finalSketchData = firstRef.getDataUrl();
+      }
     }
     
     try {
@@ -423,7 +422,7 @@ const WriteLetter = () => {
             </div>
           </div>
 
-          {/* Letter Writing Area */}
+          {/* Letter Writing Area - Continuous Scroll */}
           <div 
             className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[70vh] overflow-y-auto"
             style={{ backgroundColor: paperColor.value }}
@@ -438,31 +437,59 @@ const WriteLetter = () => {
                 style={{ color: inkColor.value }}
               />
 
-              {/* Content Area */}
-              {inputMode === "type" ? (
-                <Textarea
-                  placeholder="Dear future me..."
-                  value={pages[currentPage]?.body || ""}
-                  onChange={(e) => updateCurrentPageBody(e.target.value)}
-                  className={`min-h-[600px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
-                    showLines ? "lined-paper" : ""
-                  }`}
-                  style={{ color: inkColor.value }}
-                />
-              ) : (
-                <SketchCanvas 
-                  ref={sketchCanvasRef}
-                  onChange={updateCurrentPageSketch}
-                  inkColor={inkColor.value}
-                  showLines={showLines}
-                  initialData={pages[currentPage]?.sketchData}
-                />
-              )}
+              {/* All Pages - Continuous Scroll */}
+              <div className="space-y-8">
+                {pages.map((page, pageIndex) => (
+                  <div key={pageIndex} className="relative">
+                    {/* Page header */}
+                    {pages.length > 1 && (
+                      <div className="text-xs text-muted-foreground/60 mb-2 font-body">
+                        Page {pageIndex + 1}
+                      </div>
+                    )}
+                    
+                    {/* Content Area */}
+                    {inputMode === "type" ? (
+                      <Textarea
+                        placeholder={pageIndex === 0 ? "Dear future me..." : "Continue writing..."}
+                        value={page.body}
+                        onChange={(e) => updatePageBody(pageIndex, e.target.value)}
+                        className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
+                          showLines ? "lined-paper" : ""
+                        }`}
+                        style={{ color: inkColor.value }}
+                      />
+                    ) : (
+                      <SketchCanvas 
+                        ref={(ref) => {
+                          if (ref) {
+                            sketchCanvasRefs.current.set(pageIndex, ref);
+                          } else {
+                            sketchCanvasRefs.current.delete(pageIndex);
+                          }
+                        }}
+                        onChange={(data) => updatePageSketch(pageIndex, data)}
+                        inkColor={inkColor.value}
+                        showLines={showLines}
+                        initialData={page.sketchData}
+                      />
+                    )}
+                    
+                    {/* Page divider */}
+                    {pageIndex < pages.length - 1 && (
+                      <div className="border-b border-dashed border-border/40 mt-6" />
+                    )}
+                  </div>
+                ))}
+                
+                {/* Scroll anchor for new pages */}
+                <div ref={pagesEndRef} />
+              </div>
 
-              {/* Page indicator and Add Page button */}
+              {/* Add Page button */}
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30">
                 <span className="text-sm text-muted-foreground font-body">
-                  Page {currentPage + 1} of {pages.length}
+                  {pages.length} {pages.length === 1 ? "page" : "pages"}
                 </span>
                 <Button
                   type="button"
