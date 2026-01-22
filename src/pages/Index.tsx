@@ -216,13 +216,37 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-border/50 bg-card/20">
-        <div className="container mx-auto px-6 md:px-12 py-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="container mx-auto px-6 md:px-12 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Logo and tagline */}
             <div className="flex items-center gap-4">
               <Logo size="sm" animate={false} showText />
-              <span className="text-muted-foreground text-sm">Letters through time</span>
+              <span className="text-muted-foreground text-sm hidden sm:inline">Letters through time</span>
             </div>
+
+            {/* Compact waitlist form */}
+            {!isSubscribed ? (
+              <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-9 w-40 sm:w-48 text-sm rounded-md px-3 bg-card/80 border-border focus:border-primary transition-colors"
+                />
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  size="sm"
+                  className="h-9 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
+                >
+                  {isSubmitting ? "..." : "Join"}
+                </Button>
+              </form>
+            ) : (
+              <span className="text-primary text-sm font-medium">✓ You're on the list</span>
+            )}
 
             {/* Social links */}
             <div className="flex items-center gap-6">
