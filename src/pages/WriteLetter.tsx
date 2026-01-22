@@ -450,7 +450,7 @@ const WriteLetter = () => {
           <div 
             ref={letterScrollRef}
             onWheelCapture={handleLetterWheelCapture}
-            className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[70vh] overflow-y-auto overscroll-contain"
+            className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[80vh] overflow-y-auto overscroll-contain"
             style={{ backgroundColor: paperColor.value }}
           >
             <div className="p-6 md:p-8">
