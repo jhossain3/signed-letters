@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
-import { Moon, Sun, Archive, PenLine } from "lucide-react";
+import { Moon, Sun, Archive, PenLine, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -49,6 +51,19 @@ const Navbar = () => {
               <Archive className="h-5 w-5" />
             </Link>
           </Button>
+
+          {/* Sign out button - only show when logged in */}
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              className="rounded-full"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
     </nav>
