@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut } from "lucide-react";
-import Logo from "@/components/Logo";
+
 import EnvelopeCard from "@/components/EnvelopeCard";
 import EnvelopeOpening from "@/components/EnvelopeOpening";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,6 @@ const Vault = () => {
             <span className="font-body">Back</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Logo size="sm" animate={false} showText />
             <Button
               variant="ghost"
               size="sm"

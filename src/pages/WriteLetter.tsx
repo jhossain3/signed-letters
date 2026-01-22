@@ -1,9 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram } from "lucide-react";
-import Logo from "@/components/Logo";
-import SketchCanvas from "@/components/SketchCanvas";
+import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram, Plus } from "lucide-react";
+import SketchCanvas, { SketchCanvasRef } from "@/components/SketchCanvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,8 +49,9 @@ const WriteLetter = () => {
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
   const [inputMode, setInputMode] = useState<"type" | "sketch">("type");
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [sketchData, setSketchData] = useState("");
+  // Multi-page support: array of page content
+  const [pages, setPages] = useState<Array<{ body: string; sketchData: string }>>([{ body: "", sketchData: "" }]);
+  const [currentPage, setCurrentPage] = useState(0);
   const [deliveryDate, setDeliveryDate] = useState<Date>();
   const [recipientEmail, setRecipientEmail] = useState("");
   const [signature, setSignature] = useState("");
@@ -63,6 +63,38 @@ const WriteLetter = () => {
   const [isSealing, setIsSealing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sketchCanvasRef = useRef<SketchCanvasRef>(null);
+
+  // Helper to update current page body
+  const updateCurrentPageBody = useCallback((newBody: string) => {
+    setPages(prev => prev.map((page, idx) => 
+      idx === currentPage ? { ...page, body: newBody } : page
+    ));
+  }, [currentPage]);
+
+  // Helper to update current page sketch
+  const updateCurrentPageSketch = useCallback((newSketch: string) => {
+    setPages(prev => prev.map((page, idx) => 
+      idx === currentPage ? { ...page, sketchData: newSketch } : page
+    ));
+  }, [currentPage]);
+
+  // Add a new page
+  const addNewPage = useCallback(() => {
+    // Save current sketch data before adding new page
+    if (inputMode === "sketch" && sketchCanvasRef.current) {
+      const currentSketchData = sketchCanvasRef.current.getDataUrl();
+      setPages(prev => prev.map((page, idx) => 
+        idx === currentPage ? { ...page, sketchData: currentSketchData } : page
+      ));
+    }
+    setPages(prev => [...prev, { body: "", sketchData: "" }]);
+    setCurrentPage(prev => prev + 1);
+  }, [inputMode, currentPage]);
+
+  // Get combined content for saving
+  const getCombinedBody = () => pages.map(p => p.body).join("\n\n--- Page Break ---\n\n");
+  const getCombinedSketch = () => pages[0]?.sketchData || ""; // For now, use first page sketch
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -110,7 +142,8 @@ const WriteLetter = () => {
       return;
     }
     
-    if (inputMode === "type" && !body.trim()) {
+    const currentBody = getCombinedBody();
+    if (inputMode === "type" && !currentBody.trim()) {
       toast.error("Please write something in your letter");
       return;
     }
@@ -135,10 +168,16 @@ const WriteLetter = () => {
   };
 
   const completeSeal = async () => {
+    // Get final sketch data if in sketch mode
+    let finalSketchData = getCombinedSketch();
+    if (inputMode === "sketch" && sketchCanvasRef.current) {
+      finalSketchData = sketchCanvasRef.current.getDataUrl();
+    }
+    
     try {
       await addLetter({
         title,
-        body,
+        body: getCombinedBody(),
         date: format(new Date(), "MMMM d, yyyy"),
         deliveryDate: deliveryDate!.toISOString(),
         signature,
@@ -146,7 +185,7 @@ const WriteLetter = () => {
         recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
         recipientType,
         photos,
-        sketchData: inputMode === "sketch" ? sketchData : undefined,
+        sketchData: inputMode === "sketch" ? finalSketchData : undefined,
         isTyped: inputMode === "type",
         type: "sent" as const,
         paperColor: paperColor.value,
@@ -276,7 +315,6 @@ const WriteLetter = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </Link>
-          <Logo size="sm" animate={false} showText />
         </div>
       </header>
 
@@ -404,8 +442,8 @@ const WriteLetter = () => {
               {inputMode === "type" ? (
                 <Textarea
                   placeholder="Dear future me..."
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
+                  value={pages[currentPage]?.body || ""}
+                  onChange={(e) => updateCurrentPageBody(e.target.value)}
                   className={`min-h-[600px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
                     showLines ? "lined-paper" : ""
                   }`}
@@ -413,11 +451,30 @@ const WriteLetter = () => {
                 />
               ) : (
                 <SketchCanvas 
-                  onChange={setSketchData} 
+                  ref={sketchCanvasRef}
+                  onChange={updateCurrentPageSketch}
                   inkColor={inkColor.value}
                   showLines={showLines}
+                  initialData={pages[currentPage]?.sketchData}
                 />
               )}
+
+              {/* Page indicator and Add Page button */}
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30">
+                <span className="text-sm text-muted-foreground font-body">
+                  Page {currentPage + 1} of {pages.length}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addNewPage}
+                  className="rounded-full"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add New Page
+                </Button>
+              </div>
             </div>
           </div>
 

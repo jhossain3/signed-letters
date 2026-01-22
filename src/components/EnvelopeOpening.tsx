@@ -38,10 +38,12 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                 <motion.g style={{ transformOrigin: "80px 30px" }} animate={stage === "opening" ? { rotateX: -180, opacity: 0 } : { rotateX: 0, opacity: 1 }} transition={{ duration: 0.8 }}>
                   <path d="M 5 30 L 80 60 L 155 30 Z" fill="hsl(var(--cream))" stroke="hsl(var(--border))" strokeWidth="1.5" />
                 </motion.g>
+                {/* Wax seal with logo mark */}
                 <motion.g transform="translate(80, 48)" animate={stage === "opening" ? { opacity: 0, scale: 0 } : { opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
                   <circle cx="0" cy="0" r="10" className="wax-seal" fill="hsl(var(--seal-maroon))" />
-                  <line x1="-4" y1="0" x2="2" y2="0" stroke="hsl(var(--primary-foreground))" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="5" cy="0" r="1.5" fill="hsl(var(--primary-foreground))" />
+                  {/* Logo mark - horizontal line + dot above right */}
+                  <line x1="-4" y1="1" x2="2" y2="1" stroke="hsl(var(--primary-foreground))" strokeWidth="1.5" strokeLinecap="square" />
+                  <circle cx="5" cy="-1.5" r="1.5" fill="hsl(var(--primary-foreground))" />
                 </motion.g>
               </svg>
             </div>

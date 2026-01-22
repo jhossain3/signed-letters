@@ -35,50 +35,78 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
             strokeWidth="1"
           />
           
-          {/* Envelope flap */}
-          <path
-            d="M 5 20 L 60 50 L 115 20"
-            fill="hsl(var(--cream))"
-            stroke="hsl(var(--border))"
-            strokeWidth="1"
-          />
-          
-          {/* Wax seal with logo */}
-          <g transform="translate(60, 48)">
-            <circle 
-              cx="0" 
-              cy="0" 
-              r="12" 
-              className={`wax-seal ${isOpenable ? 'opacity-70' : ''}`}
-              fill="hsl(var(--seal-maroon))"
-            />
-            {/* Logo mark - line and dot */}
-            <line
-              x1="-5"
-              y1="0"
-              x2="3"
-              y2="0"
-              stroke="hsl(var(--primary-foreground))"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <circle
-              cx="6"
-              cy="0"
-              r="2"
-              fill="hsl(var(--primary-foreground))"
-            />
-          </g>
-          
-          {/* Open flap indicator for openable letters */}
-          {isOpenable && (
-            <path
-              d="M 5 20 L 60 -5 L 115 20"
-              fill="hsl(var(--cream))"
-              stroke="hsl(var(--border))"
-              strokeWidth="1"
-              opacity="0.5"
-            />
+          {isOpenable ? (
+            <>
+              {/* Open flap - folded back at top */}
+              <path
+                d="M 5 20 L 60 -5 L 115 20"
+                fill="hsl(var(--cream))"
+                stroke="hsl(var(--border))"
+                strokeWidth="1"
+              />
+              {/* Wax seal at top for open letters */}
+              <g transform="translate(60, 8)">
+                <circle 
+                  cx="0" 
+                  cy="0" 
+                  r="10" 
+                  className="wax-seal opacity-70"
+                  fill="hsl(var(--seal-maroon))"
+                />
+                {/* Logo mark - horizontal line + dot */}
+                <line
+                  x1="-4"
+                  y1="0"
+                  x2="2"
+                  y2="0"
+                  stroke="hsl(var(--primary-foreground))"
+                  strokeWidth="1.5"
+                  strokeLinecap="square"
+                />
+                <circle
+                  cx="5"
+                  cy="-2"
+                  r="1.5"
+                  fill="hsl(var(--primary-foreground))"
+                />
+              </g>
+            </>
+          ) : (
+            <>
+              {/* Closed envelope flap */}
+              <path
+                d="M 5 20 L 60 50 L 115 20"
+                fill="hsl(var(--cream))"
+                stroke="hsl(var(--border))"
+                strokeWidth="1"
+              />
+              {/* Wax seal with logo - centered on flap */}
+              <g transform="translate(60, 48)">
+                <circle 
+                  cx="0" 
+                  cy="0" 
+                  r="12" 
+                  className="wax-seal"
+                  fill="hsl(var(--seal-maroon))"
+                />
+                {/* Logo mark - horizontal line + dot above right */}
+                <line
+                  x1="-5"
+                  y1="1"
+                  x2="3"
+                  y2="1"
+                  stroke="hsl(var(--primary-foreground))"
+                  strokeWidth="1.5"
+                  strokeLinecap="square"
+                />
+                <circle
+                  cx="6"
+                  cy="-2"
+                  r="2"
+                  fill="hsl(var(--primary-foreground))"
+                />
+              </g>
+            </>
           )}
         </svg>
 
