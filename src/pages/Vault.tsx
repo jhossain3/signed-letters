@@ -249,12 +249,6 @@ const Vault = () => {
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Social links */}
-            <div className="flex items-center gap-6">
-              <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
-              <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
-            </div>
-
             {/* Compact waitlist form */}
             {!isSubscribed ? (
               <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
@@ -278,6 +272,12 @@ const Vault = () => {
             ) : (
               <span className="text-primary text-sm font-medium">✓ You're on the list</span>
             )}
+
+            {/* Social links */}
+            <div className="flex items-center gap-6">
+              <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
+              <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
+            </div>
           </div>
         </div>
       </footer>
