@@ -160,7 +160,7 @@ const Vault = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-editorial relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-editorial relative overflow-hidden flex flex-col">
       <div className="absolute inset-0 paper-texture pointer-events-none" />
 
       {/* Header */}
@@ -184,7 +184,7 @@ const Vault = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <main className="container mx-auto px-4 py-8 relative z-10 flex-1">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div className="text-center mb-10">
             <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Your Vault</h1>
@@ -246,9 +246,15 @@ const Vault = () => {
         </motion.div>
       </main>
 
-      <footer className="relative z-10 mt-16 border-t border-border/50 bg-card/30">
+      <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Social links */}
+            <div className="flex items-center gap-6">
+              <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
+              <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
+            </div>
+
             {/* Compact waitlist form */}
             {!isSubscribed ? (
               <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
@@ -264,7 +270,7 @@ const Vault = () => {
                   type="submit"
                   disabled={isSubmitting}
                   size="sm"
-                  className="h-9 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
+                  className="h-9 px-4 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground text-sm"
                 >
                   {isSubmitting ? "..." : "Join Waitlist"}
                 </Button>
@@ -272,12 +278,6 @@ const Vault = () => {
             ) : (
               <span className="text-primary text-sm font-medium">✓ You're on the list</span>
             )}
-
-            {/* Social links */}
-            <div className="flex items-center gap-6">
-              <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
-              <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
-            </div>
           </div>
         </div>
       </footer>

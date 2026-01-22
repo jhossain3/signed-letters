@@ -751,33 +751,9 @@ const WriteLetter = () => {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 mt-16 border-t border-border/50 bg-card/30">
+      <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            {/* Compact waitlist form */}
-            {!isSubscribed ? (
-              <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
-                <Input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="h-9 w-40 sm:w-48 text-sm rounded-md px-3 bg-card/80 border-border focus:border-primary transition-colors"
-                />
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  size="sm"
-                  className="h-9 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
-                >
-                  {isSubmitting ? "..." : "Join Waitlist"}
-                </Button>
-              </form>
-            ) : (
-              <span className="text-primary text-sm font-medium">✓ You're on the list</span>
-            )}
-
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Social links */}
             <div className="flex items-center gap-6">
               <a
@@ -797,6 +773,30 @@ const WriteLetter = () => {
                 <TikTokIcon />
               </a>
             </div>
+
+            {/* Compact waitlist form */}
+            {!isSubscribed ? (
+              <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-9 w-40 sm:w-48 text-sm rounded-md px-3 bg-card/80 border-border focus:border-primary transition-colors"
+                />
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  size="sm"
+                  className="h-9 px-4 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground text-sm"
+                >
+                  {isSubmitting ? "..." : "Join Waitlist"}
+                </Button>
+              </form>
+            ) : (
+              <span className="text-primary text-sm font-medium">✓ You're on the list</span>
+            )}
           </div>
         </div>
       </footer>
