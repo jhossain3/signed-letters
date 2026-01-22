@@ -12,6 +12,7 @@ interface SketchCanvasProps {
 interface Point {
   x: number;
   y: number;
+  pressure?: number;
 }
 
 export interface SketchCanvasRef {
@@ -22,22 +23,24 @@ export interface SketchCanvasRef {
 const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
   ({ onChange, inkColor = "hsl(15, 20%, 18%)", showLines = true, initialData }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [history, setHistory] = useState<ImageData[]>([]);
     const lastPoint = useRef<Point | null>(null);
     const points = useRef<Point[]>([]);
     const currentInkColor = useRef(inkColor);
     const isInitialized = useRef(false);
+    const pixelRatioRef = useRef(1);
 
-    // Update ink color ref when prop changes (without reinitializing canvas)
+    // Update ink color ref when prop changes
     useEffect(() => {
       currentInkColor.current = inkColor;
     }, [inkColor]);
 
     // Get device pixel ratio for sharp rendering
-    const getPixelRatio = () => {
-      return Math.min(window.devicePixelRatio || 1, 3); // Cap at 3x for performance
-    };
+    const getPixelRatio = useCallback(() => {
+      return Math.min(window.devicePixelRatio || 1, 3);
+    }, []);
 
     const drawLines = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
       if (!showLines) return;
@@ -60,6 +63,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
 
       const rect = canvas.getBoundingClientRect();
       const pixelRatio = getPixelRatio();
+      pixelRatioRef.current = pixelRatio;
       
       // Save existing content if preserving
       let existingImage: ImageData | null = null;
@@ -70,7 +74,9 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       // Set canvas size with pixel ratio for sharpness
       canvas.width = rect.width * pixelRatio;
       canvas.height = rect.height * pixelRatio;
-      ctx.scale(pixelRatio, pixelRatio);
+      
+      // Scale context to match pixel ratio
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
       // Enable smoothing
       ctx.imageSmoothingEnabled = true;
@@ -85,19 +91,22 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
 
       // Restore existing content if we had it
       if (existingImage && preserveContent) {
+        // Need to reset transform to put image data
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.putImageData(existingImage, 0, 0);
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       }
 
-      // Set drawing styles - thicker, more solid ink
+      // Set drawing styles
       ctx.strokeStyle = currentInkColor.current;
       ctx.lineWidth = 3.5;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       
       isInitialized.current = true;
-    }, [drawLines]);
+    }, [drawLines, getPixelRatio]);
 
-    // Initial setup - only once
+    // Initial setup
     useEffect(() => {
       initCanvas(false);
       
@@ -108,13 +117,13 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
         if (ctx && canvas) {
           const img = new Image();
           img.onload = () => {
-            const pixelRatio = getPixelRatio();
-            ctx.drawImage(img, 0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
+            const rect = canvas.getBoundingClientRect();
+            ctx.drawImage(img, 0, 0, rect.width, rect.height);
           };
           img.src = initialData;
         }
       }
-    }, []); // Only run once on mount
+    }, []);
 
     // Handle resize
     useEffect(() => {
@@ -122,17 +131,6 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }, [initCanvas]);
-
-    // Handle showLines changes - redraw lines without clearing content
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx || !canvas || !isInitialized.current) return;
-
-      // We need to save and restore to toggle lines
-      // This is a bit complex because lines are under the drawing
-      // For now, just update on next clear - lines toggle is immediate visual
-    }, [showLines]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -151,57 +149,58 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
           ctx.fillStyle = "hsl(38, 35%, 97%)";
           ctx.fillRect(0, 0, rect.width, rect.height);
           drawLines(ctx, rect.width, rect.height);
-          const pixelRatio = getPixelRatio();
-          ctx.drawImage(img, 0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
+          ctx.drawImage(img, 0, 0, rect.width, rect.height);
         };
         img.src = dataUrl;
       }
     }), [drawLines]);
 
-    const getCoordinates = (e: React.MouseEvent | React.TouchEvent): Point => {
+    // Get coordinates relative to canvas, accounting for all transforms
+    const getCoordinates = useCallback((e: PointerEvent): Point => {
       const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
+      if (!canvas) return { x: 0, y: 0, pressure: 0.5 };
 
       const rect = canvas.getBoundingClientRect();
       
-      if ("touches" in e) {
-        const touch = e.touches[0] || e.changedTouches[0];
-        return {
-          x: touch.clientX - rect.left,
-          y: touch.clientY - rect.top,
-        };
-      }
+      // Calculate position relative to canvas element
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
       
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-    };
+      // Get pressure from pointer event (stylus support)
+      const pressure = e.pressure > 0 ? e.pressure : 0.5;
 
-    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-      e.preventDefault();
+      return { x, y, pressure };
+    }, []);
+
+    const startDrawing = useCallback((e: PointerEvent) => {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!ctx || !canvas) return;
 
+      // Capture pointer for this element
+      canvas.setPointerCapture(e.pointerId);
+
       // Save state for undo
+      const pixelRatio = pixelRatioRef.current;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       setHistory(prev => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
       const point = getCoordinates(e);
       lastPoint.current = point;
       points.current = [point];
       
-      // Draw a dot for single clicks - use current ink color
+      // Draw a dot for single clicks
       ctx.beginPath();
-      ctx.arc(point.x, point.y, ctx.lineWidth / 2, 0, Math.PI * 2);
+      const radius = (ctx.lineWidth / 2) * (point.pressure || 0.5);
+      ctx.arc(point.x, point.y, Math.max(radius, 1), 0, Math.PI * 2);
       ctx.fillStyle = currentInkColor.current;
       ctx.fill();
       
       setIsDrawing(true);
-    };
+    }, [getCoordinates]);
 
-    const draw = (e: React.MouseEvent | React.TouchEvent) => {
-      e.preventDefault();
+    const draw = useCallback((e: PointerEvent) => {
       if (!isDrawing) return;
       
       const canvas = canvasRef.current;
@@ -216,9 +215,10 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
         points.current = points.current.slice(-4);
       }
 
-      // Use current ink color for drawing - thicker, more solid ink
+      // Set drawing styles with pressure sensitivity
       ctx.strokeStyle = currentInkColor.current;
-      ctx.lineWidth = 3.5;
+      const baseWidth = 3.5;
+      ctx.lineWidth = baseWidth * (currentPoint.pressure || 0.5) * 1.5;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
@@ -240,20 +240,74 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       }
 
       lastPoint.current = currentPoint;
-    };
+    }, [isDrawing, getCoordinates]);
 
-    const stopDrawing = () => {
+    const stopDrawing = useCallback((e: PointerEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      // Release pointer capture
+      if (canvas.hasPointerCapture(e.pointerId)) {
+        canvas.releasePointerCapture(e.pointerId);
+      }
+
       if (!isDrawing) return;
       
-      const canvas = canvasRef.current;
       setIsDrawing(false);
       lastPoint.current = null;
       points.current = [];
 
-      if (canvas && onChange) {
+      if (onChange) {
         onChange(canvas.toDataURL("image/png", 1.0));
       }
-    };
+    }, [isDrawing, onChange]);
+
+    // Set up pointer event listeners
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const handlePointerDown = (e: PointerEvent) => {
+        e.preventDefault();
+        startDrawing(e);
+      };
+
+      const handlePointerMove = (e: PointerEvent) => {
+        if (isDrawing) {
+          e.preventDefault();
+        }
+        draw(e);
+      };
+
+      const handlePointerUp = (e: PointerEvent) => {
+        stopDrawing(e);
+      };
+
+      const handlePointerCancel = (e: PointerEvent) => {
+        stopDrawing(e);
+      };
+
+      // Prevent context menu on long press
+      const handleContextMenu = (e: Event) => {
+        e.preventDefault();
+      };
+
+      canvas.addEventListener("pointerdown", handlePointerDown);
+      canvas.addEventListener("pointermove", handlePointerMove);
+      canvas.addEventListener("pointerup", handlePointerUp);
+      canvas.addEventListener("pointercancel", handlePointerCancel);
+      canvas.addEventListener("pointerleave", handlePointerUp);
+      canvas.addEventListener("contextmenu", handleContextMenu);
+
+      return () => {
+        canvas.removeEventListener("pointerdown", handlePointerDown);
+        canvas.removeEventListener("pointermove", handlePointerMove);
+        canvas.removeEventListener("pointerup", handlePointerUp);
+        canvas.removeEventListener("pointercancel", handlePointerCancel);
+        canvas.removeEventListener("pointerleave", handlePointerUp);
+        canvas.removeEventListener("contextmenu", handleContextMenu);
+      };
+    }, [isDrawing, startDrawing, draw, stopDrawing]);
 
     const clearCanvas = () => {
       const canvas = canvasRef.current;
@@ -283,7 +337,13 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       if (!ctx || !canvas || history.length === 0) return;
 
       const lastState = history[history.length - 1];
+      const pixelRatio = pixelRatioRef.current;
+      
+      // Reset transform to put image data
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.putImageData(lastState, 0, 0);
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      
       setHistory(prev => prev.slice(0, -1));
 
       if (onChange) {
@@ -303,18 +363,27 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
             Clear
           </Button>
         </div>
-        <div className="overflow-y-auto max-h-[70vh] rounded-xl border border-border bg-paper">
+        <div 
+          ref={containerRef}
+          className="overflow-y-auto max-h-[70vh] rounded-xl border border-border bg-paper"
+          style={{ 
+            // Allow scrolling on container when not drawing
+            touchAction: isDrawing ? "none" : "pan-y",
+            overscrollBehavior: "contain"
+          }}
+        >
           <canvas
             ref={canvasRef}
-            className="w-full h-[500px] cursor-crosshair touch-none"
-            style={{ touchAction: "none" }}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
+            className="w-full h-[500px] cursor-crosshair"
+            style={{ 
+              // Prevent default touch behaviors on canvas itself
+              touchAction: "none",
+              // Prevent text selection
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              // Prevent callout on iOS
+              WebkitTouchCallout: "none"
+            }}
           />
         </div>
       </div>
