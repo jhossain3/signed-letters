@@ -227,14 +227,13 @@ const Index = () => {
             {/* Social links */}
             <div className="flex items-center gap-6">
               <a
-                href="https://www.instagram.com/signed_letters"
+                href="https://www.instagram.com/@signed_letters"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                className="text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Follow us on Instagram"
               >
                 <Instagram className="h-5 w-5" />
-                <span className="text-sm font-body">@signed_letters</span>
               </a>
               <a
                 href="https://www.tiktok.com/@letters_for_later"

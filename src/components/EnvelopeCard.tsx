@@ -37,60 +37,40 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
           
           {isOpenable ? (
             <>
-              {/* Elegant open envelope with letter peeking out */}
-              {/* Letter paper emerging from envelope */}
+              {/* Letter paper peeking out from inside the envelope */}
               <g>
-                {/* Letter shadow for depth */}
+                {/* Main letter paper - positioned inside envelope, just top visible */}
                 <rect
-                  x="18"
-                  y="5"
-                  width="84"
-                  height="50"
-                  rx="1"
-                  fill="hsl(var(--envelope-shadow))"
-                  opacity="0.1"
-                  transform="translate(2, 2)"
-                />
-                {/* Main letter paper */}
-                <rect
-                  x="18"
-                  y="5"
-                  width="84"
-                  height="50"
+                  x="15"
+                  y="22"
+                  width="90"
+                  height="58"
                   rx="1"
                   fill="hsl(var(--background))"
                   stroke="hsl(var(--border))"
                   strokeWidth="0.5"
                 />
-                {/* Elegant handwritten-style lines */}
+                {/* Elegant handwritten-style lines on the visible portion */}
                 <path 
-                  d="M 28 18 Q 45 16, 72 18" 
+                  d="M 25 30 Q 42 28, 68 30" 
                   stroke="hsl(var(--muted-foreground))" 
                   strokeWidth="0.6" 
                   fill="none" 
                   opacity="0.35"
                 />
                 <path 
-                  d="M 28 26 Q 55 24, 88 26" 
+                  d="M 25 38 Q 52 36, 85 38" 
                   stroke="hsl(var(--muted-foreground))" 
                   strokeWidth="0.6" 
                   fill="none" 
                   opacity="0.35"
                 />
                 <path 
-                  d="M 28 34 Q 50 32, 78 34" 
+                  d="M 25 46 Q 48 44, 75 46" 
                   stroke="hsl(var(--muted-foreground))" 
                   strokeWidth="0.6" 
                   fill="none" 
                   opacity="0.35"
-                />
-                {/* Subtle signature flourish */}
-                <path 
-                  d="M 55 44 Q 62 42, 70 44 Q 74 45, 72 46" 
-                  stroke="hsl(var(--muted-foreground))" 
-                  strokeWidth="0.5" 
-                  fill="none" 
-                  opacity="0.3"
                 />
               </g>
               {/* Open envelope flap - gracefully folded back */}
