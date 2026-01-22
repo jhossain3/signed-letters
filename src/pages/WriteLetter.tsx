@@ -63,7 +63,27 @@ const WriteLetter = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
-  const pagesEndRef = useRef<HTMLDivElement>(null);
+  const letterScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleLetterWheelCapture = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    const el = letterScrollRef.current;
+    if (!el) return;
+
+    // If the letter panel can scroll in the wheel direction, prevent the page from scrolling.
+    const deltaY = e.deltaY;
+    const atTop = el.scrollTop <= 0;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+
+    const scrollingDown = deltaY > 0;
+    const scrollingUp = deltaY < 0;
+
+    const canScrollDown = !atBottom;
+    const canScrollUp = !atTop;
+
+    if ((scrollingDown && canScrollDown) || (scrollingUp && canScrollUp)) {
+      e.stopPropagation();
+    }
+  }, []);
 
   // Helper to update a specific page's body
   const updatePageBody = useCallback((pageIndex: number, newBody: string) => {
@@ -82,10 +102,14 @@ const WriteLetter = () => {
   // Add a new page and scroll to it
   const addNewPage = useCallback(() => {
     setPages(prev => [...prev, { body: "", sketchData: "" }]);
-    // Scroll to the new page after it renders
+
+    // IMPORTANT: Only scroll the letter container (not the entire window)
+    // after the new page mounts.
     setTimeout(() => {
-      pagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+      const el = letterScrollRef.current;
+      if (!el) return;
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }, 0);
   }, []);
 
   // Get combined content for saving
@@ -424,6 +448,8 @@ const WriteLetter = () => {
 
           {/* Letter Writing Area - Continuous Scroll */}
           <div 
+            ref={letterScrollRef}
+            onWheelCapture={handleLetterWheelCapture}
             className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[70vh] overflow-y-auto overscroll-contain"
             style={{ backgroundColor: paperColor.value }}
           >
@@ -481,9 +507,6 @@ const WriteLetter = () => {
                     )}
                   </div>
                 ))}
-                
-                {/* Scroll anchor for new pages */}
-                <div ref={pagesEndRef} />
               </div>
 
               {/* Add Page button */}
