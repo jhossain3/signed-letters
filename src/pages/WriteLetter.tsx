@@ -148,6 +148,9 @@ const WriteLetter = () => {
   const setDatePreset = (preset: string) => {
     const now = new Date();
     switch (preset) {
+      case "today":
+        setDeliveryDate(now);
+        break;
       case "1month":
         setDeliveryDate(addMonths(now, 1));
         break;
@@ -601,6 +604,7 @@ const WriteLetter = () => {
             {/* Preset buttons */}
             <div className="flex flex-wrap gap-2 mb-3">
               {[
+                { label: "Today", value: "today" },
                 { label: "1 month", value: "1month" },
                 { label: "1 year", value: "1year" },
                 { label: "5 years", value: "5years" },
@@ -631,9 +635,12 @@ const WriteLetter = () => {
                   selected={deliveryDate}
                   onSelect={setDeliveryDate}
                   disabled={(date) => {
-                    const now = new Date();
-                    const maxDate = addYears(now, 20);
-                    return date < now || date > maxDate;
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const compareDate = new Date(date);
+                    compareDate.setHours(0, 0, 0, 0);
+                    const maxDate = addYears(today, 20);
+                    return compareDate < today || compareDate > maxDate;
                   }}
                   initialFocus
                 />
