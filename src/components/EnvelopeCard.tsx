@@ -37,56 +37,12 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
           
           {isOpenable ? (
             <>
-              {/* Letter paper peeking out from inside the envelope */}
-              <g>
-                {/* Main letter paper - positioned inside envelope, just top visible */}
-                <rect
-                  x="15"
-                  y="22"
-                  width="90"
-                  height="58"
-                  rx="1"
-                  fill="hsl(var(--background))"
-                  stroke="hsl(var(--border))"
-                  strokeWidth="0.5"
-                />
-                {/* Elegant handwritten-style lines on the visible portion */}
-                <path 
-                  d="M 25 30 Q 42 28, 68 30" 
-                  stroke="hsl(var(--muted-foreground))" 
-                  strokeWidth="0.6" 
-                  fill="none" 
-                  opacity="0.35"
-                />
-                <path 
-                  d="M 25 38 Q 52 36, 85 38" 
-                  stroke="hsl(var(--muted-foreground))" 
-                  strokeWidth="0.6" 
-                  fill="none" 
-                  opacity="0.35"
-                />
-                <path 
-                  d="M 25 46 Q 48 44, 75 46" 
-                  stroke="hsl(var(--muted-foreground))" 
-                  strokeWidth="0.6" 
-                  fill="none" 
-                  opacity="0.35"
-                />
-              </g>
-              {/* Open envelope flap - gracefully folded back */}
+              {/* Closed envelope flap without seal - simple closed look */}
               <path
-                d="M 5 24 Q 5 18, 12 15 L 60 -8 L 108 15 Q 115 18, 115 24"
+                d="M 5 20 L 60 50 L 115 20"
                 fill="hsl(var(--cream))"
                 stroke="hsl(var(--border))"
-                strokeWidth="0.8"
-              />
-              {/* Inner flap shadow line */}
-              <path
-                d="M 12 18 L 60 -2 L 108 18"
-                stroke="hsl(var(--border))"
-                strokeWidth="0.4"
-                fill="none"
-                opacity="0.5"
+                strokeWidth="1"
               />
             </>
           ) : (

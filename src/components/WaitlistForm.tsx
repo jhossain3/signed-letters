@@ -81,7 +81,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
             </svg>
           </a>
           <a
-            href="https://www.instagram.com/@signed_letters"
+            href="https://www.instagram.com/signed_letters"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"

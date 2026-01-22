@@ -97,10 +97,15 @@ const Vault = () => {
   // Use demo letters when auth is disabled, otherwise use real letters
   const letters = FEATURE_FLAGS.AUTH_ENABLED ? dbLetters : DEMO_LETTERS;
 
-  const filteredLetters = letters.filter((letter) => {
-    if (activeTab === "sent") return letter.type === "sent";
-    return letter.type === "received";
-  });
+  const filteredLetters = letters
+    .filter((letter) => {
+      if (activeTab === "sent") return letter.type === "sent";
+      return letter.type === "received";
+    })
+    .sort((a, b) => {
+      // Sort by delivery date (date of receipt) - newest first
+      return new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime();
+    });
 
   const handleEnvelopeClick = (letter: Letter) => {
     if (isLetterOpenable(letter)) {
@@ -212,7 +217,7 @@ const Vault = () => {
 
       <footer className="relative z-10 mt-16 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6 flex justify-center gap-6">
-          <a href="https://www.instagram.com/@signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
+          <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
           <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
         </div>
       </footer>
