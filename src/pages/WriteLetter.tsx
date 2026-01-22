@@ -61,6 +61,9 @@ const WriteLetter = () => {
   const [inkColor, setInkColor] = useState(INK_COLORS[0]);
   const [showLines, setShowLines] = useState(true);
   const [isSealing, setIsSealing] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
@@ -163,6 +166,33 @@ const WriteLetter = () => {
       case "10years":
         setDeliveryDate(addYears(now, 10));
         break;
+    }
+  };
+
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsSubmitting(true);
+
+    const formData = new URLSearchParams();
+    formData.append("entry.1045781291", email);
+
+    try {
+      await fetch(
+        "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
+        {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData,
+        }
+      );
+      setIsSubscribed(true);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -723,23 +753,50 @@ const WriteLetter = () => {
       {/* Footer */}
       <footer className="relative z-10 mt-16 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-center gap-6">
-            <a
-              href="https://www.instagram.com/signed_letters"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Instagram className="h-5 w-5" />
-            </a>
-            <a
-              href="https://www.tiktok.com/@letters_for_later"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <TikTokIcon />
-            </a>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+            {/* Compact waitlist form */}
+            {!isSubscribed ? (
+              <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-9 w-40 sm:w-48 text-sm rounded-md px-3 bg-card/80 border-border focus:border-primary transition-colors"
+                />
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  size="sm"
+                  className="h-9 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
+                >
+                  {isSubmitting ? "..." : "Join Waitlist"}
+                </Button>
+              </form>
+            ) : (
+              <span className="text-primary text-sm font-medium">✓ You're on the list</span>
+            )}
+
+            {/* Social links */}
+            <div className="flex items-center gap-6">
+              <a
+                href="https://www.instagram.com/signed_letters"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@letters_for_later"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <TikTokIcon />
+              </a>
+            </div>
           </div>
         </div>
       </footer>
