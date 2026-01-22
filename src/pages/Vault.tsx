@@ -8,7 +8,8 @@ import EnvelopeOpening from "@/components/EnvelopeOpening";
 import { Button } from "@/components/ui/button";
 import { useLetters, Letter } from "@/hooks/useLetters";
 import { useAuth } from "@/contexts/AuthContext";
-import { format } from "date-fns";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
+import { format, addDays, subDays } from "date-fns";
 
 const TikTokIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -16,13 +17,85 @@ const TikTokIcon = () => (
   </svg>
 );
 
+// Demo letters for when auth is disabled
+const DEMO_LETTERS: Letter[] = [
+  {
+    id: "demo-sent-1",
+    title: "Letter to Future Me",
+    body: "Dear future me, I hope you're doing well and have achieved everything you set out to do...",
+    date: "January 15, 2026",
+    deliveryDate: addDays(new Date(), 30).toISOString(),
+    signature: "With hope",
+    recipientType: "myself",
+    type: "sent",
+    createdAt: subDays(new Date(), 5).toISOString(),
+    photos: [],
+    isTyped: true,
+  },
+  {
+    id: "demo-sent-2",
+    title: "Graduation Wishes",
+    body: "Congratulations on your graduation! Remember how hard you worked to get here...",
+    date: "January 10, 2026",
+    deliveryDate: subDays(new Date(), 2).toISOString(), // Openable
+    signature: "Your past self",
+    recipientType: "myself",
+    type: "sent",
+    createdAt: subDays(new Date(), 10).toISOString(),
+    photos: [],
+    isTyped: true,
+  },
+  {
+    id: "demo-sent-3",
+    title: "Birthday Surprise",
+    body: "Happy birthday! I wrote this months ago hoping you'd have an amazing day...",
+    date: "December 20, 2025",
+    deliveryDate: addDays(new Date(), 180).toISOString(),
+    signature: "Past You",
+    recipientType: "myself",
+    type: "sent",
+    createdAt: subDays(new Date(), 30).toISOString(),
+    photos: [],
+    isTyped: true,
+  },
+  {
+    id: "demo-received-1",
+    title: "From Mom",
+    body: "My dearest, I wanted to write you something special that you can read whenever you need encouragement...",
+    date: "January 12, 2026",
+    deliveryDate: subDays(new Date(), 1).toISOString(), // Openable
+    signature: "Love, Mom",
+    recipientType: "someone",
+    type: "received",
+    createdAt: subDays(new Date(), 7).toISOString(),
+    photos: [],
+    isTyped: true,
+  },
+  {
+    id: "demo-received-2",
+    title: "Anniversary Note",
+    body: "To my love, by the time you read this, we'll have been together for another wonderful year...",
+    date: "January 5, 2026",
+    deliveryDate: addDays(new Date(), 60).toISOString(),
+    signature: "Forever yours",
+    recipientType: "someone",
+    type: "received",
+    createdAt: subDays(new Date(), 14).toISOString(),
+    photos: [],
+    isTyped: true,
+  },
+];
+
 const Vault = () => {
   const [activeTab, setActiveTab] = useState<"received" | "sent">("sent");
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   
-  const { letters, isLoading, isLetterOpenable } = useLetters();
+  const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
   const { signOut, user } = useAuth();
+
+  // Use demo letters when auth is disabled, otherwise use real letters
+  const letters = FEATURE_FLAGS.AUTH_ENABLED ? dbLetters : DEMO_LETTERS;
 
   const filteredLetters = letters.filter((letter) => {
     if (activeTab === "sent") return letter.type === "sent";

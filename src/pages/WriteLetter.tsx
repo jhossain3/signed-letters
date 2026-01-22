@@ -424,7 +424,7 @@ const WriteLetter = () => {
 
           {/* Letter Writing Area - Continuous Scroll */}
           <div 
-            className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[70vh] overflow-y-auto"
+            className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[70vh] overflow-y-auto overscroll-contain"
             style={{ backgroundColor: paperColor.value }}
           >
             <div className="p-6 md:p-8">
