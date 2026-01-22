@@ -44,32 +44,22 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
                 stroke="hsl(var(--border))"
                 strokeWidth="1"
               />
-              {/* Wax seal at top for open letters */}
-              <g transform="translate(60, 8)">
-                <circle 
-                  cx="0" 
-                  cy="0" 
-                  r="10" 
-                  className="wax-seal opacity-70"
-                  fill="hsl(var(--seal-maroon))"
-                />
-                {/* Logo mark - horizontal line + dot */}
-                <line
-                  x1="-4"
-                  y1="0"
-                  x2="2"
-                  y2="0"
-                  stroke="hsl(var(--primary-foreground))"
-                  strokeWidth="1.5"
-                  strokeLinecap="square"
-                />
-                <circle
-                  cx="5"
-                  cy="-2"
-                  r="1.5"
-                  fill="hsl(var(--primary-foreground))"
-                />
-              </g>
+              {/* Letter peeking out of open envelope */}
+              <rect
+                x="15"
+                y="10"
+                width="90"
+                height="55"
+                rx="2"
+                fill="hsl(var(--background))"
+                stroke="hsl(var(--border))"
+                strokeWidth="0.5"
+              />
+              {/* Lines on letter to indicate text */}
+              <line x1="22" y1="22" x2="75" y2="22" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
+              <line x1="22" y1="30" x2="88" y2="30" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
+              <line x1="22" y1="38" x2="80" y2="38" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
+              <line x1="22" y1="46" x2="60" y2="46" stroke="hsl(var(--muted-foreground))" strokeWidth="0.8" opacity="0.4" />
             </>
           ) : (
             <>

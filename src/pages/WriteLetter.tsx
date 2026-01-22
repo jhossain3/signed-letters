@@ -49,8 +49,9 @@ const WriteLetter = () => {
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
   const [inputMode, setInputMode] = useState<"type" | "sketch">("type");
   const [title, setTitle] = useState("");
-  // Multi-page support: array of page content
-  const [pages, setPages] = useState<Array<{ body: string; sketchData: string }>>([{ body: "", sketchData: "" }]);
+  // Separate page lists for text and sketch modes
+  const [textPages, setTextPages] = useState<string[]>([""]);
+  const [sketchPages, setSketchPages] = useState<string[]>([""]);
   const [deliveryDate, setDeliveryDate] = useState<Date>();
   const [recipientEmail, setRecipientEmail] = useState("");
   const [signature, setSignature] = useState("");
@@ -85,36 +86,42 @@ const WriteLetter = () => {
     }
   }, []);
 
-  // Helper to update a specific page's body
-  const updatePageBody = useCallback((pageIndex: number, newBody: string) => {
-    setPages(prev => prev.map((page, idx) => 
-      idx === pageIndex ? { ...page, body: newBody } : page
+  // Helper to update a specific text page
+  const updateTextPage = useCallback((pageIndex: number, newBody: string) => {
+    setTextPages(prev => prev.map((page, idx) => 
+      idx === pageIndex ? newBody : page
     ));
   }, []);
 
-  // Helper to update a specific page's sketch
-  const updatePageSketch = useCallback((pageIndex: number, newSketch: string) => {
-    setPages(prev => prev.map((page, idx) => 
-      idx === pageIndex ? { ...page, sketchData: newSketch } : page
+  // Helper to update a specific sketch page
+  const updateSketchPage = useCallback((pageIndex: number, newSketch: string) => {
+    setSketchPages(prev => prev.map((page, idx) => 
+      idx === pageIndex ? newSketch : page
     ));
   }, []);
 
-  // Add a new page and scroll to it
+  // Add a new page to the current mode only
   const addNewPage = useCallback(() => {
-    setPages(prev => [...prev, { body: "", sketchData: "" }]);
+    if (inputMode === "type") {
+      setTextPages(prev => [...prev, ""]);
+    } else {
+      setSketchPages(prev => [...prev, ""]);
+    }
 
     // IMPORTANT: Only scroll the letter container (not the entire window)
-    // after the new page mounts.
     setTimeout(() => {
       const el = letterScrollRef.current;
       if (!el) return;
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }, 0);
-  }, []);
+  }, [inputMode]);
+
+  // Get the pages for the current mode
+  const currentPages = inputMode === "type" ? textPages : sketchPages;
 
   // Get combined content for saving
-  const getCombinedBody = () => pages.map(p => p.body).join("\n\n--- Page Break ---\n\n");
-  const getCombinedSketch = () => pages[0]?.sketchData || ""; // For now, use first page sketch
+  const getCombinedBody = () => textPages.join("\n\n--- Page Break ---\n\n");
+  const getCombinedSketch = () => sketchPages[0] || ""; // For now, use first page sketch
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -465,27 +472,44 @@ const WriteLetter = () => {
 
               {/* All Pages - Continuous Scroll */}
               <div className="space-y-8">
-                {pages.map((page, pageIndex) => (
-                  <div key={pageIndex} className="relative">
-                    {/* Page header */}
-                    {pages.length > 1 && (
-                      <div className="text-xs text-muted-foreground/60 mb-2 font-body">
-                        Page {pageIndex + 1}
-                      </div>
-                    )}
-                    
-                    {/* Content Area */}
-                    {inputMode === "type" ? (
+                {inputMode === "type" ? (
+                  // Text mode pages
+                  textPages.map((pageContent, pageIndex) => (
+                    <div key={`text-${pageIndex}`} className="relative">
+                      {/* Page header */}
+                      {textPages.length > 1 && (
+                        <div className="text-xs text-muted-foreground/60 mb-2 font-body">
+                          Page {pageIndex + 1}
+                        </div>
+                      )}
+                      
                       <Textarea
                         placeholder={pageIndex === 0 ? "Dear future me..." : "Continue writing..."}
-                        value={page.body}
-                        onChange={(e) => updatePageBody(pageIndex, e.target.value)}
+                        value={pageContent}
+                        onChange={(e) => updateTextPage(pageIndex, e.target.value)}
                         className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
                           showLines ? "lined-paper" : ""
                         }`}
                         style={{ color: inkColor.value }}
                       />
-                    ) : (
+                      
+                      {/* Page divider */}
+                      {pageIndex < textPages.length - 1 && (
+                        <div className="border-b border-dashed border-border/40 mt-6" />
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  // Sketch mode pages
+                  sketchPages.map((pageContent, pageIndex) => (
+                    <div key={`sketch-${pageIndex}`} className="relative">
+                      {/* Page header */}
+                      {sketchPages.length > 1 && (
+                        <div className="text-xs text-muted-foreground/60 mb-2 font-body">
+                          Page {pageIndex + 1}
+                        </div>
+                      )}
+                      
                       <SketchCanvas 
                         ref={(ref) => {
                           if (ref) {
@@ -494,25 +518,25 @@ const WriteLetter = () => {
                             sketchCanvasRefs.current.delete(pageIndex);
                           }
                         }}
-                        onChange={(data) => updatePageSketch(pageIndex, data)}
+                        onChange={(data) => updateSketchPage(pageIndex, data)}
                         inkColor={inkColor.value}
                         showLines={showLines}
-                        initialData={page.sketchData}
+                        initialData={pageContent}
                       />
-                    )}
-                    
-                    {/* Page divider */}
-                    {pageIndex < pages.length - 1 && (
-                      <div className="border-b border-dashed border-border/40 mt-6" />
-                    )}
-                  </div>
-                ))}
+                      
+                      {/* Page divider */}
+                      {pageIndex < sketchPages.length - 1 && (
+                        <div className="border-b border-dashed border-border/40 mt-6" />
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Add Page button */}
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30">
                 <span className="text-sm text-muted-foreground font-body">
-                  {pages.length} {pages.length === 1 ? "page" : "pages"}
+                  {currentPages.length} {currentPages.length === 1 ? "page" : "pages"}
                 </span>
                 <Button
                   type="button"
@@ -694,7 +718,7 @@ const WriteLetter = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-center gap-6">
             <a
-              href="https://www.instagram.com/signed.app"
+              href="https://www.instagram.com/signed_letters"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
