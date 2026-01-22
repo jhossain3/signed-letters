@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
@@ -52,8 +53,8 @@ const Navbar = () => {
             </Link>
           </Button>
 
-          {/* Sign out button - only show when logged in */}
-          {user && (
+          {/* Sign out button - only show when logged in and auth is enabled */}
+          {FEATURE_FLAGS.AUTH_ENABLED && user && (
             <Button
               variant="ghost"
               size="icon"

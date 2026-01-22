@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
 import Index from "./pages/Index";
 import WriteLetter from "./pages/WriteLetter";
 import Vault from "./pages/Vault";
@@ -27,21 +28,31 @@ const App = () => (
             <div className="pt-16">
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
+                {FEATURE_FLAGS.AUTH_ENABLED && (
+                  <Route path="/auth" element={<Auth />} />
+                )}
                 <Route
                   path="/write"
                   element={
-                    <ProtectedRoute>
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <WriteLetter />
+                      </ProtectedRoute>
+                    ) : (
                       <WriteLetter />
-                    </ProtectedRoute>
+                    )
                   }
                 />
                 <Route
                   path="/vault"
                   element={
-                    <ProtectedRoute>
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <Vault />
+                      </ProtectedRoute>
+                    ) : (
                       <Vault />
-                    </ProtectedRoute>
+                    )
                   }
                 />
                 <Route path="*" element={<NotFound />} />
