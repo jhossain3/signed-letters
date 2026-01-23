@@ -24,9 +24,10 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
     const [currentColor, setCurrentColor] = useState(inkColor);
     const [canUndo, setCanUndo] = useState(false);
     
+    // Use a unique instance ID to track this specific canvas instance
+    const instanceId = useRef(Math.random().toString(36).substring(7));
     // Track if we've already loaded initial data to prevent re-loading
     const hasLoadedInitialData = useRef(false);
-    const isInternalChange = useRef(false);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // Update color when inkColor prop changes
@@ -50,14 +51,13 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       }
     }, []); // Empty dependency - only run once on mount
 
-    // Debounced save to prevent performance issues
+    // Debounced save to prevent performance issues - each instance saves its own data
     const debouncedSave = useCallback((paths: unknown[]) => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
       debounceTimer.current = setTimeout(() => {
         if (onChange) {
-          isInternalChange.current = true;
           onChange(JSON.stringify(paths));
         }
       }, 300); // Debounce by 300ms
