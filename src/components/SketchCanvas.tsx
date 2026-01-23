@@ -9,6 +9,11 @@ interface SketchCanvasProps {
   showLines?: boolean;
   initialData?: string;
   paperColor?: string;
+  /**
+   * IMPORTANT: When rendering multiple canvases on the same page, each instance
+   * MUST have a stable unique id to avoid SVG <defs>/mask collisions (eraser/undo bleeding).
+   */
+  canvasId?: string;
 }
 
 export interface SketchCanvasRef {
@@ -18,7 +23,17 @@ export interface SketchCanvasRef {
 }
 
 const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
-  ({ onChange, inkColor = "hsl(15, 20%, 18%)", showLines = true, initialData, paperColor = "hsl(38, 35%, 97%)" }, ref) => {
+  (
+    {
+      onChange,
+      inkColor = "hsl(15, 20%, 18%)",
+      showLines = true,
+      initialData,
+      paperColor = "hsl(38, 35%, 97%)",
+      canvasId,
+    },
+    ref,
+  ) => {
     const canvasRef = useRef<ReactSketchCanvasRef>(null);
     const [isEraser, setIsEraser] = useState(false);
     const [currentColor, setCurrentColor] = useState(inkColor);
@@ -207,6 +222,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
         >
           <ReactSketchCanvas
             ref={canvasRef}
+            id={canvasId ?? `sketch-${instanceId.current}`}
             width="100%"
             height="500px"
             strokeWidth={2}
