@@ -572,9 +572,9 @@ const WriteLetter = () => {
                     </div>
                   ))
                 ) : (
-                  // Sketch mode pages
+                  // Sketch mode pages - use stable keys that don't cause remounting
                   sketchPages.map((pageContent, pageIndex) => (
-                    <div key={`sketch-${pageIndex}`} className="relative">
+                    <div key={`sketch-page-${pageIndex}`} className="relative">
                       {/* Page header with delete button */}
                       {sketchPages.length > 1 && (
                         <div className="flex items-center justify-between mb-2">
