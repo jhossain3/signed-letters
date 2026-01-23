@@ -160,12 +160,12 @@ const Index = () => {
 
             {/* Right side - Editorial photograph */}
             <motion.div
-              className="relative hidden lg:block"
+              className="relative hidden lg:block -mr-12 lg:-mr-24 xl:-mr-32"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             >
-              <div className="relative aspect-[4/5] max-w-2xl ml-auto -mr-12 overflow-hidden rounded-sm">
+              <div className="relative aspect-[4/5] w-full ml-auto overflow-hidden rounded-sm">
                 {/* Soft overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent z-10" />
                 <img src={heroImage} alt="Person writing in a notebook" className="w-full h-full object-cover" />
