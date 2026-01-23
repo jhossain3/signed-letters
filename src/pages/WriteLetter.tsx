@@ -233,7 +233,7 @@ const WriteLetter = () => {
     if (inputMode === "sketch") {
       const firstRef = sketchCanvasRefs.current.get(0);
       if (firstRef) {
-        finalSketchData = firstRef.getDataUrl();
+        finalSketchData = await firstRef.getDataUrl();
       }
     }
     
