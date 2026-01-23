@@ -206,47 +206,6 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
             </PopoverContent>
           </Popover>
 
-          {/* Color Picker */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                className="rounded-full gap-2"
-                title="Color"
-              >
-                <div 
-                  className="w-4 h-4 rounded-full border border-border"
-                  style={{ backgroundColor: currentColor }}
-                />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-3" align="start">
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Ink Color</div>
-                <div className="flex gap-2">
-                  {SKETCH_COLORS.map((color) => (
-                    <button
-                      key={color.name}
-                      type="button"
-                      onClick={() => {
-                        setCurrentColor(color.value);
-                        setIsEraser(false);
-                        canvasRef.current?.eraseMode(false);
-                      }}
-                      className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${
-                        currentColor === color.value ? "border-primary ring-2 ring-primary/30" : "border-border"
-                      }`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    />
-                  ))}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
           <div className="flex-1" />
 
           {/* Undo */}
