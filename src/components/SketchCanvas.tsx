@@ -23,38 +23,55 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
     const [isEraser, setIsEraser] = useState(false);
     const [currentColor, setCurrentColor] = useState(inkColor);
     const [canUndo, setCanUndo] = useState(false);
-    const isLoadingData = useRef(false);
+    
+    // Track if we've already loaded initial data to prevent re-loading
+    const hasLoadedInitialData = useRef(false);
+    const isInternalChange = useRef(false);
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // Update color when inkColor prop changes
     useEffect(() => {
       setCurrentColor(inkColor);
     }, [inkColor]);
 
-    // Load initial data when provided
+    // Load initial data ONLY once on mount
     useEffect(() => {
-      if (initialData && canvasRef.current && !isLoadingData.current) {
-        isLoadingData.current = true;
+      if (initialData && canvasRef.current && !hasLoadedInitialData.current) {
+        hasLoadedInitialData.current = true;
         try {
           const paths = JSON.parse(initialData);
           if (Array.isArray(paths) && paths.length > 0) {
             canvasRef.current.loadPaths(paths);
+            setCanUndo(true);
           }
         } catch {
           console.log("Could not parse sketch data as paths");
         }
-        isLoadingData.current = false;
       }
-    }, [initialData]);
+    }, []); // Empty dependency - only run once on mount
 
-    // Handle stroke changes to enable/disable undo
+    // Debounced save to prevent performance issues
+    const debouncedSave = useCallback((paths: unknown[]) => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      debounceTimer.current = setTimeout(() => {
+        if (onChange) {
+          isInternalChange.current = true;
+          onChange(JSON.stringify(paths));
+        }
+      }, 300); // Debounce by 300ms
+    }, [onChange]);
+
+    // Handle stroke changes
     const handleStroke = useCallback(() => {
       setCanUndo(true);
-      if (canvasRef.current && onChange) {
+      if (canvasRef.current) {
         canvasRef.current.exportPaths().then((paths) => {
-          onChange(JSON.stringify(paths));
+          debouncedSave(paths);
         });
       }
-    }, [onChange]);
+    }, [debouncedSave]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -83,34 +100,32 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       }
     }), []);
 
-    const handleUndo = () => {
+    const handleUndo = useCallback(() => {
       canvasRef.current?.undo();
       canvasRef.current?.exportPaths().then((paths) => {
         setCanUndo(paths.length > 0);
-        if (onChange) {
-          onChange(JSON.stringify(paths));
-        }
+        debouncedSave(paths);
       });
-    };
+    }, [debouncedSave]);
 
-    const handleClear = () => {
+    const handleClear = useCallback(() => {
       canvasRef.current?.clearCanvas();
       setCanUndo(false);
       if (onChange) {
         onChange(JSON.stringify([]));
       }
-    };
+    }, [onChange]);
 
-    const toggleEraser = () => {
+    const toggleEraser = useCallback(() => {
       const newEraserState = !isEraser;
       setIsEraser(newEraserState);
       canvasRef.current?.eraseMode(newEraserState);
-    };
+    }, [isEraser]);
 
-    const selectPen = () => {
+    const selectPen = useCallback(() => {
       setIsEraser(false);
       canvasRef.current?.eraseMode(false);
-    };
+    }, []);
 
     // Generate line pattern for background
     const linePattern = showLines ? `
