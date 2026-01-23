@@ -769,7 +769,7 @@ const WriteLetter = () => {
                   type="submit"
                   disabled={isSubmitting}
                   size="sm"
-                  className="h-9 px-4 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground text-sm"
+                  className="h-9 px-4 rounded-md bg-muted hover:bg-accent text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   {isSubmitting ? "..." : "Join Waitlist"}
                 </Button>
