@@ -258,7 +258,7 @@ const Vault = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-9 w-40 sm:w-48 text-sm rounded-md px-3 bg-card/80 border-border focus:border-primary transition-colors"
+                  className="h-9 w-52 sm:w-56 text-sm rounded-md pl-4 pr-3 bg-card/80 border-border focus:border-primary transition-colors"
                 />
                 <Button
                   type="submit"
