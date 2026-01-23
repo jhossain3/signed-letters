@@ -604,6 +604,7 @@ const WriteLetter = () => {
                             sketchCanvasRefs.current.delete(pageIndex);
                           }
                         }}
+                        canvasId={`sketch-page-${pageIndex}`}
                         onChange={(data) => updateSketchPage(pageIndex, data)}
                         inkColor={inkColor.value}
                         showLines={showLines}
