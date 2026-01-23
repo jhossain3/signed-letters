@@ -3,5 +3,5 @@
 
 export const FEATURE_FLAGS = {
   // When false, auth is disabled and all routes are public
-  AUTH_ENABLED: false,
+  AUTH_ENABLED: true,
 } as const;
