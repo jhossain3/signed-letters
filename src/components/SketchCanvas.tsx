@@ -1,391 +1,311 @@
-import { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from "react";
-import { Eraser, Undo2 } from "lucide-react";
+import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback } from "react";
+import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
+import { Eraser, Undo2, Trash2, Pen, Circle } from "lucide-react";
 import { Button } from "./ui/button";
+import { Slider } from "./ui/slider";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./ui/popover";
 
 interface SketchCanvasProps {
   onChange?: (dataUrl: string) => void;
   inkColor?: string;
   showLines?: boolean;
   initialData?: string;
-}
-
-interface Point {
-  x: number;
-  y: number;
-  pressure?: number;
+  paperColor?: string;
 }
 
 export interface SketchCanvasRef {
-  getDataUrl: () => string;
+  getDataUrl: () => Promise<string>;
   loadData: (dataUrl: string) => void;
+  clear: () => void;
 }
 
-const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
-  ({ onChange, inkColor = "hsl(15, 20%, 18%)", showLines = true, initialData }, ref) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [history, setHistory] = useState<ImageData[]>([]);
-    const lastPoint = useRef<Point | null>(null);
-    const points = useRef<Point[]>([]);
-    const currentInkColor = useRef(inkColor);
-    const isInitialized = useRef(false);
-    const pixelRatioRef = useRef(1);
+// Theme-complementary colors matching the design system
+const SKETCH_COLORS = [
+  { name: "Ink", value: "hsl(15, 20%, 18%)" },
+  { name: "Maroon", value: "hsl(358, 45%, 35%)" },
+  { name: "Charcoal", value: "hsl(20, 8%, 30%)" },
+  { name: "Navy", value: "hsl(220, 40%, 25%)" },
+  { name: "Forest", value: "hsl(160, 35%, 25%)" },
+  { name: "Plum", value: "hsl(280, 30%, 35%)" },
+];
 
-    // Update ink color ref when prop changes
+const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
+  ({ onChange, inkColor = "hsl(15, 20%, 18%)", showLines = true, initialData, paperColor = "hsl(38, 35%, 97%)" }, ref) => {
+    const canvasRef = useRef<ReactSketchCanvasRef>(null);
+    const [isEraser, setIsEraser] = useState(false);
+    const [strokeWidth, setStrokeWidth] = useState(4);
+    const [currentColor, setCurrentColor] = useState(inkColor);
+    const [canUndo, setCanUndo] = useState(false);
+    const isLoadingData = useRef(false);
+
+    // Update color when inkColor prop changes
     useEffect(() => {
-      currentInkColor.current = inkColor;
+      setCurrentColor(inkColor);
     }, [inkColor]);
 
-    // Get device pixel ratio for sharp rendering
-    const getPixelRatio = useCallback(() => {
-      return Math.min(window.devicePixelRatio || 1, 3);
-    }, []);
-
-    const drawLines = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
-      if (!showLines) return;
-      ctx.strokeStyle = "hsl(30, 15%, 88%)";
-      ctx.lineWidth = 1;
-      for (let y = 32; y < height; y += 32) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-    }, [showLines]);
-
-    const initCanvas = useCallback((preserveContent = false) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d", { alpha: false });
-      if (!ctx) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const pixelRatio = getPixelRatio();
-      pixelRatioRef.current = pixelRatio;
-      
-      // Save existing content if preserving
-      let existingImage: ImageData | null = null;
-      if (preserveContent && isInitialized.current) {
-        existingImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      }
-      
-      // Set canvas size with pixel ratio for sharpness
-      canvas.width = rect.width * pixelRatio;
-      canvas.height = rect.height * pixelRatio;
-      
-      // Scale context to match pixel ratio
-      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
-      // Enable smoothing
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-
-      // Fill with paper color
-      ctx.fillStyle = "hsl(38, 35%, 97%)";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-
-      // Draw lines if enabled
-      drawLines(ctx, rect.width, rect.height);
-
-      // Restore existing content if we had it
-      if (existingImage && preserveContent) {
-        // Need to reset transform to put image data
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.putImageData(existingImage, 0, 0);
-        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      }
-
-      // Set drawing styles
-      ctx.strokeStyle = currentInkColor.current;
-      ctx.lineWidth = 3.5;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      
-      isInitialized.current = true;
-    }, [drawLines, getPixelRatio]);
-
-    // Initial setup
+    // Load initial data when provided
     useEffect(() => {
-      initCanvas(false);
-      
-      // Load initial data if provided
-      if (initialData) {
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext("2d");
-        if (ctx && canvas) {
-          const img = new Image();
-          img.onload = () => {
-            const rect = canvas.getBoundingClientRect();
-            ctx.drawImage(img, 0, 0, rect.width, rect.height);
-          };
-          img.src = initialData;
+      if (initialData && canvasRef.current && !isLoadingData.current) {
+        isLoadingData.current = true;
+        // Parse the paths from the stored JSON data
+        try {
+          const paths = JSON.parse(initialData);
+          if (Array.isArray(paths) && paths.length > 0) {
+            canvasRef.current.loadPaths(paths);
+          }
+        } catch {
+          // If not JSON, it might be an old data URL format - ignore
+          console.log("Could not parse sketch data as paths");
         }
+        isLoadingData.current = false;
       }
-    }, []);
+    }, [initialData]);
 
-    // Handle resize
-    useEffect(() => {
-      const handleResize = () => initCanvas(true);
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, [initCanvas]);
+    // Handle stroke changes to enable/disable undo
+    const handleStroke = useCallback(() => {
+      setCanUndo(true);
+      // Save paths as JSON for persistence
+      if (canvasRef.current && onChange) {
+        canvasRef.current.exportPaths().then((paths) => {
+          onChange(JSON.stringify(paths));
+        });
+      }
+    }, [onChange]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
-      getDataUrl: () => {
-        const canvas = canvasRef.current;
-        return canvas ? canvas.toDataURL("image/png", 1.0) : "";
+      getDataUrl: async () => {
+        if (canvasRef.current) {
+          const paths = await canvasRef.current.exportPaths();
+          return JSON.stringify(paths);
+        }
+        return "";
       },
-      loadData: (dataUrl: string) => {
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext("2d");
-        if (!ctx || !canvas) return;
-        
-        const img = new Image();
-        img.onload = () => {
-          const rect = canvas.getBoundingClientRect();
-          ctx.fillStyle = "hsl(38, 35%, 97%)";
-          ctx.fillRect(0, 0, rect.width, rect.height);
-          drawLines(ctx, rect.width, rect.height);
-          ctx.drawImage(img, 0, 0, rect.width, rect.height);
-        };
-        img.src = dataUrl;
-      }
-    }), [drawLines]);
-
-    // Get coordinates relative to canvas, accounting for all transforms
-    const getCoordinates = useCallback((e: PointerEvent): Point => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0, pressure: 0.5 };
-
-      const rect = canvas.getBoundingClientRect();
-      
-      // Calculate position relative to canvas element
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      // Get pressure from pointer event (stylus support)
-      const pressure = e.pressure > 0 ? e.pressure : 0.5;
-
-      return { x, y, pressure };
-    }, []);
-
-    const startDrawing = useCallback((e: PointerEvent) => {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx || !canvas) return;
-
-      // Capture pointer for this element
-      canvas.setPointerCapture(e.pointerId);
-
-      // Save state for undo
-      const pixelRatio = pixelRatioRef.current;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      setHistory(prev => [...prev, ctx.getImageData(0, 0, canvas.width, canvas.height)]);
-      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
-      const point = getCoordinates(e);
-      lastPoint.current = point;
-      points.current = [point];
-      
-      // Draw a dot for single clicks
-      ctx.beginPath();
-      const radius = (ctx.lineWidth / 2) * (point.pressure || 0.5);
-      ctx.arc(point.x, point.y, Math.max(radius, 1), 0, Math.PI * 2);
-      ctx.fillStyle = currentInkColor.current;
-      ctx.fill();
-      
-      setIsDrawing(true);
-    }, [getCoordinates]);
-
-    const draw = useCallback((e: PointerEvent) => {
-      if (!isDrawing) return;
-      
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx || !lastPoint.current) return;
-
-      const currentPoint = getCoordinates(e);
-      points.current.push(currentPoint);
-
-      // Keep only recent points for smooth curve calculation
-      if (points.current.length > 4) {
-        points.current = points.current.slice(-4);
-      }
-
-      // Set drawing styles with pressure sensitivity
-      ctx.strokeStyle = currentInkColor.current;
-      const baseWidth = 3.5;
-      ctx.lineWidth = baseWidth * (currentPoint.pressure || 0.5) * 1.5;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      // Draw smooth line through recent points
-      if (points.current.length >= 2) {
-        const p1 = points.current[points.current.length - 2];
-        const p2 = currentPoint;
-        
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        
-        // Use midpoint for smoother curves
-        if (points.current.length >= 3) {
-          ctx.quadraticCurveTo(p1.x, p1.y, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-        } else {
-          ctx.lineTo(p2.x, p2.y);
+      loadData: (data: string) => {
+        if (canvasRef.current) {
+          try {
+            const paths = JSON.parse(data);
+            if (Array.isArray(paths)) {
+              canvasRef.current.loadPaths(paths);
+            }
+          } catch {
+            console.log("Could not load sketch data");
+          }
         }
-        ctx.stroke();
+      },
+      clear: () => {
+        canvasRef.current?.clearCanvas();
+        setCanUndo(false);
       }
+    }), []);
 
-      lastPoint.current = currentPoint;
-    }, [isDrawing, getCoordinates]);
-
-    const stopDrawing = useCallback((e: PointerEvent) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      // Release pointer capture
-      if (canvas.hasPointerCapture(e.pointerId)) {
-        canvas.releasePointerCapture(e.pointerId);
-      }
-
-      if (!isDrawing) return;
-      
-      setIsDrawing(false);
-      lastPoint.current = null;
-      points.current = [];
-
-      if (onChange) {
-        onChange(canvas.toDataURL("image/png", 1.0));
-      }
-    }, [isDrawing, onChange]);
-
-    // Set up pointer event listeners
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const handlePointerDown = (e: PointerEvent) => {
-        e.preventDefault();
-        startDrawing(e);
-      };
-
-      const handlePointerMove = (e: PointerEvent) => {
-        if (isDrawing) {
-          e.preventDefault();
+    const handleUndo = () => {
+      canvasRef.current?.undo();
+      // Check if there are still strokes after undo
+      canvasRef.current?.exportPaths().then((paths) => {
+        setCanUndo(paths.length > 0);
+        if (onChange) {
+          onChange(JSON.stringify(paths));
         }
-        draw(e);
-      };
+      });
+    };
 
-      const handlePointerUp = (e: PointerEvent) => {
-        stopDrawing(e);
-      };
-
-      const handlePointerCancel = (e: PointerEvent) => {
-        stopDrawing(e);
-      };
-
-      // Prevent context menu on long press
-      const handleContextMenu = (e: Event) => {
-        e.preventDefault();
-      };
-
-      canvas.addEventListener("pointerdown", handlePointerDown);
-      canvas.addEventListener("pointermove", handlePointerMove);
-      canvas.addEventListener("pointerup", handlePointerUp);
-      canvas.addEventListener("pointercancel", handlePointerCancel);
-      canvas.addEventListener("pointerleave", handlePointerUp);
-      canvas.addEventListener("contextmenu", handleContextMenu);
-
-      return () => {
-        canvas.removeEventListener("pointerdown", handlePointerDown);
-        canvas.removeEventListener("pointermove", handlePointerMove);
-        canvas.removeEventListener("pointerup", handlePointerUp);
-        canvas.removeEventListener("pointercancel", handlePointerCancel);
-        canvas.removeEventListener("pointerleave", handlePointerUp);
-        canvas.removeEventListener("contextmenu", handleContextMenu);
-      };
-    }, [isDrawing, startDrawing, draw, stopDrawing]);
-
-    const clearCanvas = () => {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx || !canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-
-      ctx.fillStyle = "hsl(38, 35%, 97%)";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-
-      drawLines(ctx, rect.width, rect.height);
-
-      ctx.strokeStyle = currentInkColor.current;
-      ctx.lineWidth = 3.5;
-
-      setHistory([]);
-
+    const handleClear = () => {
+      canvasRef.current?.clearCanvas();
+      setCanUndo(false);
       if (onChange) {
-        onChange(canvas.toDataURL("image/png", 1.0));
+        onChange(JSON.stringify([]));
       }
     };
 
-    const undo = () => {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx || !canvas || history.length === 0) return;
-
-      const lastState = history[history.length - 1];
-      const pixelRatio = pixelRatioRef.current;
-      
-      // Reset transform to put image data
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.putImageData(lastState, 0, 0);
-      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      
-      setHistory(prev => prev.slice(0, -1));
-
-      if (onChange) {
-        onChange(canvas.toDataURL("image/png", 1.0));
-      }
+    const toggleEraser = () => {
+      const newEraserState = !isEraser;
+      setIsEraser(newEraserState);
+      canvasRef.current?.eraseMode(newEraserState);
     };
+
+    const selectPen = () => {
+      setIsEraser(false);
+      canvasRef.current?.eraseMode(false);
+    };
+
+    // Generate line pattern for background
+    const linePattern = showLines ? `
+      repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        hsl(20, 15%, 85%) 31px,
+        hsl(20, 15%, 85%) 32px
+      )
+    ` : 'none';
 
     return (
       <div className="space-y-3">
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={undo} disabled={history.length === 0} className="rounded-full">
-            <Undo2 className="w-4 h-4 mr-1" />
-            Undo
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-2 p-2 bg-card/80 rounded-xl border border-border/50">
+          {/* Pen Tool */}
+          <Button 
+            type="button" 
+            variant={!isEraser ? "default" : "outline"} 
+            size="sm" 
+            onClick={selectPen}
+            className="rounded-full"
+            title="Pen"
+          >
+            <Pen className="w-4 h-4" />
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={clearCanvas} className="rounded-full">
-            <Eraser className="w-4 h-4 mr-1" />
-            Clear
+
+          {/* Eraser Tool */}
+          <Button 
+            type="button" 
+            variant={isEraser ? "default" : "outline"} 
+            size="sm" 
+            onClick={toggleEraser}
+            className="rounded-full"
+            title="Eraser"
+          >
+            <Eraser className="w-4 h-4" />
+          </Button>
+
+          <div className="w-px h-6 bg-border mx-1" />
+
+          {/* Stroke Width */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                className="rounded-full gap-2"
+                title="Stroke Size"
+              >
+                <Circle className="w-3 h-3" style={{ transform: `scale(${0.5 + strokeWidth / 20})` }} />
+                <span className="text-xs">{strokeWidth}px</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-3" align="start">
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Stroke Size</div>
+                <Slider
+                  value={[strokeWidth]}
+                  onValueChange={(value) => setStrokeWidth(value[0])}
+                  min={1}
+                  max={20}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Fine</span>
+                  <span>Bold</span>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Color Picker */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                className="rounded-full gap-2"
+                title="Color"
+              >
+                <div 
+                  className="w-4 h-4 rounded-full border border-border"
+                  style={{ backgroundColor: currentColor }}
+                />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-3" align="start">
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Ink Color</div>
+                <div className="flex gap-2">
+                  {SKETCH_COLORS.map((color) => (
+                    <button
+                      key={color.name}
+                      type="button"
+                      onClick={() => {
+                        setCurrentColor(color.value);
+                        setIsEraser(false);
+                        canvasRef.current?.eraseMode(false);
+                      }}
+                      className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${
+                        currentColor === color.value ? "border-primary ring-2 ring-primary/30" : "border-border"
+                      }`}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <div className="flex-1" />
+
+          {/* Undo */}
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={handleUndo} 
+            disabled={!canUndo}
+            className="rounded-full"
+            title="Undo"
+          >
+            <Undo2 className="w-4 h-4" />
+          </Button>
+
+          {/* Clear */}
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={handleClear}
+            className="rounded-full text-destructive hover:text-destructive"
+            title="Clear Canvas"
+          >
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
+
+        {/* Canvas Container */}
         <div 
-          ref={containerRef}
-          className="overflow-y-auto max-h-[70vh] rounded-xl border border-border bg-paper"
+          className="rounded-xl border border-border overflow-hidden"
           style={{ 
-            // Allow scrolling on container when not drawing
-            touchAction: isDrawing ? "none" : "pan-y",
-            overscrollBehavior: "contain"
+            background: linePattern !== 'none' ? `${linePattern}, ${paperColor}` : paperColor,
           }}
         >
-          <canvas
+          <ReactSketchCanvas
             ref={canvasRef}
-            className="w-full h-[500px] cursor-crosshair"
-            style={{ 
-              // Prevent default touch behaviors on canvas itself
-              touchAction: "none",
-              // Prevent text selection
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              // Prevent callout on iOS
-              WebkitTouchCallout: "none"
+            width="100%"
+            height="500px"
+            strokeWidth={strokeWidth}
+            strokeColor={currentColor}
+            eraserWidth={strokeWidth * 3}
+            canvasColor="transparent"
+            style={{
+              border: "none",
+              borderRadius: "0.75rem",
             }}
+            onStroke={handleStroke}
+            // Palm rejection: prioritize stylus over touch
+            allowOnlyPointerType="all"
+            // Smooth Bezier curves
+            withTimestamp={true}
           />
         </div>
+
+        {/* Hint */}
+        <p className="text-xs text-muted-foreground text-center">
+          Use your finger, stylus, or mouse to draw. Stylus input is prioritized when available.
+        </p>
       </div>
     );
   }
