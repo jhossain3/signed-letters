@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram, Plus, Trash2 } from "lucide-react";
 import SketchCanvas, { SketchCanvasRef } from "@/components/SketchCanvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +118,31 @@ const WriteLetter = () => {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }, 0);
   }, [inputMode]);
+
+  // Delete a page if it's empty (and not the only page)
+  const deletePage = useCallback((pageIndex: number) => {
+    if (inputMode === "type") {
+      if (textPages.length > 1 && textPages[pageIndex].trim() === "") {
+        setTextPages(prev => prev.filter((_, idx) => idx !== pageIndex));
+      }
+    } else {
+      if (sketchPages.length > 1 && (sketchPages[pageIndex] === "" || sketchPages[pageIndex] === "[]")) {
+        // Also clear the ref
+        sketchCanvasRefs.current.delete(pageIndex);
+        setSketchPages(prev => prev.filter((_, idx) => idx !== pageIndex));
+      }
+    }
+  }, [inputMode, textPages, sketchPages]);
+
+  // Check if a page is empty
+  const isPageEmpty = useCallback((pageIndex: number) => {
+    if (inputMode === "type") {
+      return textPages[pageIndex]?.trim() === "";
+    } else {
+      const content = sketchPages[pageIndex];
+      return !content || content === "" || content === "[]";
+    }
+  }, [inputMode, textPages, sketchPages]);
 
   // Get the pages for the current mode
   const currentPages = inputMode === "type" ? textPages : sketchPages;
@@ -509,10 +534,24 @@ const WriteLetter = () => {
                   // Text mode pages
                   textPages.map((pageContent, pageIndex) => (
                     <div key={`text-${pageIndex}`} className="relative">
-                      {/* Page header */}
+                      {/* Page header with delete button */}
                       {textPages.length > 1 && (
-                        <div className="text-xs text-muted-foreground/60 mb-2 font-body">
-                          Page {pageIndex + 1}
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-muted-foreground/60 font-body">
+                            Page {pageIndex + 1}
+                          </span>
+                          {isPageEmpty(pageIndex) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deletePage(pageIndex)}
+                              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              Remove
+                            </Button>
+                          )}
                         </div>
                       )}
                       
@@ -536,10 +575,24 @@ const WriteLetter = () => {
                   // Sketch mode pages
                   sketchPages.map((pageContent, pageIndex) => (
                     <div key={`sketch-${pageIndex}`} className="relative">
-                      {/* Page header */}
+                      {/* Page header with delete button */}
                       {sketchPages.length > 1 && (
-                        <div className="text-xs text-muted-foreground/60 mb-2 font-body">
-                          Page {pageIndex + 1}
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-muted-foreground/60 font-body">
+                            Page {pageIndex + 1}
+                          </span>
+                          {isPageEmpty(pageIndex) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deletePage(pageIndex)}
+                              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              Remove
+                            </Button>
+                          )}
                         </div>
                       )}
                       

@@ -180,16 +180,21 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
 
         {/* Canvas Container - Touch-optimized for seamless writing */}
         <div 
-          className="rounded-xl border border-border overflow-hidden touch-none"
+          className="rounded-xl border border-border overflow-hidden"
           style={{ 
             background: linePattern !== 'none' ? `${linePattern}, ${paperColor}` : paperColor,
+            touchAction: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none",
           }}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <ReactSketchCanvas
             ref={canvasRef}
             width="100%"
             height="500px"
-            strokeWidth={3}
+            strokeWidth={2}
             strokeColor={currentColor}
             eraserWidth={20}
             canvasColor="transparent"
@@ -206,7 +211,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
 
         {/* Hint */}
         <p className="text-xs text-muted-foreground text-center">
-          Use your finger, stylus, or mouse to draw
+          Draw with your finger, stylus, or mouse
         </p>
       </div>
     );
