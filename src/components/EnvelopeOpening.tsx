@@ -57,27 +57,42 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
 
         {stage === "letter" && (
           <motion.div key="letter" className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-border" initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5 }}>
-            <div className="paper-texture min-h-[300px] p-6 rounded-xl border border-border bg-paper">
-              <h2 className="font-editorial text-2xl text-foreground mb-6">{letter.title}</h2>
-              {letter.isTyped ? (
-                <p className="text-foreground leading-relaxed whitespace-pre-wrap font-body">{letter.body || ""}</p>
-              ) : (
-                letter.sketchData && (
-                  <SketchRenderer 
-                    sketchData={letter.sketchData} 
-                    paperColor={letter.paperColor}
-                    inkColor={letter.inkColor}
-                  />
-                )
+            <div 
+              className="min-h-[300px] p-6 rounded-xl border border-border relative"
+              style={{ backgroundColor: letter.paperColor || 'hsl(var(--paper))' }}
+            >
+              {/* Lined paper effect */}
+              {letter.isLined !== false && (
+                <div 
+                  className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden"
+                  style={{
+                    backgroundImage: 'repeating-linear-gradient(transparent, transparent 27px, hsl(var(--border) / 0.3) 27px, hsl(var(--border) / 0.3) 28px)',
+                    backgroundPositionY: '48px',
+                  }}
+                />
               )}
-              {letter.photos && letter.photos.length > 0 && (
-                <div className="flex gap-3 mt-6">
-                  {letter.photos.map((photo, index) => (
-                    <img key={index} src={photo} alt={`Attachment ${index + 1}`} className="w-24 h-24 object-cover rounded-lg border border-border shadow-editorial" />
-                  ))}
-                </div>
-              )}
-              <p className={`text-xl mt-8 text-foreground ${letter.signatureFont || "font-signature"}`}>{letter.signature}</p>
+              <div className="relative z-10">
+                <h2 className="font-editorial text-2xl text-foreground mb-6">{letter.title}</h2>
+                {letter.isTyped ? (
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap font-body" style={{ color: letter.inkColor }}>{letter.body || ""}</p>
+                ) : (
+                  letter.sketchData && (
+                    <SketchRenderer 
+                      sketchData={letter.sketchData} 
+                      paperColor={letter.paperColor}
+                      inkColor={letter.inkColor}
+                    />
+                  )
+                )}
+                {letter.photos && letter.photos.length > 0 && (
+                  <div className="flex gap-3 mt-6">
+                    {letter.photos.map((photo, index) => (
+                      <img key={index} src={photo} alt={`Attachment ${index + 1}`} className="w-24 h-24 object-cover rounded-lg border border-border shadow-editorial" />
+                    ))}
+                  </div>
+                )}
+                <p className={`text-xl mt-8 text-foreground ${letter.signatureFont || "font-signature"}`}>{letter.signature}</p>
+              </div>
             </div>
             <p className="text-center text-muted-foreground mt-6 font-editorial italic text-sm">This moment was worth waiting for.</p>
             <button onClick={onClose} className="mt-6 w-full py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-all shadow-editorial">

@@ -32,6 +32,7 @@ const DEMO_LETTERS: Letter[] = [
     createdAt: subDays(new Date(), 5).toISOString(),
     photos: [],
     isTyped: true,
+    isLined: true,
   },
   {
     id: "demo-sent-2",
@@ -45,6 +46,7 @@ const DEMO_LETTERS: Letter[] = [
     createdAt: subDays(new Date(), 10).toISOString(),
     photos: [],
     isTyped: true,
+    isLined: false,
   },
   {
     id: "demo-sent-3",
@@ -58,6 +60,7 @@ const DEMO_LETTERS: Letter[] = [
     createdAt: subDays(new Date(), 30).toISOString(),
     photos: [],
     isTyped: true,
+    isLined: true,
   },
   {
     id: "demo-received-1",
@@ -71,6 +74,7 @@ const DEMO_LETTERS: Letter[] = [
     createdAt: subDays(new Date(), 7).toISOString(),
     photos: [],
     isTyped: true,
+    isLined: true,
   },
   {
     id: "demo-received-2",
@@ -84,6 +88,7 @@ const DEMO_LETTERS: Letter[] = [
     createdAt: subDays(new Date(), 14).toISOString(),
     photos: [],
     isTyped: true,
+    isLined: false,
   },
 ];
 
