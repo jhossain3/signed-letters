@@ -5,6 +5,13 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
   :root {
     /* Warm cream/beige background */
     --background: 35 30% 96%;
