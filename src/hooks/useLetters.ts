@@ -22,6 +22,7 @@ export interface Letter {
   type: "sent" | "received";
   paperColor?: string;
   inkColor?: string;
+  isLined?: boolean;
 }
 
 export interface CreateLetterInput {
@@ -39,6 +40,7 @@ export interface CreateLetterInput {
   type: "sent" | "received";
   paperColor?: string;
   inkColor?: string;
+  isLined?: boolean;
 }
 
 const mapDbToLetter = (row: any): Letter => ({
@@ -58,6 +60,7 @@ const mapDbToLetter = (row: any): Letter => ({
   type: row.type,
   paperColor: row.paper_color,
   inkColor: row.ink_color,
+  isLined: row.is_lined ?? true,
 });
 
 export const useLetters = () => {
@@ -115,6 +118,7 @@ export const useLetters = () => {
           type: letter.type,
           paper_color: letter.paperColor,
           ink_color: letter.inkColor,
+          is_lined: letter.isLined ?? true,
         })
         .select()
         .single();

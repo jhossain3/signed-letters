@@ -22,6 +22,7 @@ export type Database = {
           delivery_date: string
           id: string
           ink_color: string | null
+          is_lined: boolean | null
           is_typed: boolean | null
           paper_color: string | null
           photos: string[] | null
@@ -42,6 +43,7 @@ export type Database = {
           delivery_date: string
           id?: string
           ink_color?: string | null
+          is_lined?: boolean | null
           is_typed?: boolean | null
           paper_color?: string | null
           photos?: string[] | null
@@ -62,6 +64,7 @@ export type Database = {
           delivery_date?: string
           id?: string
           ink_color?: string | null
+          is_lined?: boolean | null
           is_typed?: boolean | null
           paper_color?: string | null
           photos?: string[] | null

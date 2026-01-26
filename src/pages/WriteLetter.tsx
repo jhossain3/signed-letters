@@ -278,6 +278,7 @@ const WriteLetter = () => {
         type: "sent" as const,
         paperColor: paperColor.value,
         inkColor: inkColor.value,
+        isLined: showLines,
       });
       
       setTimeout(() => {
