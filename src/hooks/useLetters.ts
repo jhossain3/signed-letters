@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
 
 export interface Letter {
   id: string;
@@ -134,6 +135,11 @@ export const useLetters = () => {
   });
 
   const isLetterOpenable = (letter: Letter) => {
+    // Bypass delivery date check for testing
+    if (FEATURE_FLAGS.BYPASS_DELIVERY_DATE) {
+      return true;
+    }
+    
     const deliveryDate = new Date(letter.deliveryDate);
     const now = new Date();
     // Allow opening on the same day (compare dates only, not time)
