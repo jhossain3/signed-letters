@@ -106,13 +106,16 @@ const SketchRenderer = ({
               id={`sketch-view-${page.pageIndex}-${Date.now()}`}
               width="100%"
               height="500px"
-              strokeWidth={2}
+              strokeWidth={3}
               strokeColor={inkColor || "hsl(15, 20%, 18%)"}
               canvasColor="transparent"
               style={{
                 border: "none",
                 borderRadius: "0.75rem",
-                pointerEvents: "none", // Make it non-interactive
+                pointerEvents: "none",
+              }}
+              svgStyle={{
+                shapeRendering: "geometricPrecision",
               }}
               allowOnlyPointerType="all"
             />
