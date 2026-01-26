@@ -31,7 +31,7 @@ function jsonToStrokes(json: string): Stroke[] | null {
     const parsed = JSON.parse(json);
     if (Array.isArray(parsed)) {
       // Check if it's new format (Stroke[])
-      if (parsed.length === 0 || (parsed[0] && 'points' in parsed[0])) {
+      if (parsed.length === 0 || (parsed[0] && "points" in parsed[0])) {
         return parsed as Stroke[];
       }
       // Legacy format from react-sketch-canvas - return empty, can't convert
@@ -54,7 +54,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       paperColor = "hsl(38, 35%, 97%)",
       canvasId,
     },
-    ref
+    ref,
   ) => {
     const canvasRef = useRef<FreehandCanvasRef>(null);
     const [isEraser, setIsEraser] = useState(false);
@@ -75,35 +75,42 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
     }, [initialData]);
 
     // Handle stroke changes
-    const handleChange = useCallback((strokes: Stroke[]) => {
-      setCanUndo(strokes.length > 0);
-      if (onChange) {
-        onChange(strokesToJson(strokes));
-      }
-    }, [onChange]);
+    const handleChange = useCallback(
+      (strokes: Stroke[]) => {
+        setCanUndo(strokes.length > 0);
+        if (onChange) {
+          onChange(strokesToJson(strokes));
+        }
+      },
+      [onChange],
+    );
 
     // Expose methods via ref
-    useImperativeHandle(ref, () => ({
-      getDataUrl: async () => {
-        if (canvasRef.current) {
-          return strokesToJson(canvasRef.current.getStrokes());
-        }
-        return "[]";
-      },
-      loadData: (data: string) => {
-        if (canvasRef.current) {
-          const strokes = jsonToStrokes(data);
-          if (strokes) {
-            canvasRef.current.loadStrokes(strokes);
-            setCanUndo(strokes.length > 0);
+    useImperativeHandle(
+      ref,
+      () => ({
+        getDataUrl: async () => {
+          if (canvasRef.current) {
+            return strokesToJson(canvasRef.current.getStrokes());
           }
-        }
-      },
-      clear: () => {
-        canvasRef.current?.clear();
-        setCanUndo(false);
-      }
-    }), []);
+          return "[]";
+        },
+        loadData: (data: string) => {
+          if (canvasRef.current) {
+            const strokes = jsonToStrokes(data);
+            if (strokes) {
+              canvasRef.current.loadStrokes(strokes);
+              setCanUndo(strokes.length > 0);
+            }
+          }
+        },
+        clear: () => {
+          canvasRef.current?.clear();
+          setCanUndo(false);
+        },
+      }),
+      [],
+    );
 
     const handlePen = useCallback(() => {
       setIsEraser(false);
@@ -138,10 +145,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
         />
 
         {/* Canvas */}
-        <div
-          onTouchStart={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
+        <div onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
           <FreehandCanvas
             ref={canvasRef}
             inkColor={inkColor}
@@ -155,14 +159,9 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
             canvasId={canvasId}
           />
         </div>
-
-        {/* Hint */}
-        <p className="text-xs text-muted-foreground text-center">
-          Draw with your finger, stylus, or mouse • Pressure-sensitive
-        </p>
       </div>
     );
-  }
+  },
 );
 
 SketchCanvas.displayName = "SketchCanvas";
