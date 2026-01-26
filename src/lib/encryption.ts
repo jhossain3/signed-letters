@@ -33,6 +33,17 @@ async function deriveKey(userId: string): Promise<CryptoKey> {
   );
 }
 
+// Helper to convert Uint8Array to base64 without stack overflow
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const CHUNK_SIZE = 0x8000; // 32KB chunks to avoid call stack issues
+  let result = '';
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    result += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  return btoa(result);
+}
+
 // Encrypt a string value
 export async function encryptValue(value: string, userId: string): Promise<string> {
   if (!value) return value;
@@ -57,7 +68,7 @@ export async function encryptValue(value: string, userId: string): Promise<strin
     combined.set(new Uint8Array(encrypted), iv.length);
     
     // Prefix with 'enc:' to identify encrypted values
-    return 'enc:' + btoa(String.fromCharCode(...combined));
+    return 'enc:' + uint8ArrayToBase64(combined);
   } catch (error) {
     console.error('Encryption failed:', error);
     throw new Error('Failed to encrypt data');
