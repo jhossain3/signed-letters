@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, addMonths, addYears } from "date-fns";
 import { useLetters } from "@/hooks/useLetters";
 import { toast } from "sonner";
+import { serializeMultiPage } from "@/lib/sketchSerialization";
 
 // Signature font options
 const SIGNATURE_FONTS = [
@@ -152,9 +153,9 @@ const WriteLetter = () => {
   // Get combined content for saving
   const getCombinedBody = () => textPages.join("\n\n--- Page Break ---\n\n");
 
-  // Combine all sketch pages into a single JSON array of pages
+  // Combine all sketch pages into compact flat array format
   const getCombinedSketchData = async () => {
-    const allPagesData: { pageIndex: number; strokes: unknown[] }[] = [];
+    const allPagesData: { pageIndex: number; strokes: import("@/components/sketch/FreehandCanvas").Stroke[] }[] = [];
 
     for (let i = 0; i < sketchPages.length; i++) {
       const ref = sketchCanvasRefs.current.get(i);
@@ -171,7 +172,8 @@ const WriteLetter = () => {
       }
     }
 
-    return JSON.stringify(allPagesData);
+    // Use compact flat array serialization
+    return serializeMultiPage(allPagesData);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

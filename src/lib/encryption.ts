@@ -1,25 +1,39 @@
 // Client-side encryption using Web Crypto API
 // Uses AES-GCM for symmetric encryption with user-specific keys
+// Key is derived from user email (NOT stored in letters table) for security
 
 const ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
 
-// Derive a consistent encryption key from user ID
-async function deriveKey(userId: string): Promise<CryptoKey> {
+// Cache derived keys to avoid re-deriving on every operation
+const keyCache = new Map<string, CryptoKey>();
+
+/**
+ * Derive a consistent encryption key from user email
+ * Email is used instead of userId because userId is stored in the letters table,
+ * making it visible alongside encrypted data. Email is only in auth.users (RLS protected).
+ */
+async function deriveKey(userEmail: string): Promise<CryptoKey> {
+  // Check cache first
+  const cached = keyCache.get(userEmail);
+  if (cached) return cached;
+
   const encoder = new TextEncoder();
+  
+  // Use email as the key material - it's private and not stored with letter data
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(userId),
+    encoder.encode(userEmail.toLowerCase().trim()),
     { name: 'PBKDF2' },
     false,
     ['deriveKey']
   );
 
-  // Use a fixed salt derived from the app name for consistency
-  const salt = encoder.encode('signed-letters-encryption-salt-v1');
+  // Salt combines app identifier with a version for future key rotation if needed
+  const salt = encoder.encode('signed-letters-v2-email-derived-key');
 
-  return crypto.subtle.deriveKey(
+  const key = await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
       salt,
@@ -31,6 +45,18 @@ async function deriveKey(userId: string): Promise<CryptoKey> {
     false,
     ['encrypt', 'decrypt']
   );
+
+  // Cache the key
+  keyCache.set(userEmail, key);
+  
+  return key;
+}
+
+/**
+ * Clear the key cache (call on logout)
+ */
+export function clearKeyCache(): void {
+  keyCache.clear();
 }
 
 // Helper to convert Uint8Array to base64 without stack overflow
@@ -45,11 +71,11 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
 }
 
 // Encrypt a string value
-export async function encryptValue(value: string, userId: string): Promise<string> {
+export async function encryptValue(value: string, userEmail: string): Promise<string> {
   if (!value) return value;
   
   try {
-    const key = await deriveKey(userId);
+    const key = await deriveKey(userEmail);
     const encoder = new TextEncoder();
     const data = encoder.encode(value);
     
@@ -76,7 +102,7 @@ export async function encryptValue(value: string, userId: string): Promise<strin
 }
 
 // Decrypt a string value
-export async function decryptValue(encryptedValue: string, userId: string): Promise<string> {
+export async function decryptValue(encryptedValue: string, userEmail: string): Promise<string> {
   if (!encryptedValue) return encryptedValue;
   
   // Check if the value is encrypted (has the 'enc:' prefix)
@@ -86,7 +112,7 @@ export async function decryptValue(encryptedValue: string, userId: string): Prom
   }
   
   try {
-    const key = await deriveKey(userId);
+    const key = await deriveKey(userEmail);
     
     // Remove the 'enc:' prefix and decode from base64
     const combined = Uint8Array.from(atob(encryptedValue.slice(4)), c => c.charCodeAt(0));
@@ -113,13 +139,13 @@ export async function decryptValue(encryptedValue: string, userId: string): Prom
 // Encrypt multiple fields in an object
 export async function encryptLetterFields(
   letter: { title: string; body: string | null; signature: string; sketchData?: string },
-  userId: string
+  userEmail: string
 ): Promise<{ title: string; body: string | null; signature: string; sketchData?: string }> {
   const [encryptedTitle, encryptedBody, encryptedSignature, encryptedSketchData] = await Promise.all([
-    encryptValue(letter.title, userId),
-    letter.body ? encryptValue(letter.body, userId) : Promise.resolve(null),
-    encryptValue(letter.signature, userId),
-    letter.sketchData ? encryptValue(letter.sketchData, userId) : Promise.resolve(undefined),
+    encryptValue(letter.title, userEmail),
+    letter.body ? encryptValue(letter.body, userEmail) : Promise.resolve(null),
+    encryptValue(letter.signature, userEmail),
+    letter.sketchData ? encryptValue(letter.sketchData, userEmail) : Promise.resolve(undefined),
   ]);
   
   return {
@@ -133,13 +159,13 @@ export async function encryptLetterFields(
 // Decrypt multiple fields in a letter object
 export async function decryptLetterFields<T extends { title: string; body: string | null; signature: string; sketchData?: string }>(
   letter: T,
-  userId: string
+  userEmail: string
 ): Promise<T> {
   const [decryptedTitle, decryptedBody, decryptedSignature, decryptedSketchData] = await Promise.all([
-    decryptValue(letter.title, userId),
-    letter.body ? decryptValue(letter.body, userId) : Promise.resolve(null),
-    decryptValue(letter.signature, userId),
-    letter.sketchData ? decryptValue(letter.sketchData, userId) : Promise.resolve(undefined),
+    decryptValue(letter.title, userEmail),
+    letter.body ? decryptValue(letter.body, userEmail) : Promise.resolve(null),
+    decryptValue(letter.signature, userEmail),
+    letter.sketchData ? decryptValue(letter.sketchData, userEmail) : Promise.resolve(undefined),
   ]);
   
   return {
