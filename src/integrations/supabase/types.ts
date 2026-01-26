@@ -80,6 +80,72 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_phone_verifications: {
+        Row: {
+          attempts: number
+          country_code: string
+          created_at: string
+          email: string
+          id: string
+          otp_expires_at: string
+          otp_hash: string
+          phone_number: string
+        }
+        Insert: {
+          attempts?: number
+          country_code: string
+          created_at?: string
+          email: string
+          id?: string
+          otp_expires_at: string
+          otp_hash: string
+          phone_number: string
+        }
+        Update: {
+          attempts?: number
+          country_code?: string
+          created_at?: string
+          email?: string
+          id?: string
+          otp_expires_at?: string
+          otp_hash?: string
+          phone_number?: string
+        }
+        Relationships: []
+      }
+      user_phones: {
+        Row: {
+          country_code: string
+          created_at: string
+          id: string
+          is_verified: boolean
+          phone_number: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          country_code: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          phone_number: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          phone_number?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
