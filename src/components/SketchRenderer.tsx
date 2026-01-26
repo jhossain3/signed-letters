@@ -31,14 +31,14 @@ function getSvgPathFromStroke(stroke: number[][]): string {
   return d.join(" ");
 }
 
-// Perfect-freehand options matching the canvas
+// Perfect-freehand options matching FreehandCanvas exactly
 const getStrokeOptions = (size: number) => ({
   size,
-  thinning: 0.5,
+  thinning: 0,
   smoothing: 0.5,
   streamline: 0.5,
   easing: (t: number) => t,
-  simulatePressure: true,
+  simulatePressure: false,
   start: { cap: true, taper: 0 },
   end: { cap: true, taper: 0 },
 });
@@ -131,7 +131,9 @@ const SketchRenderer = ({
             <svg
               width="100%"
               height="500px"
-              style={{ display: "block" }}
+              viewBox="0 0 600 500"
+              preserveAspectRatio="xMinYMin meet"
+              style={{ display: "block", shapeRendering: "geometricPrecision" }}
             >
               {page.strokes.map((stroke, strokeIndex) => {
                 const outlinePoints = getStroke(
