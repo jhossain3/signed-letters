@@ -38,14 +38,14 @@ const INK_COLORS = [
 // TikTok Icon
 const TikTokIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
   </svg>
 );
 
 const WriteLetter = () => {
   const navigate = useNavigate();
   const { addLetter, isAddingLetter } = useLetters();
-  
+
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
   const [inputMode, setInputMode] = useState<"type" | "sketch">("type");
   const [title, setTitle] = useState("");
@@ -64,7 +64,7 @@ const WriteLetter = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
   const letterScrollRef = useRef<HTMLDivElement>(null);
@@ -91,24 +91,20 @@ const WriteLetter = () => {
 
   // Helper to update a specific text page
   const updateTextPage = useCallback((pageIndex: number, newBody: string) => {
-    setTextPages(prev => prev.map((page, idx) => 
-      idx === pageIndex ? newBody : page
-    ));
+    setTextPages((prev) => prev.map((page, idx) => (idx === pageIndex ? newBody : page)));
   }, []);
 
   // Helper to update a specific sketch page
   const updateSketchPage = useCallback((pageIndex: number, newSketch: string) => {
-    setSketchPages(prev => prev.map((page, idx) => 
-      idx === pageIndex ? newSketch : page
-    ));
+    setSketchPages((prev) => prev.map((page, idx) => (idx === pageIndex ? newSketch : page)));
   }, []);
 
   // Add a new page to the current mode only
   const addNewPage = useCallback(() => {
     if (inputMode === "type") {
-      setTextPages(prev => [...prev, ""]);
+      setTextPages((prev) => [...prev, ""]);
     } else {
-      setSketchPages(prev => [...prev, ""]);
+      setSketchPages((prev) => [...prev, ""]);
     }
 
     // IMPORTANT: Only scroll the letter container (not the entire window)
@@ -120,40 +116,46 @@ const WriteLetter = () => {
   }, [inputMode]);
 
   // Delete a page if it's empty (and not the only page)
-  const deletePage = useCallback((pageIndex: number) => {
-    if (inputMode === "type") {
-      if (textPages.length > 1 && textPages[pageIndex].trim() === "") {
-        setTextPages(prev => prev.filter((_, idx) => idx !== pageIndex));
+  const deletePage = useCallback(
+    (pageIndex: number) => {
+      if (inputMode === "type") {
+        if (textPages.length > 1 && textPages[pageIndex].trim() === "") {
+          setTextPages((prev) => prev.filter((_, idx) => idx !== pageIndex));
+        }
+      } else {
+        if (sketchPages.length > 1 && (sketchPages[pageIndex] === "" || sketchPages[pageIndex] === "[]")) {
+          // Also clear the ref
+          sketchCanvasRefs.current.delete(pageIndex);
+          setSketchPages((prev) => prev.filter((_, idx) => idx !== pageIndex));
+        }
       }
-    } else {
-      if (sketchPages.length > 1 && (sketchPages[pageIndex] === "" || sketchPages[pageIndex] === "[]")) {
-        // Also clear the ref
-        sketchCanvasRefs.current.delete(pageIndex);
-        setSketchPages(prev => prev.filter((_, idx) => idx !== pageIndex));
-      }
-    }
-  }, [inputMode, textPages, sketchPages]);
+    },
+    [inputMode, textPages, sketchPages],
+  );
 
   // Check if a page is empty
-  const isPageEmpty = useCallback((pageIndex: number) => {
-    if (inputMode === "type") {
-      return textPages[pageIndex]?.trim() === "";
-    } else {
-      const content = sketchPages[pageIndex];
-      return !content || content === "" || content === "[]";
-    }
-  }, [inputMode, textPages, sketchPages]);
+  const isPageEmpty = useCallback(
+    (pageIndex: number) => {
+      if (inputMode === "type") {
+        return textPages[pageIndex]?.trim() === "";
+      } else {
+        const content = sketchPages[pageIndex];
+        return !content || content === "" || content === "[]";
+      }
+    },
+    [inputMode, textPages, sketchPages],
+  );
 
   // Get the pages for the current mode
   const currentPages = inputMode === "type" ? textPages : sketchPages;
 
   // Get combined content for saving
   const getCombinedBody = () => textPages.join("\n\n--- Page Break ---\n\n");
-  
+
   // Combine all sketch pages into a single JSON array of pages
   const getCombinedSketchData = async () => {
     const allPagesData: { pageIndex: number; strokes: unknown[] }[] = [];
-    
+
     for (let i = 0; i < sketchPages.length; i++) {
       const ref = sketchCanvasRefs.current.get(i);
       if (ref) {
@@ -168,7 +170,7 @@ const WriteLetter = () => {
         }
       }
     }
-    
+
     return JSON.stringify(allPagesData);
   };
 
@@ -232,7 +234,7 @@ const WriteLetter = () => {
           mode: "no-cors",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData,
-        }
+        },
       );
       setIsSubscribed(true);
     } catch (error) {
@@ -247,23 +249,23 @@ const WriteLetter = () => {
       toast.error("Please add a title to your letter");
       return;
     }
-    
+
     const currentBody = getCombinedBody();
     if (inputMode === "type" && !currentBody.trim()) {
       toast.error("Please write something in your letter");
       return;
     }
-    
+
     if (!deliveryDate) {
       toast.error("Please select a delivery date");
       return;
     }
-    
+
     if (recipientType === "someone" && !recipientEmail.trim()) {
       toast.error("Please enter the recipient's email");
       return;
     }
-    
+
     if (!signature.trim()) {
       toast.error("Please add your signature");
       return;
@@ -279,7 +281,7 @@ const WriteLetter = () => {
     if (inputMode === "sketch") {
       finalSketchData = await getCombinedSketchData();
     }
-    
+
     try {
       await addLetter({
         title,
@@ -298,7 +300,7 @@ const WriteLetter = () => {
         inkColor: inkColor.value,
         isLined: showLines,
       });
-      
+
       setTimeout(() => {
         navigate("/vault");
       }, 500);
@@ -346,7 +348,7 @@ const WriteLetter = () => {
                     stroke="hsl(var(--border))"
                     strokeWidth="1.5"
                   />
-                  
+
                   {/* Envelope flap - animates closed */}
                   <motion.path
                     d="M 10 35 L 80 75 L 150 35"
@@ -358,21 +360,15 @@ const WriteLetter = () => {
                     transition={{ duration: 0.8, delay: 0.3 }}
                     style={{ transformOrigin: "center 35px" }}
                   />
-                  
+
                   {/* Wax seal appears */}
-                  <motion.g 
+                  <motion.g
                     transform="translate(80, 65)"
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 1, duration: 0.4, type: "spring" }}
                   >
-                    <circle 
-                      cx="0" 
-                      cy="0" 
-                      r="16" 
-                      className="wax-seal"
-                      fill="hsl(var(--seal-maroon))"
-                    />
+                    <circle cx="0" cy="0" r="16" className="wax-seal" fill="hsl(var(--seal-maroon))" />
                     <line
                       x1="-7"
                       y1="0"
@@ -382,12 +378,7 @@ const WriteLetter = () => {
                       strokeWidth="2"
                       strokeLinecap="round"
                     />
-                    <circle
-                      cx="8"
-                      cy="0"
-                      r="2.5"
-                      fill="hsl(var(--primary-foreground))"
-                    />
+                    <circle cx="8" cy="0" r="2.5" fill="hsl(var(--primary-foreground))" />
                   </motion.g>
                 </svg>
               </motion.div>
@@ -400,7 +391,7 @@ const WriteLetter = () => {
               >
                 Your letter is sealed
               </motion.p>
-              
+
               <motion.p
                 className="text-primary-foreground/70 text-sm mt-2"
                 initial={{ opacity: 0 }}
@@ -418,7 +409,10 @@ const WriteLetter = () => {
       {/* Header */}
       <header className="container mx-auto px-4 py-6 relative z-10">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </Link>
@@ -427,16 +421,10 @@ const WriteLetter = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           {/* Page Title */}
           <div className="text-center mb-10">
-            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">
-              Write a Letter
-            </h1>
+            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write a Letter</h1>
             <p className="text-muted-foreground font-body">Take your time. Make it meaningful.</p>
           </div>
 
@@ -531,7 +519,7 @@ const WriteLetter = () => {
           </div>
 
           {/* Letter Writing Area - Continuous Scroll */}
-          <div 
+          <div
             ref={letterScrollRef}
             onWheelCapture={handleLetterWheelCapture}
             className="rounded-2xl shadow-dreamy mb-8 border border-border/50 transition-colors max-h-[85vh] overflow-y-auto overscroll-contain"
@@ -549,108 +537,99 @@ const WriteLetter = () => {
 
               {/* All Pages - Continuous Scroll */}
               <div className="space-y-8">
-                {inputMode === "type" ? (
-                  // Text mode pages
-                  textPages.map((pageContent, pageIndex) => (
-                    <div key={`text-${pageIndex}`} className="relative">
-                      {/* Page header with delete button */}
-                      {textPages.length > 1 && (
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-muted-foreground/60 font-body">
-                            Page {pageIndex + 1}
-                          </span>
-                          {isPageEmpty(pageIndex) && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deletePage(pageIndex)}
-                              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="w-3 h-3 mr-1" />
-                              Remove
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                      
-                      <Textarea
-                        placeholder={pageIndex === 0 ? "Dear future me..." : "Continue writing..."}
-                        value={pageContent}
-                        onChange={(e) => updateTextPage(pageIndex, e.target.value)}
-                        className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
-                          showLines ? "lined-paper" : ""
-                        }`}
-                        style={{ color: inkColor.value }}
-                      />
-                      
-                      {/* Page divider */}
-                      {pageIndex < textPages.length - 1 && (
-                        <div className="border-b border-dashed border-border/40 mt-6" />
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  // Sketch mode pages - use stable keys that don't cause remounting
-                  sketchPages.map((pageContent, pageIndex) => (
-                    <div key={`sketch-page-${pageIndex}`} className="relative">
-                      {/* Page header with delete button */}
-                      {sketchPages.length > 1 && (
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-muted-foreground/60 font-body">
-                            Page {pageIndex + 1}
-                          </span>
-                          {isPageEmpty(pageIndex) && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deletePage(pageIndex)}
-                              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="w-3 h-3 mr-1" />
-                              Remove
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                      
-                      <SketchCanvas 
-                        ref={(ref) => {
-                          if (ref) {
-                            sketchCanvasRefs.current.set(pageIndex, ref);
-                          } else {
-                            sketchCanvasRefs.current.delete(pageIndex);
-                          }
-                        }}
-                        canvasId={`sketch-page-${pageIndex}`}
-                        onChange={(data) => updateSketchPage(pageIndex, data)}
-                        inkColor={inkColor.value}
-                        showLines={showLines}
-                        initialData={pageContent}
-                      />
-                      
-                      {/* Page divider */}
-                      {pageIndex < sketchPages.length - 1 && (
-                        <div className="border-b border-dashed border-border/40 mt-6" />
-                      )}
-                    </div>
-                  ))
-                )}
+                {inputMode === "type"
+                  ? // Text mode pages
+                    textPages.map((pageContent, pageIndex) => (
+                      <div key={`text-${pageIndex}`} className="relative">
+                        {/* Page header with delete button */}
+                        {textPages.length > 1 && (
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground/60 font-body">Page {pageIndex + 1}</span>
+                            {isPageEmpty(pageIndex) && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deletePage(pageIndex)}
+                                className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        <Textarea
+                          placeholder={pageIndex === 0 ? "Dear future me..." : "Continue writing..."}
+                          value={pageContent}
+                          onChange={(e) => updateTextPage(pageIndex, e.target.value)}
+                          className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
+                            showLines ? "lined-paper" : ""
+                          }`}
+                          style={{ color: inkColor.value }}
+                        />
+
+                        {/* Page divider */}
+                        {pageIndex < textPages.length - 1 && (
+                          <div className="border-b border-dashed border-border/40 mt-6" />
+                        )}
+                      </div>
+                    ))
+                  : // Sketch mode pages - use stable keys that don't cause remounting
+                    sketchPages.map((pageContent, pageIndex) => (
+                      <div key={`sketch-page-${pageIndex}`} className="relative">
+                        {/* Page header with delete button */}
+                        {sketchPages.length > 1 && (
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground/60 font-body">Page {pageIndex + 1}</span>
+                            {isPageEmpty(pageIndex) && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deletePage(pageIndex)}
+                                className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        <SketchCanvas
+                          ref={(ref) => {
+                            if (ref) {
+                              sketchCanvasRefs.current.set(pageIndex, ref);
+                            } else {
+                              sketchCanvasRefs.current.delete(pageIndex);
+                            }
+                          }}
+                          canvasId={`sketch-page-${pageIndex}`}
+                          onChange={(data) => updateSketchPage(pageIndex, data)}
+                          inkColor={inkColor.value}
+                          showLines={showLines}
+                          initialData={pageContent}
+                        />
+
+                        {/* Page divider */}
+                        {pageIndex < sketchPages.length - 1 && (
+                          <div className="border-b border-dashed border-border/40 mt-6" />
+                        )}
+                      </div>
+                    ))}
               </div>
 
               {/* Add Page button */}
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30">
+              <div
+                className="flex items-center justify-between mt-6 pt-4 border-t border-border/30"
+                style={"user-select:none;"}
+              >
                 <span className="text-sm text-muted-foreground font-body">
                   {currentPages.length} {currentPages.length === 1 ? "page" : "pages"}
                 </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addNewPage}
-                  className="rounded-full"
-                >
+                <Button type="button" variant="outline" size="sm" onClick={addNewPage} className="rounded-full">
                   <Plus className="w-4 h-4 mr-1" />
                   Add New Page
                 </Button>
@@ -700,10 +679,8 @@ const WriteLetter = () => {
 
           {/* Delivery Date */}
           <div className="mb-8">
-            <label className="text-sm font-medium text-foreground mb-3 block font-body">
-              Delivery Date
-            </label>
-            
+            <label className="text-sm font-medium text-foreground mb-3 block font-body">Delivery Date</label>
+
             {/* Preset buttons */}
             <div className="flex flex-wrap gap-2 mb-3">
               {[
@@ -749,7 +726,7 @@ const WriteLetter = () => {
                 />
               </PopoverContent>
             </Popover>
-            
+
             {deliveryDate && (
               <p className="text-sm text-muted-foreground mt-2 font-body">
                 Written on {format(new Date(), "MMMM d, yyyy")} • Arrives {format(deliveryDate, "MMMM d, yyyy")}
@@ -760,9 +737,7 @@ const WriteLetter = () => {
           {/* Recipient Email */}
           {recipientType === "someone" && (
             <div className="mb-8">
-              <label className="text-sm font-medium text-foreground mb-2 block font-body">
-                Recipient Email
-              </label>
+              <label className="text-sm font-medium text-foreground mb-2 block font-body">Recipient Email</label>
               <Input
                 type="email"
                 placeholder="their.email@example.com"
@@ -775,10 +750,8 @@ const WriteLetter = () => {
 
           {/* Signature */}
           <div className="mb-8">
-            <label className="text-sm font-medium text-foreground mb-3 block font-body">
-              Your Signature
-            </label>
-            
+            <label className="text-sm font-medium text-foreground mb-3 block font-body">Your Signature</label>
+
             {/* Signature font options */}
             <div className="flex gap-2 mb-3">
               {SIGNATURE_FONTS.map((font) => (
@@ -793,14 +766,14 @@ const WriteLetter = () => {
                 </Button>
               ))}
             </div>
-            
+
             <Input
               placeholder="With love..."
               value={signature}
               onChange={(e) => setSignature(e.target.value)}
               className={`bg-card/50 rounded-xl text-lg ${signatureFont.class}`}
             />
-            
+
             {signature && (
               <p className={`mt-3 text-2xl ${signatureFont.class}`} style={{ color: inkColor.value }}>
                 {signature}
@@ -809,14 +782,14 @@ const WriteLetter = () => {
           </div>
 
           {/* Seal Button */}
-          <Button 
+          <Button
             onClick={handleSealLetter}
-            size="lg" 
+            size="lg"
             className="w-full text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
           >
             Seal
           </Button>
-          
+
           <p className="text-center text-muted-foreground text-sm mt-4 font-body italic">
             Once sealed, this letter cannot be viewed, edited, or rewritten until delivery.
           </p>
