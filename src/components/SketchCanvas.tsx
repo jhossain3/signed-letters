@@ -228,14 +228,18 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
             id={canvasId ?? `sketch-${instanceId.current}`}
             width="100%"
             height="500px"
-            strokeWidth={2}
+            strokeWidth={3}
             strokeColor={currentColor}
-            eraserWidth={20}
+            eraserWidth={24}
             canvasColor="transparent"
             style={{
               border: "none",
               borderRadius: "0.75rem",
               touchAction: "none",
+            }}
+            svgStyle={{
+              // Improve SVG rendering quality
+              shapeRendering: "geometricPrecision",
             }}
             onStroke={handleStroke}
             allowOnlyPointerType="all"
