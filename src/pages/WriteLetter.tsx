@@ -623,8 +623,7 @@ const WriteLetter = () => {
 
               {/* Add Page button */}
               <div
-                className="flex items-center justify-between mt-6 pt-4 border-t border-border/30"
-                style={"user-select:none;"}
+                className="flex items-center justify-between mt-6 pt-4 border-t border-border/30 select-none"
               >
                 <span className="text-sm text-muted-foreground font-body">
                   {currentPages.length} {currentPages.length === 1 ? "page" : "pages"}
