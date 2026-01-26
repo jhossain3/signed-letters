@@ -234,15 +234,18 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
 
     return (
       <div
-        className="rounded-xl border border-border overflow-hidden"
+        className="rounded-xl border border-border overflow-hidden select-none"
         style={{
           background: linePattern !== 'none' ? `${linePattern}, ${paperColor}` : paperColor,
           backgroundPositionY: "8px",
           touchAction: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
+          WebkitTouchCallout: "none",
           width,
         }}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
       >
         <svg
           ref={svgRef}
