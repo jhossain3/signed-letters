@@ -142,10 +142,12 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       canvasRef.current?.eraseMode(false);
     }, []);
 
-    // Generate line pattern for background
+    // Generate line pattern for background - align with 32px line height
+    // Start lines after a small top margin so handwriting sits ON lines
     const linePattern = showLines ? `
       repeating-linear-gradient(
-        transparent,
+        to bottom,
+        transparent 0px,
         transparent 31px,
         hsl(20, 15%, 85%) 31px,
         hsl(20, 15%, 85%) 32px
@@ -213,6 +215,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
           className="rounded-xl border border-border overflow-hidden"
           style={{ 
             background: linePattern !== 'none' ? `${linePattern}, ${paperColor}` : paperColor,
+            backgroundPositionY: "8px", // Offset lines so handwriting sits ON them
             touchAction: "none",
             WebkitUserSelect: "none",
             userSelect: "none",

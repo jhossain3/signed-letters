@@ -149,7 +149,28 @@ const WriteLetter = () => {
 
   // Get combined content for saving
   const getCombinedBody = () => textPages.join("\n\n--- Page Break ---\n\n");
-  const getCombinedSketch = () => sketchPages[0] || ""; // For now, use first page sketch
+  
+  // Combine all sketch pages into a single JSON array of pages
+  const getCombinedSketchData = async () => {
+    const allPagesData: { pageIndex: number; paths: unknown[] }[] = [];
+    
+    for (let i = 0; i < sketchPages.length; i++) {
+      const ref = sketchCanvasRefs.current.get(i);
+      if (ref) {
+        const data = await ref.getDataUrl();
+        try {
+          const paths = JSON.parse(data);
+          if (Array.isArray(paths) && paths.length > 0) {
+            allPagesData.push({ pageIndex: i, paths });
+          }
+        } catch {
+          // Skip invalid data
+        }
+      }
+    }
+    
+    return JSON.stringify(allPagesData);
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -254,12 +275,9 @@ const WriteLetter = () => {
 
   const completeSeal = async () => {
     // Get final sketch data from all pages if in sketch mode
-    let finalSketchData = getCombinedSketch();
+    let finalSketchData = "";
     if (inputMode === "sketch") {
-      const firstRef = sketchCanvasRefs.current.get(0);
-      if (firstRef) {
-        finalSketchData = await firstRef.getDataUrl();
-      }
+      finalSketchData = await getCombinedSketchData();
     }
     
     try {

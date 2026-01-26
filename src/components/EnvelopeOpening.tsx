@@ -79,8 +79,9 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   letter.sketchData && (
                     <SketchRenderer 
                       sketchData={letter.sketchData} 
-                      paperColor={letter.paperColor}
+                      paperColor="transparent"
                       inkColor={letter.inkColor}
+                      showLines={letter.isLined !== false}
                     />
                   )
                 )}
