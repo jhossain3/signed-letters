@@ -1,9 +1,10 @@
-import { useRef, useEffect, useState } from "react";
-import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
+import { useMemo } from "react";
+import getStroke from "perfect-freehand";
+import type { Stroke } from "./sketch/FreehandCanvas";
 
 interface SketchPage {
   pageIndex: number;
-  paths: unknown[];
+  strokes: Stroke[];
 }
 
 interface SketchRendererProps {
@@ -13,54 +14,79 @@ interface SketchRendererProps {
   showLines?: boolean;
 }
 
+// Convert stroke points to SVG path using perfect-freehand
+function getSvgPathFromStroke(stroke: number[][]): string {
+  if (!stroke.length) return "";
+
+  const d = stroke.reduce(
+    (acc, [x0, y0], i, arr) => {
+      const [x1, y1] = arr[(i + 1) % arr.length];
+      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+      return acc;
+    },
+    ["M", ...stroke[0], "Q"]
+  );
+
+  d.push("Z");
+  return d.join(" ");
+}
+
+// Perfect-freehand options matching the canvas
+const getStrokeOptions = (size: number) => ({
+  size,
+  thinning: 0.5,
+  smoothing: 0.5,
+  streamline: 0.5,
+  easing: (t: number) => t,
+  simulatePressure: true,
+  start: { cap: true, taper: 0 },
+  end: { cap: true, taper: 0 },
+});
+
 /**
- * Read-only renderer for sketch data (JSON paths from react-sketch-canvas)
+ * Read-only renderer for sketch data (perfect-freehand strokes)
  * Supports both legacy single-page format and new multi-page format
  * Used to display saved handwritten letters in the vault
  */
-const SketchRenderer = ({ 
-  sketchData, 
-  paperColor = "hsl(38, 35%, 97%)", 
+const SketchRenderer = ({
+  sketchData,
+  paperColor = "hsl(38, 35%, 97%)",
   inkColor,
-  showLines = true 
+  showLines = true,
 }: SketchRendererProps) => {
-  const [pages, setPages] = useState<SketchPage[]>([]);
-  const canvasRefs = useRef<Map<number, ReactSketchCanvasRef>>(new Map());
-  const hasLoaded = useRef(false);
-
   // Parse sketch data and determine format
-  useEffect(() => {
-    if (!sketchData || hasLoaded.current) return;
-    
+  const pages = useMemo((): SketchPage[] => {
+    if (!sketchData) return [];
+
     try {
       const parsed = JSON.parse(sketchData);
-      
-      // Check if it's the new multi-page format
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Check if first element has pageIndex (multi-page format)
-        if (parsed[0] && typeof parsed[0] === 'object' && 'pageIndex' in parsed[0]) {
-          // New multi-page format: [{ pageIndex: 0, paths: [...] }, ...]
-          setPages(parsed as SketchPage[]);
-        } else {
-          // Legacy single-page format: array of paths directly
-          setPages([{ pageIndex: 0, paths: parsed }]);
-        }
-        hasLoaded.current = true;
+
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return [];
       }
+
+      // Check if it's new multi-page format with pageIndex
+      if (parsed[0] && typeof parsed[0] === "object" && "pageIndex" in parsed[0]) {
+        // Multi-page format: [{ pageIndex: 0, strokes: [...] }, ...]
+        return parsed.map((page: { pageIndex: number; strokes?: Stroke[]; paths?: unknown[] }) => ({
+          pageIndex: page.pageIndex,
+          strokes: page.strokes || [],
+        }));
+      }
+
+      // Check if it's new single-page stroke format (Stroke[])
+      if (parsed[0] && typeof parsed[0] === "object" && "points" in parsed[0]) {
+        return [{ pageIndex: 0, strokes: parsed as Stroke[] }];
+      }
+
+      // Legacy react-sketch-canvas format - can't render directly
+      console.log("Legacy sketch format detected - cannot render");
+      return [];
     } catch {
       console.log("Could not parse sketch data");
+      return [];
     }
   }, [sketchData]);
-
-  // Load paths into canvases once pages are set
-  useEffect(() => {
-    pages.forEach((page) => {
-      const ref = canvasRefs.current.get(page.pageIndex);
-      if (ref && page.paths.length > 0) {
-        ref.loadPaths(page.paths as any);
-      }
-    });
-  }, [pages]);
 
   if (pages.length === 0) {
     return (
@@ -71,7 +97,8 @@ const SketchRenderer = ({
   }
 
   // Generate line pattern matching SketchCanvas exactly
-  const linePattern = showLines ? `
+  const linePattern = showLines
+    ? `
     repeating-linear-gradient(
       to bottom,
       transparent 0px,
@@ -79,7 +106,8 @@ const SketchRenderer = ({
       hsl(20, 15%, 85% / 0.5) 31px,
       hsl(20, 15%, 85% / 0.5) 32px
     )
-  ` : 'none';
+  `
+    : "none";
 
   return (
     <div className="space-y-6">
@@ -90,35 +118,38 @@ const SketchRenderer = ({
               Page {index + 1}
             </p>
           )}
-          <div 
+          <div
             className="w-full rounded-xl border border-border overflow-hidden"
-            style={{ 
-              background: linePattern !== 'none' ? `${linePattern}, ${paperColor}` : paperColor,
-              backgroundPositionY: "8px", // Match SketchCanvas line alignment
+            style={{
+              background:
+                linePattern !== "none"
+                  ? `${linePattern}, ${paperColor}`
+                  : paperColor,
+              backgroundPositionY: "8px",
             }}
           >
-            <ReactSketchCanvas
-              ref={(ref) => {
-                if (ref) {
-                  canvasRefs.current.set(page.pageIndex, ref);
-                }
-              }}
-              id={`sketch-view-${page.pageIndex}-${Date.now()}`}
+            <svg
               width="100%"
               height="500px"
-              strokeWidth={3}
-              strokeColor={inkColor || "hsl(15, 20%, 18%)"}
-              canvasColor="transparent"
-              style={{
-                border: "none",
-                borderRadius: "0.75rem",
-                pointerEvents: "none",
-              }}
-              svgStyle={{
-                shapeRendering: "geometricPrecision",
-              }}
-              allowOnlyPointerType="all"
-            />
+              style={{ display: "block" }}
+            >
+              {page.strokes.map((stroke, strokeIndex) => {
+                const outlinePoints = getStroke(
+                  stroke.points,
+                  getStrokeOptions(stroke.size)
+                );
+                const pathData = getSvgPathFromStroke(outlinePoints);
+
+                return (
+                  <path
+                    key={`stroke-${page.pageIndex}-${strokeIndex}`}
+                    d={pathData}
+                    fill={stroke.isEraser ? paperColor : (stroke.color || inkColor || "hsl(15, 20%, 18%)")}
+                    stroke="none"
+                  />
+                );
+              })}
+            </svg>
           </div>
           {/* Page divider */}
           {index < pages.length - 1 && (

@@ -1,7 +1,5 @@
-import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback } from "react";
-import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
-import { Eraser, Undo2, Trash2, Pen } from "lucide-react";
-import { Button } from "./ui/button";
+import { useRef, useImperativeHandle, forwardRef, useState, useCallback, useEffect } from "react";
+import { FreehandCanvas, FreehandCanvasRef, Stroke, SketchToolbar } from "./sketch";
 
 interface SketchCanvasProps {
   onChange?: (dataUrl: string) => void;
@@ -11,7 +9,7 @@ interface SketchCanvasProps {
   paperColor?: string;
   /**
    * IMPORTANT: When rendering multiple canvases on the same page, each instance
-   * MUST have a stable unique id to avoid SVG <defs>/mask collisions (eraser/undo bleeding).
+   * MUST have a stable unique id to avoid SVG collisions.
    */
   canvasId?: string;
 }
@@ -20,6 +18,30 @@ export interface SketchCanvasRef {
   getDataUrl: () => Promise<string>;
   loadData: (dataUrl: string) => void;
   clear: () => void;
+}
+
+// Convert strokes to serializable format
+function strokesToJson(strokes: Stroke[]): string {
+  return JSON.stringify(strokes);
+}
+
+// Parse JSON to strokes
+function jsonToStrokes(json: string): Stroke[] | null {
+  try {
+    const parsed = JSON.parse(json);
+    if (Array.isArray(parsed)) {
+      // Check if it's new format (Stroke[])
+      if (parsed.length === 0 || (parsed[0] && 'points' in parsed[0])) {
+        return parsed as Stroke[];
+      }
+      // Legacy format from react-sketch-canvas - return empty, can't convert
+      console.log("Legacy sketch format detected, starting fresh");
+      return [];
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
@@ -32,224 +54,111 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
       paperColor = "hsl(38, 35%, 97%)",
       canvasId,
     },
-    ref,
+    ref
   ) => {
-    const canvasRef = useRef<ReactSketchCanvasRef>(null);
+    const canvasRef = useRef<FreehandCanvasRef>(null);
     const [isEraser, setIsEraser] = useState(false);
-    const [currentColor, setCurrentColor] = useState(inkColor);
     const [canUndo, setCanUndo] = useState(false);
-    
-    // Use a unique instance ID to track this specific canvas instance
-    const instanceId = useRef(Math.random().toString(36).substring(7));
-    // Track if we've already loaded initial data to prevent re-loading
+    const [initialStrokes, setInitialStrokes] = useState<Stroke[] | undefined>();
     const hasLoadedInitialData = useRef(false);
-    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-    // Update color when inkColor prop changes
+    // Load initial data once
     useEffect(() => {
-      setCurrentColor(inkColor);
-    }, [inkColor]);
-
-    // Load initial data ONLY once on mount
-    useEffect(() => {
-      if (initialData && canvasRef.current && !hasLoadedInitialData.current) {
+      if (initialData && !hasLoadedInitialData.current) {
         hasLoadedInitialData.current = true;
-        try {
-          const paths = JSON.parse(initialData);
-          if (Array.isArray(paths) && paths.length > 0) {
-            canvasRef.current.loadPaths(paths);
-            setCanUndo(true);
-          }
-        } catch {
-          console.log("Could not parse sketch data as paths");
+        const strokes = jsonToStrokes(initialData);
+        if (strokes && strokes.length > 0) {
+          setInitialStrokes(strokes);
+          setCanUndo(true);
         }
       }
-    }, []); // Empty dependency - only run once on mount
-
-    // Debounced save to prevent performance issues - each instance saves its own data
-    const debouncedSave = useCallback((paths: unknown[]) => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-      debounceTimer.current = setTimeout(() => {
-        if (onChange) {
-          onChange(JSON.stringify(paths));
-        }
-      }, 300); // Debounce by 300ms
-    }, [onChange]);
+    }, [initialData]);
 
     // Handle stroke changes
-    const handleStroke = useCallback(() => {
-      setCanUndo(true);
-      if (canvasRef.current) {
-        canvasRef.current.exportPaths().then((paths) => {
-          debouncedSave(paths);
-        });
+    const handleChange = useCallback((strokes: Stroke[]) => {
+      setCanUndo(strokes.length > 0);
+      if (onChange) {
+        onChange(strokesToJson(strokes));
       }
-    }, [debouncedSave]);
+    }, [onChange]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       getDataUrl: async () => {
         if (canvasRef.current) {
-          const paths = await canvasRef.current.exportPaths();
-          return JSON.stringify(paths);
+          return strokesToJson(canvasRef.current.getStrokes());
         }
-        return "";
+        return "[]";
       },
       loadData: (data: string) => {
         if (canvasRef.current) {
-          try {
-            const paths = JSON.parse(data);
-            if (Array.isArray(paths)) {
-              canvasRef.current.loadPaths(paths);
-            }
-          } catch {
-            console.log("Could not load sketch data");
+          const strokes = jsonToStrokes(data);
+          if (strokes) {
+            canvasRef.current.loadStrokes(strokes);
+            setCanUndo(strokes.length > 0);
           }
         }
       },
       clear: () => {
-        canvasRef.current?.clearCanvas();
+        canvasRef.current?.clear();
         setCanUndo(false);
       }
     }), []);
 
-    const handleUndo = useCallback(() => {
-      canvasRef.current?.undo();
-      canvasRef.current?.exportPaths().then((paths) => {
-        setCanUndo(paths.length > 0);
-        debouncedSave(paths);
-      });
-    }, [debouncedSave]);
-
-    const handleClear = useCallback(() => {
-      canvasRef.current?.clearCanvas();
-      setCanUndo(false);
-      if (onChange) {
-        onChange(JSON.stringify([]));
-      }
-    }, [onChange]);
-
-    const toggleEraser = useCallback(() => {
-      const newEraserState = !isEraser;
-      setIsEraser(newEraserState);
-      canvasRef.current?.eraseMode(newEraserState);
-    }, [isEraser]);
-
-    const selectPen = useCallback(() => {
+    const handlePen = useCallback(() => {
       setIsEraser(false);
-      canvasRef.current?.eraseMode(false);
+      canvasRef.current?.setEraseMode(false);
     }, []);
 
-    // Generate line pattern for background - align with 32px line height
-    // Start lines after a small top margin so handwriting sits ON lines
-    const linePattern = showLines ? `
-      repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent 31px,
-        hsl(20, 15%, 85%) 31px,
-        hsl(20, 15%, 85%) 32px
-      )
-    ` : 'none';
+    const handleEraser = useCallback(() => {
+      setIsEraser(true);
+      canvasRef.current?.setEraseMode(true);
+    }, []);
+
+    const handleUndo = useCallback(() => {
+      canvasRef.current?.undo();
+      setCanUndo(canvasRef.current?.canUndo() || false);
+    }, []);
+
+    const handleClear = useCallback(() => {
+      canvasRef.current?.clear();
+      setCanUndo(false);
+    }, []);
 
     return (
       <div className="space-y-3">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 p-2 bg-card/80 rounded-xl border border-border/50">
-          {/* Pen Tool */}
-          <Button 
-            type="button" 
-            variant={!isEraser ? "default" : "outline"} 
-            size="sm" 
-            onClick={selectPen}
-            className="rounded-full"
-            title="Pen"
-          >
-            <Pen className="w-4 h-4" />
-          </Button>
+        <SketchToolbar
+          isEraser={isEraser}
+          canUndo={canUndo}
+          onPenClick={handlePen}
+          onEraserClick={handleEraser}
+          onUndoClick={handleUndo}
+          onClearClick={handleClear}
+        />
 
-          {/* Eraser Tool */}
-          <Button 
-            type="button" 
-            variant={isEraser ? "default" : "outline"} 
-            size="sm" 
-            onClick={toggleEraser}
-            className="rounded-full"
-            title="Eraser"
-          >
-            <Eraser className="w-4 h-4" />
-          </Button>
-
-          <div className="flex-1" />
-
-          {/* Undo */}
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            onClick={handleUndo} 
-            disabled={!canUndo}
-            className="rounded-full"
-            title="Undo"
-          >
-            <Undo2 className="w-4 h-4" />
-          </Button>
-
-          {/* Clear */}
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            onClick={handleClear}
-            className="rounded-full text-destructive hover:text-destructive"
-            title="Clear Canvas"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Canvas Container - Touch-optimized for seamless writing */}
-        <div 
-          className="rounded-xl border border-border overflow-hidden"
-          style={{ 
-            background: linePattern !== 'none' ? `${linePattern}, ${paperColor}` : paperColor,
-            backgroundPositionY: "8px", // Offset lines so handwriting sits ON them
-            touchAction: "none",
-            WebkitUserSelect: "none",
-            userSelect: "none",
-          }}
+        {/* Canvas */}
+        <div
           onTouchStart={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
-          <ReactSketchCanvas
+          <FreehandCanvas
             ref={canvasRef}
-            id={canvasId ?? `sketch-${instanceId.current}`}
-            width="100%"
+            inkColor={inkColor}
+            strokeSize={3}
+            eraserSize={24}
             height="500px"
-            strokeWidth={3}
-            strokeColor={currentColor}
-            eraserWidth={24}
-            canvasColor="transparent"
-            style={{
-              border: "none",
-              borderRadius: "0.75rem",
-              touchAction: "none",
-            }}
-            svgStyle={{
-              // Improve SVG rendering quality
-              shapeRendering: "geometricPrecision",
-            }}
-            onStroke={handleStroke}
-            allowOnlyPointerType="all"
-            withTimestamp={true}
+            showLines={showLines}
+            paperColor={paperColor}
+            initialStrokes={initialStrokes}
+            onChange={handleChange}
+            canvasId={canvasId}
           />
         </div>
 
         {/* Hint */}
         <p className="text-xs text-muted-foreground text-center">
-          Draw with your finger, stylus, or mouse
+          Draw with your finger, stylus, or mouse • Pressure-sensitive
         </p>
       </div>
     );
