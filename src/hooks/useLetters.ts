@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
 
 export interface Letter {
   id: string;
@@ -73,7 +74,14 @@ export const useLetters = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data.map(mapDbToLetter);
+      
+      // Decrypt all letters
+      const mappedLetters = data.map(mapDbToLetter);
+      const decryptedLetters = await Promise.all(
+        mappedLetters.map(letter => decryptLetterFields(letter, user.id))
+      );
+      
+      return decryptedLetters;
     },
     enabled: !!user,
   });
@@ -82,15 +90,21 @@ export const useLetters = () => {
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Encrypt sensitive fields before saving
+      const encryptedFields = await encryptLetterFields(
+        { title: letter.title, body: letter.body, signature: letter.signature },
+        user.id
+      );
+
       const { data, error } = await supabase
         .from("letters")
         .insert({
           user_id: user.id,
-          title: letter.title,
-          body: letter.body,
+          title: encryptedFields.title,
+          body: encryptedFields.body,
           date: letter.date,
           delivery_date: letter.deliveryDate,
-          signature: letter.signature,
+          signature: encryptedFields.signature,
           signature_font: letter.signatureFont,
           recipient_email: letter.recipientEmail,
           recipient_type: letter.recipientType,
@@ -105,7 +119,10 @@ export const useLetters = () => {
         .single();
 
       if (error) throw error;
-      return mapDbToLetter(data);
+      
+      // Decrypt before returning
+      const mappedLetter = mapDbToLetter(data);
+      return decryptLetterFields(mappedLetter, user.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
