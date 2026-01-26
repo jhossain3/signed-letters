@@ -70,7 +70,7 @@ export const useLetters = () => {
   const { data: letters = [], isLoading, error } = useQuery({
     queryKey: ["letters", user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !user.email) return [];
       
       const { data, error } = await supabase
         .from("letters")
@@ -79,25 +79,25 @@ export const useLetters = () => {
 
       if (error) throw error;
       
-      // Decrypt all letters
+      // Decrypt all letters using email (not stored in letters table)
       const mappedLetters = data.map(mapDbToLetter);
       const decryptedLetters = await Promise.all(
-        mappedLetters.map(letter => decryptLetterFields(letter, user.id))
+        mappedLetters.map(letter => decryptLetterFields(letter, user.email!))
       );
       
       return decryptedLetters;
     },
-    enabled: !!user,
+    enabled: !!user && !!user.email,
   });
 
   const addLetterMutation = useMutation({
     mutationFn: async (letter: CreateLetterInput) => {
-      if (!user) throw new Error("User not authenticated");
+      if (!user || !user.email) throw new Error("User not authenticated");
 
-      // Encrypt sensitive fields before saving (including sketch data)
+      // Encrypt sensitive fields before saving using email (more secure than userId)
       const encryptedFields = await encryptLetterFields(
         { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-        user.id
+        user.email
       );
 
       const { data, error } = await supabase
@@ -127,7 +127,7 @@ export const useLetters = () => {
       
       // Decrypt before returning
       const mappedLetter = mapDbToLetter(data);
-      return decryptLetterFields(mappedLetter, user.id);
+      return decryptLetterFields(mappedLetter, user.email!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });

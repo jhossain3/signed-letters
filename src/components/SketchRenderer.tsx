@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import getStroke from "perfect-freehand";
 import type { Stroke } from "./sketch/FreehandCanvas";
+import { deserializeMultiPage } from "@/lib/sketchSerialization";
 
 interface SketchPage {
   pageIndex: number;
@@ -45,7 +46,7 @@ const getStrokeOptions = (size: number) => ({
 
 /**
  * Read-only renderer for sketch data (perfect-freehand strokes)
- * Supports both legacy single-page format and new multi-page format
+ * Supports both legacy JSON format and new compact flat array format
  * Used to display saved handwritten letters in the vault
  */
 const SketchRenderer = ({
@@ -54,38 +55,13 @@ const SketchRenderer = ({
   inkColor,
   showLines = true,
 }: SketchRendererProps) => {
-  // Parse sketch data and determine format
+  // Parse sketch data using the unified deserializer
   const pages = useMemo((): SketchPage[] => {
     if (!sketchData) return [];
-
-    try {
-      const parsed = JSON.parse(sketchData);
-
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        return [];
-      }
-
-      // Check if it's new multi-page format with pageIndex
-      if (parsed[0] && typeof parsed[0] === "object" && "pageIndex" in parsed[0]) {
-        // Multi-page format: [{ pageIndex: 0, strokes: [...] }, ...]
-        return parsed.map((page: { pageIndex: number; strokes?: Stroke[]; paths?: unknown[] }) => ({
-          pageIndex: page.pageIndex,
-          strokes: page.strokes || [],
-        }));
-      }
-
-      // Check if it's new single-page stroke format (Stroke[])
-      if (parsed[0] && typeof parsed[0] === "object" && "points" in parsed[0]) {
-        return [{ pageIndex: 0, strokes: parsed as Stroke[] }];
-      }
-
-      // Legacy react-sketch-canvas format - can't render directly
-      console.log("Legacy sketch format detected - cannot render");
-      return [];
-    } catch {
-      console.log("Could not parse sketch data");
-      return [];
-    }
+    
+    // Use the unified deserializer that handles all formats
+    const result = deserializeMultiPage(sketchData);
+    return result || [];
   }, [sketchData]);
 
   if (pages.length === 0) {
