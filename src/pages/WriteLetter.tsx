@@ -152,16 +152,16 @@ const WriteLetter = () => {
   
   // Combine all sketch pages into a single JSON array of pages
   const getCombinedSketchData = async () => {
-    const allPagesData: { pageIndex: number; paths: unknown[] }[] = [];
+    const allPagesData: { pageIndex: number; strokes: unknown[] }[] = [];
     
     for (let i = 0; i < sketchPages.length; i++) {
       const ref = sketchCanvasRefs.current.get(i);
       if (ref) {
         const data = await ref.getDataUrl();
         try {
-          const paths = JSON.parse(data);
-          if (Array.isArray(paths) && paths.length > 0) {
-            allPagesData.push({ pageIndex: i, paths });
+          const strokes = JSON.parse(data);
+          if (Array.isArray(strokes) && strokes.length > 0) {
+            allPagesData.push({ pageIndex: i, strokes });
           }
         } catch {
           // Skip invalid data
