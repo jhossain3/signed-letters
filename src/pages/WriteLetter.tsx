@@ -310,7 +310,7 @@ const WriteLetter = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-editorial relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-editorial relative overflow-hidden select-none">
       {/* Paper texture overlay */}
       <div className="absolute inset-0 paper-texture pointer-events-none" />
 
