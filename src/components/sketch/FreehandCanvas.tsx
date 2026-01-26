@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback } from "react";
+import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useCallback, useMemo } from "react";
 import getStroke from "perfect-freehand";
 
 export interface Stroke {
@@ -67,29 +67,37 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
   ) => {
     const svgRef = useRef<SVGSVGElement>(null);
     const [strokes, setStrokes] = useState<Stroke[]>([]);
-    const [currentStroke, setCurrentStroke] = useState<number[][] | null>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
     const [isEraser, setIsEraser] = useState(false);
     const hasLoadedInitialData = useRef(false);
     const instanceId = useRef(Math.random().toString(36).substring(7));
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+    
+    // Use refs for drawing state to avoid re-renders during active drawing
+    const isDrawingRef = useRef(false);
+    const currentPointsRef = useRef<number[][]>([]);
+    const currentPathRef = useRef<SVGPathElement | null>(null);
 
-    // Perfect-freehand options for smooth, natural strokes
-    const getStrokeOptions = useCallback((size: number, isErasing: boolean) => ({
-      size: isErasing ? eraserSize : size,
-      thinning: 0.5,
+    // Stable stroke options - no pressure simulation for consistent size
+    const penOptions = useMemo(() => ({
+      size: strokeSize,
+      thinning: 0,
       smoothing: 0.5,
       streamline: 0.5,
       easing: (t: number) => t,
-      simulatePressure: true,
-      start: {
-        cap: true,
-        taper: 0,
-      },
-      end: {
-        cap: true,
-        taper: 0,
-      },
+      simulatePressure: false,
+      start: { cap: true, taper: 0 },
+      end: { cap: true, taper: 0 },
+    }), [strokeSize]);
+
+    const eraserOptions = useMemo(() => ({
+      size: eraserSize,
+      thinning: 0,
+      smoothing: 0.5,
+      streamline: 0.5,
+      easing: (t: number) => t,
+      simulatePressure: false,
+      start: { cap: true, taper: 0 },
+      end: { cap: true, taper: 0 },
     }), [eraserSize]);
 
     // Load initial strokes
@@ -113,15 +121,25 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
     // Get pointer position relative to SVG
     const getPoint = useCallback((e: React.PointerEvent): number[] => {
       const svg = svgRef.current;
-      if (!svg) return [0, 0, 0.5];
+      if (!svg) return [0, 0];
       
       const rect = svg.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const pressure = e.pressure || 0.5;
       
-      return [x, y, pressure];
+      return [x, y];
     }, []);
+
+    // Update the live path element directly (no React state)
+    const updateLivePath = useCallback(() => {
+      if (!currentPathRef.current || currentPointsRef.current.length === 0) return;
+      
+      const options = isEraser ? eraserOptions : penOptions;
+      const outlinePoints = getStroke(currentPointsRef.current, options);
+      const pathData = getSvgPathFromStroke(outlinePoints);
+      
+      currentPathRef.current.setAttribute("d", pathData);
+    }, [isEraser, penOptions, eraserOptions]);
 
     const handlePointerDown = useCallback((e: React.PointerEvent) => {
       if (readOnly) return;
@@ -130,44 +148,67 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
       e.stopPropagation();
       (e.target as Element).setPointerCapture(e.pointerId);
       
-      setIsDrawing(true);
+      isDrawingRef.current = true;
       const point = getPoint(e);
-      setCurrentStroke([point]);
-    }, [readOnly, getPoint]);
+      currentPointsRef.current = [point];
+      
+      // Create live path element
+      const svg = svgRef.current;
+      if (svg) {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("fill", isEraser ? paperColor : inkColor);
+        path.setAttribute("stroke", "none");
+        path.id = "live-stroke";
+        svg.appendChild(path);
+        currentPathRef.current = path;
+        updateLivePath();
+      }
+    }, [readOnly, getPoint, isEraser, paperColor, inkColor, updateLivePath]);
 
     const handlePointerMove = useCallback((e: React.PointerEvent) => {
-      if (!isDrawing || readOnly) return;
+      if (!isDrawingRef.current || readOnly) return;
       
       e.preventDefault();
       e.stopPropagation();
       
       const point = getPoint(e);
-      setCurrentStroke(prev => prev ? [...prev, point] : [point]);
-    }, [isDrawing, readOnly, getPoint]);
+      currentPointsRef.current.push(point);
+      
+      // Use requestAnimationFrame for smooth updates
+      requestAnimationFrame(updateLivePath);
+    }, [readOnly, getPoint, updateLivePath]);
 
     const handlePointerUp = useCallback((e: React.PointerEvent) => {
-      if (!isDrawing || readOnly) return;
+      if (!isDrawingRef.current || readOnly) return;
       
       e.preventDefault();
       e.stopPropagation();
       (e.target as Element).releasePointerCapture(e.pointerId);
       
-      if (currentStroke && currentStroke.length > 0) {
+      // Remove live path
+      if (currentPathRef.current) {
+        currentPathRef.current.remove();
+        currentPathRef.current = null;
+      }
+      
+      if (currentPointsRef.current.length > 0) {
         const newStroke: Stroke = {
-          points: currentStroke,
+          points: [...currentPointsRef.current],
           color: isEraser ? paperColor : inkColor,
           size: isEraser ? eraserSize : strokeSize,
           isEraser,
         };
         
-        const newStrokes = [...strokes, newStroke];
-        setStrokes(newStrokes);
-        debouncedOnChange(newStrokes);
+        setStrokes(prev => {
+          const newStrokes = [...prev, newStroke];
+          debouncedOnChange(newStrokes);
+          return newStrokes;
+        });
       }
       
-      setCurrentStroke(null);
-      setIsDrawing(false);
-    }, [isDrawing, readOnly, currentStroke, isEraser, paperColor, inkColor, eraserSize, strokeSize, strokes, debouncedOnChange]);
+      currentPointsRef.current = [];
+      isDrawingRef.current = false;
+    }, [readOnly, isEraser, paperColor, inkColor, eraserSize, strokeSize, debouncedOnChange]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -180,9 +221,11 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
         onChange?.([]);
       },
       undo: () => {
-        const newStrokes = strokes.slice(0, -1);
-        setStrokes(newStrokes);
-        debouncedOnChange(newStrokes);
+        setStrokes(prev => {
+          const newStrokes = prev.slice(0, -1);
+          debouncedOnChange(newStrokes);
+          return newStrokes;
+        });
       },
       canUndo: () => strokes.length > 0,
       setEraseMode: (enabled: boolean) => {
@@ -190,36 +233,26 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
       },
     }), [strokes, onChange, debouncedOnChange]);
 
-    // Render stroke as SVG path
-    const renderStroke = useCallback((stroke: Stroke, index: number) => {
-      const outlinePoints = getStroke(stroke.points, getStrokeOptions(stroke.size, stroke.isEraser || false));
-      const pathData = getSvgPathFromStroke(outlinePoints);
-      
-      return (
-        <path
-          key={`stroke-${canvasId || instanceId.current}-${index}`}
-          d={pathData}
-          fill={stroke.color}
-          stroke="none"
-        />
-      );
-    }, [getStrokeOptions, canvasId]);
-
-    // Render current stroke being drawn
-    const renderCurrentStroke = useCallback(() => {
-      if (!currentStroke || currentStroke.length === 0) return null;
-      
-      const outlinePoints = getStroke(currentStroke, getStrokeOptions(isEraser ? eraserSize : strokeSize, isEraser));
-      const pathData = getSvgPathFromStroke(outlinePoints);
-      
-      return (
-        <path
-          d={pathData}
-          fill={isEraser ? paperColor : inkColor}
-          stroke="none"
-        />
-      );
-    }, [currentStroke, isEraser, eraserSize, strokeSize, inkColor, paperColor, getStrokeOptions]);
+    // Memoized stroke paths for completed strokes
+    const strokePaths = useMemo(() => {
+      return strokes.map((stroke, index) => {
+        const options = stroke.isEraser ? eraserOptions : {
+          ...penOptions,
+          size: stroke.size,
+        };
+        const outlinePoints = getStroke(stroke.points, options);
+        const pathData = getSvgPathFromStroke(outlinePoints);
+        
+        return (
+          <path
+            key={`stroke-${canvasId || instanceId.current}-${index}`}
+            d={pathData}
+            fill={stroke.color}
+            stroke="none"
+          />
+        );
+      });
+    }, [strokes, penOptions, eraserOptions, canvasId]);
 
     // Generate line pattern for background
     const linePattern = showLines ? `
@@ -234,7 +267,7 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
 
     return (
       <div
-        className="rounded-xl border border-border overflow-hidden select-none"
+        className="rounded-xl border border-border overflow-hidden"
         style={{
           background: linePattern !== 'none' ? `${linePattern}, ${paperColor}` : paperColor,
           backgroundPositionY: "8px",
@@ -255,6 +288,7 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
           style={{
             touchAction: "none",
             cursor: readOnly ? "default" : isEraser ? "cell" : "crosshair",
+            shapeRendering: "geometricPrecision",
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -262,11 +296,7 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
           onPointerLeave={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          {/* Render all completed strokes */}
-          {strokes.map((stroke, i) => renderStroke(stroke, i))}
-          
-          {/* Render current stroke being drawn */}
-          {renderCurrentStroke()}
+          {strokePaths}
         </svg>
       </div>
     );
