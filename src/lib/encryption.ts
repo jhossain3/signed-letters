@@ -101,31 +101,34 @@ export async function decryptValue(encryptedValue: string, userId: string): Prom
 
 // Encrypt multiple fields in an object
 export async function encryptLetterFields(
-  letter: { title: string; body: string | null; signature: string },
+  letter: { title: string; body: string | null; signature: string; sketchData?: string },
   userId: string
-): Promise<{ title: string; body: string | null; signature: string }> {
-  const [encryptedTitle, encryptedBody, encryptedSignature] = await Promise.all([
+): Promise<{ title: string; body: string | null; signature: string; sketchData?: string }> {
+  const [encryptedTitle, encryptedBody, encryptedSignature, encryptedSketchData] = await Promise.all([
     encryptValue(letter.title, userId),
     letter.body ? encryptValue(letter.body, userId) : Promise.resolve(null),
     encryptValue(letter.signature, userId),
+    letter.sketchData ? encryptValue(letter.sketchData, userId) : Promise.resolve(undefined),
   ]);
   
   return {
     title: encryptedTitle,
     body: encryptedBody,
     signature: encryptedSignature,
+    sketchData: encryptedSketchData,
   };
 }
 
 // Decrypt multiple fields in a letter object
-export async function decryptLetterFields<T extends { title: string; body: string | null; signature: string }>(
+export async function decryptLetterFields<T extends { title: string; body: string | null; signature: string; sketchData?: string }>(
   letter: T,
   userId: string
 ): Promise<T> {
-  const [decryptedTitle, decryptedBody, decryptedSignature] = await Promise.all([
+  const [decryptedTitle, decryptedBody, decryptedSignature, decryptedSketchData] = await Promise.all([
     decryptValue(letter.title, userId),
     letter.body ? decryptValue(letter.body, userId) : Promise.resolve(null),
     decryptValue(letter.signature, userId),
+    letter.sketchData ? decryptValue(letter.sketchData, userId) : Promise.resolve(undefined),
   ]);
   
   return {
@@ -133,5 +136,6 @@ export async function decryptLetterFields<T extends { title: string; body: strin
     title: decryptedTitle,
     body: decryptedBody,
     signature: decryptedSignature,
+    sketchData: decryptedSketchData,
   };
 }

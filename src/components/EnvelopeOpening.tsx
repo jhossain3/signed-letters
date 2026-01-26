@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Letter } from "@/hooks/useLetters";
+import SketchRenderer from "./SketchRenderer";
 
 interface EnvelopeOpeningProps {
   letter: Letter;
@@ -61,7 +62,13 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
               {letter.isTyped ? (
                 <p className="text-foreground leading-relaxed whitespace-pre-wrap font-body">{letter.body || ""}</p>
               ) : (
-                letter.sketchData && <img src={letter.sketchData} alt="Handwritten letter" className="w-full rounded-lg" />
+                letter.sketchData && (
+                  <SketchRenderer 
+                    sketchData={letter.sketchData} 
+                    paperColor={letter.paperColor}
+                    inkColor={letter.inkColor}
+                  />
+                )
               )}
               {letter.photos && letter.photos.length > 0 && (
                 <div className="flex gap-3 mt-6">

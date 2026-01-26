@@ -91,9 +91,9 @@ export const useLetters = () => {
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Encrypt sensitive fields before saving
+      // Encrypt sensitive fields before saving (including sketch data)
       const encryptedFields = await encryptLetterFields(
-        { title: letter.title, body: letter.body, signature: letter.signature },
+        { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
         user.id
       );
 
@@ -110,7 +110,7 @@ export const useLetters = () => {
           recipient_email: letter.recipientEmail,
           recipient_type: letter.recipientType,
           photos: letter.photos,
-          sketch_data: letter.sketchData,
+          sketch_data: encryptedFields.sketchData,
           is_typed: letter.isTyped,
           type: letter.type,
           paper_color: letter.paperColor,
