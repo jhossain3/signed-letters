@@ -59,6 +59,7 @@ interface LetterDraft {
   paperColor: typeof PAPER_COLORS[0];
   inkColor: typeof INK_COLORS[0];
   textPages: string[];
+  sketchPages: string[];
   photos: string[];
 }
 
@@ -109,6 +110,7 @@ const WriteLetter = () => {
         setShowLines(draft.showLines);
         setPaperColor(draft.paperColor);
         setInkColor(draft.inkColor);
+        setSketchPages(draft.sketchPages?.length > 0 ? draft.sketchPages : [""]);
         setTextPages(draft.textPages.length > 0 ? draft.textPages : [""]);
         setPhotos(draft.photos);
         // Clear draft after restoring
@@ -136,10 +138,11 @@ const WriteLetter = () => {
       paperColor,
       inkColor,
       textPages,
+      sketchPages,
       photos,
     };
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  }, [recipientType, recipientEmail, title, deliveryDate, signature, signatureFont, inputMode, showLines, paperColor, inkColor, textPages, photos]);
+  }, [recipientType, recipientEmail, title, deliveryDate, signature, signatureFont, inputMode, showLines, paperColor, inkColor, textPages, sketchPages, photos]);
 
   const clearDraft = useCallback(() => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
