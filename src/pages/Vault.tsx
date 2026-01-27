@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut } from "lucide-react";
@@ -11,6 +11,8 @@ import { useLetters, Letter } from "@/hooks/useLetters";
 import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { format, addDays, subDays } from "date-fns";
+import { toast } from "sonner";
+import { needsMigration, migrateLettersToRandomKey } from "@/lib/migrateLegacyEncryption";
 
 const TikTokIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -99,9 +101,41 @@ const Vault = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
   
   const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
   const { signOut, user } = useAuth();
+
+  // Auto-migrate legacy encrypted letters
+  useEffect(() => {
+    const runMigration = async () => {
+      if (!user?.id || !user?.email || isMigrating) return;
+      
+      try {
+        const needsMig = await needsMigration(user.id);
+        if (needsMig) {
+          setIsMigrating(true);
+          toast.info("Migrating your letters to new encryption...");
+          
+          const result = await migrateLettersToRandomKey(user.id, user.email);
+          
+          if (result.success && result.migratedCount > 0) {
+            toast.success(`Migrated ${result.migratedCount} letters successfully!`);
+            // Refresh the page to reload letters with new keys
+            window.location.reload();
+          } else if (!result.success) {
+            toast.error("Migration failed: " + result.error);
+          }
+          setIsMigrating(false);
+        }
+      } catch (error) {
+        console.error("Migration check failed:", error);
+        setIsMigrating(false);
+      }
+    };
+    
+    runMigration();
+  }, [user?.id, user?.email]);
 
   // Use demo letters when auth is disabled, otherwise use real letters
   const letters = FEATURE_FLAGS.AUTH_ENABLED ? dbLetters : DEMO_LETTERS;
@@ -153,12 +187,14 @@ const Vault = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isMigrating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-editorial">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground font-body">Loading your letters...</p>
+          <p className="text-muted-foreground font-body">
+            {isMigrating ? "Migrating your letters..." : "Loading your letters..."}
+          </p>
         </div>
       </div>
     );
