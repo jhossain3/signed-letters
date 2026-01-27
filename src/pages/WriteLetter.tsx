@@ -363,24 +363,42 @@ const WriteLetter = () => {
                     style={{ transformOrigin: "center 35px" }}
                   />
 
-                  {/* Wax seal appears */}
+                  {/* Wax seal appears - use absolute positioning instead of transform */}
                   <motion.g
-                    transform="translate(80, 65)"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 1, duration: 0.4, type: "spring" }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1, duration: 0.4 }}
                   >
-                    <circle cx="0" cy="0" r="16" className="wax-seal" fill="hsl(var(--seal-maroon))" />
-                    <line
-                      x1="-7"
-                      y1="0"
-                      x2="4"
-                      y2="0"
+                    <motion.circle 
+                      cx="80" 
+                      cy="65" 
+                      r="16" 
+                      fill="hsl(var(--seal-maroon))"
+                      initial={{ r: 0 }}
+                      animate={{ r: 16 }}
+                      transition={{ delay: 1, duration: 0.4, type: "spring" }}
+                    />
+                    <motion.line
+                      x1="73"
+                      y1="65"
+                      x2="84"
+                      y2="65"
                       stroke="hsl(var(--primary-foreground))"
                       strokeWidth="2"
                       strokeLinecap="round"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.2 }}
                     />
-                    <circle cx="8" cy="0" r="2.5" fill="hsl(var(--primary-foreground))" />
+                    <motion.circle 
+                      cx="88" 
+                      cy="65" 
+                      r="2.5" 
+                      fill="hsl(var(--primary-foreground))"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.2 }}
+                    />
                   </motion.g>
                 </svg>
               </motion.div>
