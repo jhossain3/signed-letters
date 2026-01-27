@@ -33,18 +33,46 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
         {(stage === "envelope" || stage === "opening") && (
           <motion.div key="envelope" className="relative" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0, y: -100 }} transition={{ duration: 0.5 }}>
             <div className="relative w-72 h-52" style={{ perspective: "800px" }}>
-              <svg viewBox="0 0 160 110" className="w-full h-full drop-shadow-2xl">
+              <svg viewBox="0 0 160 110" className="w-full h-full drop-shadow-2xl" style={{ overflow: 'visible' }}>
+                {/* Envelope body */}
                 <rect x="5" y="30" width="150" height="75" rx="4" fill="hsl(var(--envelope-cream))" stroke="hsl(var(--border))" strokeWidth="1.5" />
-                <motion.rect x="15" y="35" width="130" height="60" rx="3" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="0.5" animate={stage === "opening" ? { y: 10 } : { y: 35 }} transition={{ duration: 1, delay: 0.5 }} />
-                <motion.g style={{ transformOrigin: "80px 30px" }} animate={stage === "opening" ? { rotateX: -180, opacity: 0 } : { rotateX: 0, opacity: 1 }} transition={{ duration: 0.8 }}>
-                  <path d="M 5 30 L 80 60 L 155 30 Z" fill="hsl(var(--cream))" stroke="hsl(var(--border))" strokeWidth="1.5" />
-                </motion.g>
-                {/* Wax seal with logo mark */}
-                <motion.g transform="translate(80, 48)" animate={stage === "opening" ? { opacity: 0, scale: 0 } : { opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
-                  <circle cx="0" cy="0" r="10" className="wax-seal" fill="hsl(var(--seal-maroon))" />
+                
+                {/* Letter inside */}
+                <motion.rect 
+                  x="15" 
+                  width="130" 
+                  height="60" 
+                  rx="3" 
+                  fill="hsl(var(--background))" 
+                  stroke="hsl(var(--border))" 
+                  strokeWidth="0.5" 
+                  initial={{ y: 35 }}
+                  animate={stage === "opening" ? { y: 10 } : { y: 35 }} 
+                  transition={{ duration: 1, delay: 0.5, ease: "easeOut" }} 
+                />
+                
+                {/* Envelope flap */}
+                <motion.path 
+                  d="M 5 30 L 80 60 L 155 30 Z" 
+                  fill="hsl(var(--cream))" 
+                  stroke="hsl(var(--border))" 
+                  strokeWidth="1.5"
+                  style={{ transformOrigin: "80px 30px" }} 
+                  initial={{ rotateX: 0 }}
+                  animate={stage === "opening" ? { rotateX: -180, opacity: 0 } : { rotateX: 0, opacity: 1 }} 
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                />
+                
+                {/* Wax seal with logo mark - positioned absolutely */}
+                <motion.g
+                  initial={{ opacity: 1 }}
+                  animate={stage === "opening" ? { opacity: 0 } : { opacity: 1 }} 
+                  transition={{ duration: 0.2, delay: stage === "opening" ? 0.3 : 0 }}
+                >
+                  <circle cx="80" cy="48" r="10" fill="hsl(var(--seal-maroon))" />
                   {/* Logo mark - horizontal line + dot above right */}
-                  <line x1="-4" y1="1" x2="2" y2="1" stroke="hsl(var(--primary-foreground))" strokeWidth="1.5" strokeLinecap="square" />
-                  <circle cx="5" cy="-1.5" r="1.5" fill="hsl(var(--primary-foreground))" />
+                  <line x1="76" y1="49" x2="82" y2="49" stroke="hsl(var(--primary-foreground))" strokeWidth="1.5" strokeLinecap="square" />
+                  <circle cx="85" cy="46.5" r="1.5" fill="hsl(var(--primary-foreground))" />
                 </motion.g>
               </svg>
             </div>
