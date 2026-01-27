@@ -794,7 +794,8 @@ const WriteLetter = () => {
             {/* Preset buttons */}
             <div className="flex flex-wrap gap-2 mb-3">
               {[
-                { label: "Today", value: "today" },
+                // Only show "Today" option when bypass is enabled (for testing)
+                ...(FEATURE_FLAGS.BYPASS_DELIVERY_DATE ? [{ label: "Today", value: "today" }] : []),
                 { label: "1 month", value: "1month" },
                 { label: "1 year", value: "1year" },
                 { label: "5 years", value: "5years" },
