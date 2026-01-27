@@ -101,13 +101,14 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
               )}
               <div className="relative z-10 overflow-hidden">
                 <h2 className="font-editorial text-2xl text-foreground mb-6 break-words">{letter.title}</h2>
-                {letter.isTyped ? (
+                {/* Show typed content if exists */}
+                {letter.isTyped && letter.body && letter.body.trim() && (
                   <div 
                     className="text-foreground leading-relaxed font-body break-words overflow-hidden"
                     style={{ color: letter.inkColor, wordBreak: 'break-word', overflowWrap: 'break-word' }}
                   >
                     {/* Render pages with visual separators instead of text */}
-                    {(letter.body || "").split("\n\n--- Page Break ---\n\n").map((page, index, arr) => (
+                    {letter.body.split("\n\n--- Page Break ---\n\n").map((page, index, arr) => (
                       <div key={index}>
                         <p className="whitespace-pre-wrap">{page}</p>
                         {index < arr.length - 1 && (
@@ -116,15 +117,17 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  letter.sketchData && (
+                )}
+                {/* Show sketch content below typed content if both exist */}
+                {letter.sketchData && (
+                  <div className={letter.isTyped && letter.body?.trim() ? "mt-8" : ""}>
                     <SketchRenderer 
                       sketchData={letter.sketchData} 
                       paperColor="transparent"
                       inkColor={letter.inkColor}
                       showLines={letter.isLined !== false}
                     />
-                  )
+                  </div>
                 )}
                 {letter.photos && letter.photos.length > 0 && (
                   <div className="flex gap-3 mt-6 flex-wrap">
