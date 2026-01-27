@@ -1,9 +1,50 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi, beforeEach } from "vitest";
+
+// Mock Supabase client before importing encryption module
+vi.mock('@/integrations/supabase/client', () => {
+  // Store generated keys per user for test isolation
+  const generatedKeys = new Map<string, string>();
+  let lastQueriedUserId: string | undefined;
+  
+  return {
+    supabase: {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn((_field: string, value: string) => {
+            lastQueriedUserId = value;
+            return {
+              maybeSingle: vi.fn(async () => {
+                const storedKey = lastQueriedUserId ? generatedKeys.get(lastQueriedUserId) : undefined;
+                return { 
+                  data: storedKey ? { encrypted_key: storedKey } : null, 
+                  error: null 
+                };
+              }),
+            };
+          }),
+        })),
+        insert: vi.fn(async (data: { user_id: string; encrypted_key: string }) => {
+          generatedKeys.set(data.user_id, data.encrypted_key);
+          return { error: null };
+        }),
+      })),
+    },
+    // Expose for test cleanup
+    __testClearKeys: () => generatedKeys.clear(),
+  };
+});
+
+// Import after mocking
 import { encryptValue, decryptValue, encryptLetterFields, decryptLetterFields, clearKeyCache } from "./encryption";
 
 describe("encryption", () => {
-  // Use email instead of userId for key derivation (more secure - email is not stored in letters table)
-  const testUserEmail = "test@example.com";
+  // Use UUID for userId (matches database schema)
+  const testUserId = "550e8400-e29b-41d4-a716-446655440000";
+  const testUserId2 = "660e8400-e29b-41d4-a716-446655440001";
+
+  beforeEach(() => {
+    clearKeyCache();
+  });
 
   afterEach(() => {
     clearKeyCache();
@@ -11,19 +52,19 @@ describe("encryption", () => {
 
   describe("encryptValue", () => {
     it("should return empty string for empty input", async () => {
-      const result = await encryptValue("", testUserEmail);
+      const result = await encryptValue("", testUserId);
       expect(result).toBe("");
     });
 
     it("should encrypt a value with 'enc:' prefix", async () => {
-      const result = await encryptValue("Hello World", testUserEmail);
+      const result = await encryptValue("Hello World", testUserId);
       expect(result).toMatch(/^enc:/);
       expect(result).not.toContain("Hello World");
     });
 
     it("should produce different ciphertexts for same plaintext (random IV)", async () => {
-      const result1 = await encryptValue("Same text", testUserEmail);
-      const result2 = await encryptValue("Same text", testUserEmail);
+      const result1 = await encryptValue("Same text", testUserId);
+      const result2 = await encryptValue("Same text", testUserId);
       // Both should be encrypted but with different IVs
       expect(result1).toMatch(/^enc:/);
       expect(result2).toMatch(/^enc:/);
@@ -33,45 +74,47 @@ describe("encryption", () => {
 
   describe("decryptValue", () => {
     it("should return empty string for empty input", async () => {
-      const result = await decryptValue("", testUserEmail);
+      const result = await decryptValue("", testUserId);
       expect(result).toBe("");
     });
 
     it("should return unencrypted value as-is (legacy support)", async () => {
-      const result = await decryptValue("Plain text without prefix", testUserEmail);
+      const result = await decryptValue("Plain text without prefix", testUserId);
       expect(result).toBe("Plain text without prefix");
     });
 
     it("should decrypt encrypted values correctly", async () => {
       const original = "Secret message 🔐";
-      const encrypted = await encryptValue(original, testUserEmail);
-      const decrypted = await decryptValue(encrypted, testUserEmail);
+      const encrypted = await encryptValue(original, testUserId);
+      const decrypted = await decryptValue(encrypted, testUserId);
       expect(decrypted).toBe(original);
     });
 
     it("should handle unicode and emojis", async () => {
       const original = "日本語テスト 🎉🚀💌";
-      const encrypted = await encryptValue(original, testUserEmail);
-      const decrypted = await decryptValue(encrypted, testUserEmail);
+      const encrypted = await encryptValue(original, testUserId);
+      const decrypted = await decryptValue(encrypted, testUserId);
       expect(decrypted).toBe(original);
     });
 
     it("should handle large text", async () => {
       const original = "A".repeat(10000);
-      const encrypted = await encryptValue(original, testUserEmail);
-      const decrypted = await decryptValue(encrypted, testUserEmail);
+      const encrypted = await encryptValue(original, testUserId);
+      const decrypted = await decryptValue(encrypted, testUserId);
       expect(decrypted).toBe(original);
     });
 
-    it("should fail to decrypt with wrong email", async () => {
-      const encrypted = await encryptValue("Secret", testUserEmail);
-      const decrypted = await decryptValue(encrypted, "wrong@email.com");
+    it("should fail to decrypt with different user key", async () => {
+      const encrypted = await encryptValue("Secret", testUserId);
+      // Clear cache and switch to different user
+      clearKeyCache();
+      const decrypted = await decryptValue(encrypted, testUserId2);
       expect(decrypted).toBe("[Unable to decrypt]");
     });
 
     it("should handle corrupted data gracefully", async () => {
       const corrupted = "enc:invalid-base64-data!!!";
-      const result = await decryptValue(corrupted, testUserEmail);
+      const result = await decryptValue(corrupted, testUserId);
       expect(result).toBe("[Unable to decrypt]");
     });
   });
@@ -85,7 +128,7 @@ describe("encryption", () => {
         sketchData: '[{"points":[[1,2]]}]',
       };
 
-      const encrypted = await encryptLetterFields(letter, testUserEmail);
+      const encrypted = await encryptLetterFields(letter, testUserId);
 
       expect(encrypted.title).toMatch(/^enc:/);
       expect(encrypted.body).toMatch(/^enc:/);
@@ -100,7 +143,7 @@ describe("encryption", () => {
         signature: "With love",
       };
 
-      const encrypted = await encryptLetterFields(letter, testUserEmail);
+      const encrypted = await encryptLetterFields(letter, testUserId);
 
       expect(encrypted.title).toMatch(/^enc:/);
       expect(encrypted.body).toBeNull();
@@ -115,7 +158,7 @@ describe("encryption", () => {
         sketchData: undefined,
       };
 
-      const encrypted = await encryptLetterFields(letter, testUserEmail);
+      const encrypted = await encryptLetterFields(letter, testUserId);
 
       expect(encrypted.sketchData).toBeUndefined();
     });
@@ -130,8 +173,8 @@ describe("encryption", () => {
         sketchData: '[{"points":[[1,2]]}]',
       };
 
-      const encrypted = await encryptLetterFields(original, testUserEmail);
-      const decrypted = await decryptLetterFields(encrypted, testUserEmail);
+      const encrypted = await encryptLetterFields(original, testUserId);
+      const decrypted = await decryptLetterFields(encrypted, testUserId);
 
       expect(decrypted.title).toBe(original.title);
       expect(decrypted.body).toBe(original.body);
@@ -149,10 +192,10 @@ describe("encryption", () => {
         extra: "data",
       };
 
-      const encrypted = await encryptLetterFields(original, testUserEmail);
+      const encrypted = await encryptLetterFields(original, testUserId);
       const decrypted = await decryptLetterFields(
         { ...encrypted, id: original.id, createdAt: original.createdAt, extra: original.extra },
-        testUserEmail
+        testUserId
       );
 
       expect(decrypted.id).toBe("letter-123");
@@ -167,7 +210,7 @@ describe("encryption", () => {
         signature: "Old signature",
       };
 
-      const decrypted = await decryptLetterFields(legacyLetter, testUserEmail);
+      const decrypted = await decryptLetterFields(legacyLetter, testUserId);
 
       expect(decrypted.title).toBe("Old Letter");
       expect(decrypted.body).toBe("Old content without encryption");
@@ -196,8 +239,8 @@ With love and hope ❤️`,
         ]),
       };
 
-      const encrypted = await encryptLetterFields(complexLetter, testUserEmail);
-      const decrypted = await decryptLetterFields(encrypted, testUserEmail);
+      const encrypted = await encryptLetterFields(complexLetter, testUserId);
+      const decrypted = await decryptLetterFields(encrypted, testUserId);
 
       expect(decrypted.title).toBe(complexLetter.title);
       expect(decrypted.body).toBe(complexLetter.body);

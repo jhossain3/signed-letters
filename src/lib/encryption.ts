@@ -1,53 +1,99 @@
 // Client-side encryption using Web Crypto API
-// Uses AES-GCM for symmetric encryption with user-specific keys
-// Key is derived from user email (NOT stored in letters table) for security
+// Uses AES-GCM for symmetric encryption with randomly generated keys
+// Keys are stored encrypted in Supabase (encrypted at rest)
+
+import { supabase } from "@/integrations/supabase/client";
 
 const ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
 
-// Cache derived keys to avoid re-deriving on every operation
+// Cache derived keys to avoid re-fetching on every operation
 const keyCache = new Map<string, CryptoKey>();
 
 /**
- * Derive a consistent encryption key from user email
- * Email is used instead of userId because userId is stored in the letters table,
- * making it visible alongside encrypted data. Email is only in auth.users (RLS protected).
+ * Generate a new random encryption key
  */
-async function deriveKey(userEmail: string): Promise<CryptoKey> {
-  // Check cache first
-  const cached = keyCache.get(userEmail);
-  if (cached) return cached;
-
-  const encoder = new TextEncoder();
-  
-  // Use email as the key material - it's private and not stored with letter data
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(userEmail.toLowerCase().trim()),
-    { name: 'PBKDF2' },
-    false,
-    ['deriveKey']
-  );
-
-  // Salt combines app identifier with a version for future key rotation if needed
-  const salt = encoder.encode('signed-letters-v2-email-derived-key');
-
-  const key = await crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt,
-      iterations: 100000,
-      hash: 'SHA-256',
-    },
-    keyMaterial,
+async function generateEncryptionKey(): Promise<CryptoKey> {
+  return crypto.subtle.generateKey(
     { name: ALGORITHM, length: KEY_LENGTH },
-    false,
+    true, // extractable for storage
     ['encrypt', 'decrypt']
   );
+}
+
+/**
+ * Export a CryptoKey to base64 string for storage
+ */
+async function exportKey(key: CryptoKey): Promise<string> {
+  const exported = await crypto.subtle.exportKey('raw', key);
+  return uint8ArrayToBase64(new Uint8Array(exported));
+}
+
+/**
+ * Import a base64 string back to CryptoKey
+ */
+async function importKey(keyString: string): Promise<CryptoKey> {
+  const keyData = Uint8Array.from(atob(keyString), c => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: ALGORITHM, length: KEY_LENGTH },
+    false, // not extractable after import
+    ['encrypt', 'decrypt']
+  );
+}
+
+/**
+ * Get or create the encryption key for a user
+ * Keys are stored in Supabase and encrypted at rest
+ */
+async function getOrCreateUserKey(userId: string): Promise<CryptoKey> {
+  // Check cache first
+  const cached = keyCache.get(userId);
+  if (cached) return cached;
+
+  // Try to fetch existing key from database
+  const { data: existingKey, error: fetchError } = await supabase
+    .from('user_encryption_keys')
+    .select('encrypted_key')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error('Error fetching encryption key:', fetchError);
+    throw new Error('Failed to retrieve encryption key');
+  }
+
+  let key: CryptoKey;
+
+  if (existingKey) {
+    // Import existing key
+    key = await importKey(existingKey.encrypted_key);
+  } else {
+    // Generate new key for this user
+    key = await generateEncryptionKey();
+    const exportedKey = await exportKey(key);
+
+    // Store the key in database (encrypted at rest by Supabase)
+    const { error: insertError } = await supabase
+      .from('user_encryption_keys')
+      .insert({
+        user_id: userId,
+        encrypted_key: exportedKey,
+      });
+
+    if (insertError) {
+      console.error('Error storing encryption key:', insertError);
+      throw new Error('Failed to store encryption key');
+    }
+    
+    // Re-import as non-extractable for security
+    key = await importKey(exportedKey);
+  }
 
   // Cache the key
-  keyCache.set(userEmail, key);
+  keyCache.set(userId, key);
   
   return key;
 }
@@ -71,11 +117,11 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
 }
 
 // Encrypt a string value
-export async function encryptValue(value: string, userEmail: string): Promise<string> {
+export async function encryptValue(value: string, userId: string): Promise<string> {
   if (!value) return value;
   
   try {
-    const key = await deriveKey(userEmail);
+    const key = await getOrCreateUserKey(userId);
     const encoder = new TextEncoder();
     const data = encoder.encode(value);
     
@@ -102,7 +148,7 @@ export async function encryptValue(value: string, userEmail: string): Promise<st
 }
 
 // Decrypt a string value
-export async function decryptValue(encryptedValue: string, userEmail: string): Promise<string> {
+export async function decryptValue(encryptedValue: string, userId: string): Promise<string> {
   if (!encryptedValue) return encryptedValue;
   
   // Check if the value is encrypted (has the 'enc:' prefix)
@@ -112,7 +158,7 @@ export async function decryptValue(encryptedValue: string, userEmail: string): P
   }
   
   try {
-    const key = await deriveKey(userEmail);
+    const key = await getOrCreateUserKey(userId);
     
     // Remove the 'enc:' prefix and decode from base64
     const combined = Uint8Array.from(atob(encryptedValue.slice(4)), c => c.charCodeAt(0));
@@ -139,13 +185,13 @@ export async function decryptValue(encryptedValue: string, userEmail: string): P
 // Encrypt multiple fields in an object
 export async function encryptLetterFields(
   letter: { title: string; body: string | null; signature: string; sketchData?: string },
-  userEmail: string
+  userId: string
 ): Promise<{ title: string; body: string | null; signature: string; sketchData?: string }> {
   const [encryptedTitle, encryptedBody, encryptedSignature, encryptedSketchData] = await Promise.all([
-    encryptValue(letter.title, userEmail),
-    letter.body ? encryptValue(letter.body, userEmail) : Promise.resolve(null),
-    encryptValue(letter.signature, userEmail),
-    letter.sketchData ? encryptValue(letter.sketchData, userEmail) : Promise.resolve(undefined),
+    encryptValue(letter.title, userId),
+    letter.body ? encryptValue(letter.body, userId) : Promise.resolve(null),
+    encryptValue(letter.signature, userId),
+    letter.sketchData ? encryptValue(letter.sketchData, userId) : Promise.resolve(undefined),
   ]);
   
   return {
@@ -159,13 +205,13 @@ export async function encryptLetterFields(
 // Decrypt multiple fields in a letter object
 export async function decryptLetterFields<T extends { title: string; body: string | null; signature: string; sketchData?: string }>(
   letter: T,
-  userEmail: string
+  userId: string
 ): Promise<T> {
   const [decryptedTitle, decryptedBody, decryptedSignature, decryptedSketchData] = await Promise.all([
-    decryptValue(letter.title, userEmail),
-    letter.body ? decryptValue(letter.body, userEmail) : Promise.resolve(null),
-    decryptValue(letter.signature, userEmail),
-    letter.sketchData ? decryptValue(letter.sketchData, userEmail) : Promise.resolve(undefined),
+    decryptValue(letter.title, userId),
+    letter.body ? decryptValue(letter.body, userId) : Promise.resolve(null),
+    decryptValue(letter.signature, userId),
+    letter.sketchData ? decryptValue(letter.sketchData, userId) : Promise.resolve(undefined),
   ]);
   
   return {
