@@ -10,6 +10,8 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, addMonths, addYears } from "date-fns";
 import { useLetters } from "@/hooks/useLetters";
+import { useAuth } from "@/contexts/AuthContext";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { toast } from "sonner";
 import { serializeMultiPage } from "@/lib/sketchSerialization";
 
@@ -45,6 +47,7 @@ const TikTokIcon = () => (
 
 const WriteLetter = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { addLetter, isAddingLetter } = useLetters();
 
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
@@ -247,6 +250,14 @@ const WriteLetter = () => {
   };
 
   const handleSealLetter = () => {
+    // Check auth first if enabled
+    if (FEATURE_FLAGS.AUTH_ENABLED && !user) {
+      // Redirect to auth with return path
+      navigate("/auth", { state: { from: { pathname: "/write" } } });
+      toast.info("Please sign in to seal your letter");
+      return;
+    }
+
     if (!title.trim()) {
       toast.error("Please add a title to your letter");
       return;
