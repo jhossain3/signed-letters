@@ -31,18 +31,7 @@ const App = () => (
                 {FEATURE_FLAGS.AUTH_ENABLED && (
                   <Route path="/auth" element={<Auth />} />
                 )}
-                <Route
-                  path="/write"
-                  element={
-                    FEATURE_FLAGS.AUTH_ENABLED ? (
-                      <ProtectedRoute>
-                        <WriteLetter />
-                      </ProtectedRoute>
-                    ) : (
-                      <WriteLetter />
-                    )
-                  }
-                />
+                <Route path="/write" element={<WriteLetter />} />
                 <Route
                   path="/vault"
                   element={
