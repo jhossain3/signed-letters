@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, addMonths, addYears } from "date-fns";
+import { format, addMonths, addYears, addDays } from "date-fns";
 import { useLetters } from "@/hooks/useLetters";
 import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
@@ -831,7 +831,9 @@ const WriteLetter = () => {
                     const compareDate = new Date(date);
                     compareDate.setHours(0, 0, 0, 0);
                     const maxDate = addYears(today, 20);
-                    return compareDate < today || compareDate > maxDate;
+                    // When bypass is disabled, don't allow selecting today
+                    const minDate = FEATURE_FLAGS.BYPASS_DELIVERY_DATE ? today : addDays(today, 1);
+                    return compareDate < minDate || compareDate > maxDate;
                   }}
                   initialFocus
                 />
