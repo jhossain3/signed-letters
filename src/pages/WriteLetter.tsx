@@ -278,16 +278,16 @@ const WriteLetter = () => {
   };
 
   const completeSeal = async () => {
-    // Get final sketch data from all pages if in sketch mode
-    let finalSketchData = "";
-    if (inputMode === "sketch") {
-      finalSketchData = await getCombinedSketchData();
-    }
+    // Always collect sketch data if any sketches exist
+    const finalSketchData = await getCombinedSketchData();
+    const hasSketchContent = finalSketchData && finalSketchData !== "[]" && finalSketchData.length > 0;
+    const textBody = getCombinedBody();
+    const hasTextContent = textBody.trim().length > 0;
 
     try {
       await addLetter({
         title,
-        body: getCombinedBody(),
+        body: textBody,
         date: format(new Date(), "MMMM d, yyyy"),
         deliveryDate: deliveryDate!.toISOString(),
         signature,
@@ -295,8 +295,8 @@ const WriteLetter = () => {
         recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
         recipientType,
         photos,
-        sketchData: inputMode === "sketch" ? finalSketchData : undefined,
-        isTyped: inputMode === "type",
+        sketchData: hasSketchContent ? finalSketchData : undefined,
+        isTyped: hasTextContent, // true if there's any typed content
         type: "sent" as const,
         paperColor: paperColor.value,
         inkColor: inkColor.value,
