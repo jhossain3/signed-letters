@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram, Plus, Trash2 } from "lucide-react";
@@ -45,6 +45,23 @@ const TikTokIcon = () => (
   </svg>
 );
 
+const DRAFT_STORAGE_KEY = "letter-draft";
+
+interface LetterDraft {
+  recipientType: "myself" | "someone";
+  recipientEmail: string;
+  title: string;
+  deliveryDate: string | null;
+  signature: string;
+  signatureFont: typeof SIGNATURE_FONTS[0];
+  inputMode: "type" | "sketch";
+  showLines: boolean;
+  paperColor: typeof PAPER_COLORS[0];
+  inkColor: typeof INK_COLORS[0];
+  textPages: string[];
+  photos: string[];
+}
+
 const WriteLetter = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -68,10 +85,65 @@ const WriteLetter = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
   const letterScrollRef = useRef<HTMLDivElement>(null);
+
+  // Restore draft from localStorage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const draft: LetterDraft = JSON.parse(savedDraft);
+        setRecipientType(draft.recipientType);
+        setRecipientEmail(draft.recipientEmail);
+        setTitle(draft.title);
+        if (draft.deliveryDate) {
+          setDeliveryDate(new Date(draft.deliveryDate));
+        }
+        setSignature(draft.signature);
+        setSignatureFont(draft.signatureFont);
+        setInputMode(draft.inputMode);
+        setShowLines(draft.showLines);
+        setPaperColor(draft.paperColor);
+        setInkColor(draft.inkColor);
+        setTextPages(draft.textPages.length > 0 ? draft.textPages : [""]);
+        setPhotos(draft.photos);
+        // Clear draft after restoring
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        toast.success("Your letter draft has been restored");
+      } catch (e) {
+        console.error("Failed to restore draft:", e);
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    }
+    setDraftLoaded(true);
+  }, []);
+
+  // Save draft to localStorage before auth redirect
+  const saveDraft = useCallback(() => {
+    const draft: LetterDraft = {
+      recipientType,
+      recipientEmail,
+      title,
+      deliveryDate: deliveryDate?.toISOString() || null,
+      signature,
+      signatureFont,
+      inputMode,
+      showLines,
+      paperColor,
+      inkColor,
+      textPages,
+      photos,
+    };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  }, [recipientType, recipientEmail, title, deliveryDate, signature, signatureFont, inputMode, showLines, paperColor, inkColor, textPages, photos]);
+
+  const clearDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  }, []);
 
   const handleLetterWheelCapture = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     const el = letterScrollRef.current;
@@ -252,6 +324,8 @@ const WriteLetter = () => {
   const handleSealLetter = () => {
     // Check auth first if enabled
     if (FEATURE_FLAGS.AUTH_ENABLED && !user) {
+      // Save draft before redirecting
+      saveDraft();
       // Redirect to auth with return path
       navigate("/auth", { state: { from: { pathname: "/write" } } });
       toast.info("Please sign in to seal your letter");
@@ -313,6 +387,9 @@ const WriteLetter = () => {
         inkColor: inkColor.value,
         isLined: showLines,
       });
+
+      // Clear any saved draft on success
+      clearDraft();
 
       setTimeout(() => {
         navigate("/vault");
