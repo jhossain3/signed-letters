@@ -86,7 +86,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
         {stage === "letter" && (
           <motion.div key="letter" className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-border" initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5 }}>
             <div 
-              className="min-h-[300px] p-6 rounded-xl border border-border relative"
+              className="min-h-[300px] p-6 rounded-xl border border-border relative overflow-hidden"
               style={{ backgroundColor: letter.paperColor || 'hsl(var(--paper))' }}
             >
               {/* Lined paper effect */}
@@ -99,10 +99,23 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   }}
                 />
               )}
-              <div className="relative z-10">
-                <h2 className="font-editorial text-2xl text-foreground mb-6">{letter.title}</h2>
+              <div className="relative z-10 overflow-hidden">
+                <h2 className="font-editorial text-2xl text-foreground mb-6 break-words">{letter.title}</h2>
                 {letter.isTyped ? (
-                  <p className="text-foreground leading-relaxed whitespace-pre-wrap font-body" style={{ color: letter.inkColor }}>{letter.body || ""}</p>
+                  <div 
+                    className="text-foreground leading-relaxed font-body break-words overflow-hidden"
+                    style={{ color: letter.inkColor, wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                  >
+                    {/* Render pages with visual separators instead of text */}
+                    {(letter.body || "").split("\n\n--- Page Break ---\n\n").map((page, index, arr) => (
+                      <div key={index}>
+                        <p className="whitespace-pre-wrap">{page}</p>
+                        {index < arr.length - 1 && (
+                          <div className="my-8 border-t border-dashed border-border/40" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   letter.sketchData && (
                     <SketchRenderer 
@@ -114,13 +127,13 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   )
                 )}
                 {letter.photos && letter.photos.length > 0 && (
-                  <div className="flex gap-3 mt-6">
+                  <div className="flex gap-3 mt-6 flex-wrap">
                     {letter.photos.map((photo, index) => (
                       <img key={index} src={photo} alt={`Attachment ${index + 1}`} className="w-24 h-24 object-cover rounded-lg border border-border shadow-editorial" />
                     ))}
                   </div>
                 )}
-                <p className={`text-xl mt-8 text-foreground ${letter.signatureFont || "font-signature"}`}>{letter.signature}</p>
+                <p className={`text-xl mt-8 text-foreground break-words ${letter.signatureFont || "font-signature"}`}>{letter.signature}</p>
               </div>
             </div>
             <p className="text-center text-muted-foreground mt-6 font-editorial italic text-sm">This moment was worth waiting for.</p>
