@@ -21,6 +21,7 @@ export type Database = {
           date: string
           delivery_date: string
           id: string
+          initial_notification_sent: boolean | null
           ink_color: string | null
           is_lined: boolean | null
           is_typed: boolean | null
@@ -44,6 +45,7 @@ export type Database = {
           date: string
           delivery_date: string
           id?: string
+          initial_notification_sent?: boolean | null
           ink_color?: string | null
           is_lined?: boolean | null
           is_typed?: boolean | null
@@ -67,6 +69,7 @@ export type Database = {
           date?: string
           delivery_date?: string
           id?: string
+          initial_notification_sent?: boolean | null
           ink_color?: string | null
           is_lined?: boolean | null
           is_typed?: boolean | null

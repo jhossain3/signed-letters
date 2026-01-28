@@ -114,14 +114,14 @@ const generateAuthorEmailHtml = (title: string) => `
 </html>
 `;
 
-// Email template for external recipients (invitation to view letter)
-const generateRecipientEmailHtml = (title: string) => `
+// Email template for external recipients when delivery date arrives (letter ready to open)
+const generateRecipientDeliveryEmailHtml = (title: string) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Someone Sent You a Letter</title>
+  <title>Your Letter is Ready to Open</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap');
   </style>
@@ -142,29 +142,31 @@ const generateRecipientEmailHtml = (title: string) => `
                 </svg>
               </div>
               <h1 style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 500; color: #2d2522; letter-spacing: -0.02em;">
-                Someone Sent You a Letter
+                Your Letter is Ready to Open!
               </h1>
               <p style="margin: 0; font-size: 15px; color: #7a6f6a; line-height: 1.5;">
-                A heartfelt message is waiting for you
+                The moment you've been waiting for has arrived
               </p>
             </td>
           </tr>
 
-          <!-- Envelope illustration -->
+          <!-- Envelope illustration - open/ready -->
           <tr>
             <td style="padding: 16px 40px 24px; text-align: center;">
               <div style="display: inline-block; position: relative;">
                 <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <!-- Envelope body -->
-                  <rect x="10" y="20" width="100" height="55" rx="4" fill="#f5ebe0" stroke="#d4c4b5" stroke-width="1.5"/>
-                  <!-- Envelope flap -->
-                  <path d="M10 24 L60 48 L110 24" fill="#faf5ef" stroke="#d4c4b5" stroke-width="1.5" stroke-linejoin="round"/>
-                  <!-- Wax seal -->
-                  <circle cx="60" cy="50" r="14" fill="#8b4545"/>
-                  <circle cx="60" cy="50" r="10" fill="#a05656"/>
-                  <!-- Seal mark -->
-                  <line x1="52" y1="50" x2="64" y2="50" stroke="#f5ebe0" stroke-width="1.5" stroke-linecap="square"/>
-                  <circle cx="68" cy="47" r="2" fill="#f5ebe0"/>
+                  <rect x="10" y="30" width="100" height="45" rx="4" fill="#f5ebe0" stroke="#d4c4b5" stroke-width="1.5"/>
+                  <!-- Envelope flap (open) -->
+                  <path d="M10 34 L60 10 L110 34" fill="#faf5ef" stroke="#d4c4b5" stroke-width="1.5" stroke-linejoin="round"/>
+                  <!-- Letter peeking out -->
+                  <rect x="20" y="25" width="80" height="40" rx="2" fill="#ffffff" stroke="#ebe5de" stroke-width="1"/>
+                  <line x1="30" y1="35" x2="90" y2="35" stroke="#e0d8d0" stroke-width="2"/>
+                  <line x1="30" y1="42" x2="80" y2="42" stroke="#e0d8d0" stroke-width="2"/>
+                  <line x1="30" y1="49" x2="70" y2="49" stroke="#e0d8d0" stroke-width="2"/>
+                  <!-- Broken seal pieces -->
+                  <circle cx="55" cy="58" r="6" fill="#8b4545" opacity="0.7"/>
+                  <circle cx="65" cy="60" r="5" fill="#a05656" opacity="0.7"/>
                 </svg>
               </div>
             </td>
@@ -188,7 +190,7 @@ const generateRecipientEmailHtml = (title: string) => `
           <tr>
             <td style="padding: 0 40px 24px; text-align: center;">
               <p style="margin: 0; font-size: 14px; color: #7a6f6a; line-height: 1.6;">
-                Create a free account to read your letter and keep it safe in your personal vault.
+                Your letter has arrived and is waiting to be read. Sign in to your vault to open it.
               </p>
             </td>
           </tr>
@@ -196,8 +198,8 @@ const generateRecipientEmailHtml = (title: string) => `
           <!-- CTA Button -->
           <tr>
             <td style="padding: 0 40px 40px; text-align: center;">
-              <a href="${SIGNUP_URL}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
-                Create Account to Read
+              <a href="${VAULT_URL}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
+                Open Your Letter
               </a>
             </td>
           </tr>
@@ -293,11 +295,11 @@ const handler = async (req: Request): Promise<Response> => {
         let emailSubject: string;
 
         if (isForSomeoneElse) {
-          // Letter is for an external recipient
+          // Letter is for an external recipient - delivery date has arrived
           targetEmail = letter.recipient_email!;
-          emailHtml = generateRecipientEmailHtml(letter.title);
-          emailSubject = `You've received a letter: "${letter.title}"`;
-          console.log(`Sending invitation email to recipient: ${targetEmail}`);
+          emailHtml = generateRecipientDeliveryEmailHtml(letter.title);
+          emailSubject = `Your letter "${letter.title}" is ready to open!`;
+          console.log(`Sending delivery notification to recipient: ${targetEmail}`);
         } else {
           // Letter is for the author (self-sent)
           const { data: userData, error: userError } = await supabase.auth.admin.getUserById(letter.user_id);
