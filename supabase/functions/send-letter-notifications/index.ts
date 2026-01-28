@@ -125,7 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Supabase credentials not configured");
     }
@@ -149,10 +149,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!letters || letters.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No letters to notify", count: 0 }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return new Response(JSON.stringify({ message: "No letters to notify", count: 0 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     console.log(`Found ${letters.length} letters to notify`);
@@ -175,7 +175,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Send the notification email
         const emailResponse = await resend.emails.send({
-          from: "signed <noreply@yourdomain.com>", // Replace with your verified domain
+          from: "signed <onboarding@resend.dev>", // Replace with your verified domain
           to: [userEmail],
           subject: `Your letter "${letter.title}" is ready to open`,
           html: generateEmailHtml(letter.title),
@@ -209,15 +209,15 @@ const handler = async (req: Request): Promise<Response> => {
         total: letters.length,
         errors: errors.length > 0 ? errors : undefined,
       }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error in send-letter-notifications:", error);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 
