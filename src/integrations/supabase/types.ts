@@ -29,6 +29,7 @@ export type Database = {
           photos: string[] | null
           recipient_email: string | null
           recipient_type: string
+          recipient_user_id: string | null
           signature: string
           signature_font: string | null
           sketch_data: string | null
@@ -51,6 +52,7 @@ export type Database = {
           photos?: string[] | null
           recipient_email?: string | null
           recipient_type: string
+          recipient_user_id?: string | null
           signature: string
           signature_font?: string | null
           sketch_data?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           photos?: string[] | null
           recipient_email?: string | null
           recipient_type?: string
+          recipient_user_id?: string | null
           signature?: string
           signature_font?: string | null
           sketch_data?: string | null

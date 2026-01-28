@@ -1,57 +1,53 @@
 
-## Fix: Email Notifications Not Finding Same-Day Letters
+## Feature: External Recipient Letter Delivery
 
-### Problem Identified
-The edge function's date comparison is too strict. It normalizes "now" to midnight UTC (`00:00:00`), then queries for `delivery_date <= midnight`. But when you save a letter with today's date, the `delivery_date` includes the current time (e.g., `11:01:15`), which is greater than midnight, so the letter isn't found.
+### Completed Implementation
 
-**Example:**
-- Query checks: `delivery_date <= 2026-01-28T00:00:00Z`
-- Your letter has: `delivery_date = 2026-01-28T11:01:15Z`
-- Result: Not matched (11 AM is not <= midnight)
+#### 1. Database Changes
+- Added `recipient_user_id` column to `letters` table (UUID, nullable, FK to auth.users)
+- Added indexes on `recipient_user_id` and `recipient_email` for efficient lookups
+- Updated RLS policy to allow recipients to view letters sent to them:
+  ```sql
+  auth.uid() = user_id OR auth.uid() = recipient_user_id
+  ```
+- Created `link_pending_letters()` function that runs on user signup to associate pending letters
 
-### Solution
-Modify the edge function to compare against the **end of today** (23:59:59.999Z) instead of the start. This ensures any letter with a delivery date on or before today will be found.
+#### 2. Edge Function Updates
+- `send-letter-notifications` now handles two types of notifications:
+  - **Self-sent letters**: Sends "Your Letter Has Arrived" email to author
+  - **Letters to others**: Sends "Someone Sent You a Letter" invitation email to recipient
+- Invitation email directs recipients to sign up at `/auth`
 
-### Technical Changes
+#### 3. Frontend Updates
+- `useLetters` hook:
+  - Fetches both authored and received letters (RLS handles filtering)
+  - Marks letters where user is recipient (not author) as "received"
+  - Only encrypts self-sent letters (letters to others remain unencrypted so recipients can read them)
 
-**File:** `supabase/functions/send-letter-notifications/index.ts`
+### Flow Summary
 
-**Current code (lines 136-144):**
-```typescript
-// Get current time normalized to start of day
-const now = new Date();
-now.setHours(0, 0, 0, 0);
+1. **User sends letter to someone@example.com**
+   - Letter stored with `recipient_email` set
+   - Letter NOT encrypted (so recipient can read it later)
 
-// Find letters that are ready to be opened and haven't been notified
-const { data: letters, error: fetchError } = await supabase
-  .from("letters")
-  .select("id, title, user_id, delivery_date")
-  .lte("delivery_date", now.toISOString())
-  .eq("notification_sent", false);
-```
+2. **Delivery date arrives**
+   - Edge function finds letter with `recipient_type = 'someone'`
+   - Sends invitation email to `recipient_email`
+   - Marks `notification_sent = true`
 
-**Updated code:**
-```typescript
-// Get end of today (23:59:59.999) to include all letters scheduled for today
-const endOfToday = new Date();
-endOfToday.setHours(23, 59, 59, 999);
+3. **Recipient signs up**
+   - `on_auth_user_created_link_letters` trigger fires
+   - `link_pending_letters()` finds letters with matching email
+   - Updates `recipient_user_id` to new user's ID
 
-// Find letters that are ready to be opened and haven't been notified
-const { data: letters, error: fetchError } = await supabase
-  .from("letters")
-  .select("id, title, user_id, delivery_date")
-  .lte("delivery_date", endOfToday.toISOString())
-  .eq("notification_sent", false);
-```
+4. **Recipient views vault**
+   - RLS allows access via `recipient_user_id = auth.uid()`
+   - Letter appears in "Received" tab
+   - Letter is readable (not encrypted)
 
-### Why This Works
-- A letter saved with today's date at any time (e.g., 11:01:15) will be matched
-- Letters with future dates (tomorrow, next week) will NOT be matched
-- The cron job at midnight UTC will correctly notify for all letters due that day
-- The immediate trigger (when bypass flag is on) will also work correctly
-
-### Testing After Fix
-1. Deploy the updated edge function
-2. Create a new letter with today's delivery date
-3. Verify the notification is sent immediately (with bypass flag enabled)
-4. Check edge function logs to confirm it found the letter
+### Testing Checklist
+- [ ] Send letter to unregistered email (set delivery date to today)
+- [ ] Verify invitation email is sent
+- [ ] Create account with that email
+- [ ] Verify letter appears in Received tab
+- [ ] Verify letter content is readable

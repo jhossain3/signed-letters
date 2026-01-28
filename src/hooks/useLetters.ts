@@ -88,6 +88,8 @@ export const useLetters = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      // Fetch letters authored by user OR received by user
+      // RLS policy handles this, but we need to get all accessible letters
       const { data, error } = await supabase
         .from("letters")
         .select("*")
@@ -95,8 +97,17 @@ export const useLetters = () => {
 
       if (error) throw error;
       
+      // Map and mark letters as sent or received based on ownership
+      const mappedLetters = data.map((row: any) => {
+        const letter = mapDbToLetter(row);
+        // If user is the recipient (not the author), mark as received
+        if (row.recipient_user_id === user.id && row.user_id !== user.id) {
+          return { ...letter, type: "received" as const };
+        }
+        return letter;
+      });
+      
       // Decrypt all letters using user's stored encryption key
-      const mappedLetters = data.map(mapDbToLetter);
       const decryptedLetters = await Promise.all(
         mappedLetters.map(letter => decryptLetterFields(letter, user.id))
       );
@@ -110,26 +121,41 @@ export const useLetters = () => {
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Encrypt sensitive fields before saving using user's stored encryption key
-      const encryptedFields = await encryptLetterFields(
-        { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-        user.id
-      );
+      // Only encrypt for self-sent letters
+      // Letters to others remain unencrypted so recipients can read them
+      const isForSelf = letter.recipientType === "myself";
+      
+      let titleToStore = letter.title;
+      let bodyToStore = letter.body;
+      let signatureToStore = letter.signature;
+      let sketchDataToStore = letter.sketchData;
+
+      if (isForSelf) {
+        // Encrypt sensitive fields before saving using user's stored encryption key
+        const encryptedFields = await encryptLetterFields(
+          { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
+          user.id
+        );
+        titleToStore = encryptedFields.title;
+        bodyToStore = encryptedFields.body;
+        signatureToStore = encryptedFields.signature;
+        sketchDataToStore = encryptedFields.sketchData;
+      }
 
       const { data, error } = await supabase
         .from("letters")
         .insert({
           user_id: user.id,
-          title: encryptedFields.title,
-          body: encryptedFields.body,
+          title: titleToStore,
+          body: bodyToStore,
           date: letter.date,
           delivery_date: letter.deliveryDate,
-          signature: encryptedFields.signature,
+          signature: signatureToStore,
           signature_font: letter.signatureFont,
           recipient_email: letter.recipientEmail,
           recipient_type: letter.recipientType,
           photos: letter.photos,
-          sketch_data: encryptedFields.sketchData,
+          sketch_data: sketchDataToStore,
           is_typed: letter.isTyped,
           type: letter.type,
           paper_color: letter.paperColor,
@@ -141,9 +167,9 @@ export const useLetters = () => {
 
       if (error) throw error;
       
-      // Decrypt before returning
+      // For self-sent, decrypt before returning; for others, just map
       const mappedLetter = mapDbToLetter(data);
-      return decryptLetterFields(mappedLetter, user.id);
+      return isForSelf ? decryptLetterFields(mappedLetter, user.id) : mappedLetter;
     },
     onSuccess: (savedLetter) => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
