@@ -5,6 +5,22 @@ import { toast } from "sonner";
 import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 
+// Trigger immediate notification when bypass is enabled and delivery is today
+const triggerImmediateNotification = async () => {
+  if (!FEATURE_FLAGS.BYPASS_DELIVERY_DATE) return;
+  
+  try {
+    const response = await supabase.functions.invoke('send-letter-notifications');
+    if (response.error) {
+      console.error('Failed to trigger immediate notification:', response.error);
+    } else {
+      console.log('Immediate notification triggered:', response.data);
+    }
+  } catch (error) {
+    console.error('Error triggering immediate notification:', error);
+  }
+};
+
 export interface Letter {
   id: string;
   title: string;
@@ -129,9 +145,20 @@ export const useLetters = () => {
       const mappedLetter = mapDbToLetter(data);
       return decryptLetterFields(mappedLetter, user.id);
     },
-    onSuccess: () => {
+    onSuccess: (savedLetter) => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
       toast.success("Letter sealed and saved!");
+      
+      // Check if delivery date is today and bypass is enabled - trigger immediate notification
+      const deliveryDate = new Date(savedLetter.deliveryDate);
+      const today = new Date();
+      deliveryDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      
+      if (deliveryDate.getTime() === today.getTime() && FEATURE_FLAGS.BYPASS_DELIVERY_DATE) {
+        // Small delay to ensure the letter is fully saved before triggering
+        setTimeout(() => triggerImmediateNotification(), 500);
+      }
     },
     onError: (error) => {
       toast.error("Failed to save letter: " + error.message);
