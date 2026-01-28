@@ -289,7 +289,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         // Determine who to notify based on recipient type
         const isForSomeoneElse = letter.recipient_type === "someone" && letter.recipient_email;
-        
+
         let targetEmail: string;
         let emailHtml: string;
         let emailSubject: string;
@@ -317,7 +317,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Send the notification email
         const emailResponse = await resend.emails.send({
-          from: "signed <onboarding@resend.dev>", // Replace with your verified domain
+          from: "signed <team@notify.signedletter.com>", // Replace with your verified domain
           to: [targetEmail],
           subject: emailSubject,
           html: emailHtml,

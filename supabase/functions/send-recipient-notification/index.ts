@@ -188,10 +188,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check if initial notification was already sent
     if (letter.initial_notification_sent) {
-      return new Response(
-        JSON.stringify({ message: "Initial notification already sent", skipped: true }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return new Response(JSON.stringify({ message: "Initial notification already sent", skipped: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Format the delivery date
@@ -199,7 +199,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send the initial notification email
     const emailResponse = await resend.emails.send({
-      from: "signed <onboarding@resend.dev>",
+      from: "signed <team@notify.signedletter.com>",
       to: [letter.recipient_email],
       subject: `Someone is sending you a letter: "${letter.title}"`,
       html: generateInitialNotificationHtml(letter.title, deliveryDate),
@@ -219,19 +219,19 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: "Initial notification sent successfully",
-        emailId: emailResponse.id 
+        emailId: emailResponse.id,
       }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error in send-recipient-notification:", error);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 
