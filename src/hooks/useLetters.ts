@@ -167,6 +167,23 @@ export const useLetters = () => {
 
       if (error) throw error;
       
+      // For letters to external recipients, send immediate notification
+      if (!isForSelf && letter.recipientEmail) {
+        try {
+          const response = await supabase.functions.invoke('send-recipient-notification', {
+            body: { letterId: data.id }
+          });
+          if (response.error) {
+            console.error('Failed to send initial recipient notification:', response.error);
+          } else {
+            console.log('Initial recipient notification sent:', response.data);
+          }
+        } catch (notifyError) {
+          console.error('Error sending initial recipient notification:', notifyError);
+          // Don't throw - letter was saved successfully, notification is secondary
+        }
+      }
+      
       // For self-sent, decrypt before returning; for others, just map
       const mappedLetter = mapDbToLetter(data);
       return isForSelf ? decryptLetterFields(mappedLetter, user.id) : mappedLetter;
