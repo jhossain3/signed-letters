@@ -1,53 +1,109 @@
 
-## Feature: External Recipient Letter Delivery
 
-### Completed Implementation
+## Two-Stage Email Notification System
 
-#### 1. Database Changes
-- Added `recipient_user_id` column to `letters` table (UUID, nullable, FK to auth.users)
-- Added indexes on `recipient_user_id` and `recipient_email` for efficient lookups
-- Updated RLS policy to allow recipients to view letters sent to them:
-  ```sql
-  auth.uid() = user_id OR auth.uid() = recipient_user_id
-  ```
-- Created `link_pending_letters()` function that runs on user signup to associate pending letters
+This plan implements a dual-notification flow for letters sent to external recipients, while keeping the single notification for self-sent letters.
 
-#### 2. Edge Function Updates
-- `send-letter-notifications` now handles two types of notifications:
-  - **Self-sent letters**: Sends "Your Letter Has Arrived" email to author
-  - **Letters to others**: Sends "Someone Sent You a Letter" invitation email to recipient
-- Invitation email directs recipients to sign up at `/auth`
+### Current Behavior vs. Desired Behavior
 
-#### 3. Frontend Updates
-- `useLetters` hook:
-  - Fetches both authored and received letters (RLS handles filtering)
-  - Marks letters where user is recipient (not author) as "received"
-  - Only encrypts self-sent letters (letters to others remain unencrypted so recipients can read them)
+| Scenario | Current | Desired |
+|----------|---------|---------|
+| Self-sent letter | 1 email on delivery date | 1 email on delivery date (no change) |
+| Letter to someone else | 1 email on delivery date | 2 emails: one when sent + one on delivery date |
 
-### Flow Summary
+---
 
-1. **User sends letter to someone@example.com**
-   - Letter stored with `recipient_email` set
-   - Letter NOT encrypted (so recipient can read it later)
+### Implementation Overview
 
-2. **Delivery date arrives**
-   - Edge function finds letter with `recipient_type = 'someone'`
-   - Sends invitation email to `recipient_email`
-   - Marks `notification_sent = true`
+**1. Database Changes**
 
-3. **Recipient signs up**
-   - `on_auth_user_created_link_letters` trigger fires
-   - `link_pending_letters()` finds letters with matching email
-   - Updates `recipient_user_id` to new user's ID
+Add a new column to track whether the initial "letter sent" notification has been delivered:
 
-4. **Recipient views vault**
-   - RLS allows access via `recipient_user_id = auth.uid()`
-   - Letter appears in "Received" tab
-   - Letter is readable (not encrypted)
+- Add `initial_notification_sent` boolean column (default: `false`) to the `letters` table
+- This separates the "you've been sent a letter" notification from the "letter is ready to open" notification
 
-### Testing Checklist
-- [ ] Send letter to unregistered email (set delivery date to today)
-- [ ] Verify invitation email is sent
-- [ ] Create account with that email
-- [ ] Verify letter appears in Received tab
-- [ ] Verify letter content is readable
+**2. New Edge Function: Send Initial Recipient Notification**
+
+Create a new edge function `send-recipient-notification` that:
+- Is called immediately when a letter is created for someone else
+- Sends a "Someone is writing you a letter" email to the recipient
+- Includes the unseal/delivery date in the email so they know when to expect it
+- Updates `initial_notification_sent` to `true`
+
+**3. Frontend Changes**
+
+Update `useLetters.ts` to:
+- After successfully creating a letter with `recipientType === "someone"`, immediately invoke the new `send-recipient-notification` edge function
+- Pass the letter ID so the function knows which letter to process
+
+**4. Update Existing Edge Function**
+
+Modify `send-letter-notifications` to:
+- For self-sent letters: continue sending "Your letter is ready" email (no change)
+- For letters to others: send a "Your letter is ready to open" email (different from the initial notification)
+- Keep using the existing `notification_sent` flag for delivery-date notifications
+
+**5. New Email Templates**
+
+Create two distinct email templates for external recipients:
+
+| Email | When Sent | Message | CTA |
+|-------|-----------|---------|-----|
+| Initial | Immediately on letter creation | "Someone is writing you a letter that will arrive on [date]" | "Create Account" |
+| Delivery | On unseal date | "Your letter is ready to open!" | "Open Your Vault" |
+
+---
+
+### Technical Details
+
+**Database Migration:**
+```sql
+ALTER TABLE public.letters 
+ADD COLUMN initial_notification_sent boolean DEFAULT false;
+```
+
+**New Edge Function (`send-recipient-notification`):**
+- Accepts letter ID as input
+- Validates the letter exists and has `recipient_type = 'someone'`
+- Sends the initial notification email with delivery date information
+- Sets `initial_notification_sent = true`
+
+**Updated `useLetters.ts`:**
+```typescript
+// After successful letter creation for someone else
+if (letter.recipientType === "someone" && letter.recipientEmail) {
+  await supabase.functions.invoke('send-recipient-notification', {
+    body: { letterId: data.id }
+  });
+}
+```
+
+**Modified `send-letter-notifications`:**
+- For external recipients on delivery date: uses a "ready to open" template
+- For self-sent on delivery date: uses existing "your letter has arrived" template
+
+---
+
+### Email Content Summary
+
+**Initial Notification (sent immediately):**
+- Subject: "Someone is sending you a letter"
+- Body: A letter titled "[title]" will arrive on [delivery_date]. Sign up to receive it.
+- CTA: "Create Account"
+
+**Delivery Notification (sent on unseal date):**
+- Subject: "Your letter is ready to open!"
+- Body: The letter "[title]" is now available in your vault.
+- CTA: "Open Your Vault" (or "Create Account" if not registered)
+
+---
+
+### Files to Create/Modify
+
+| File | Action |
+|------|--------|
+| `supabase/functions/send-recipient-notification/index.ts` | Create new |
+| `supabase/functions/send-letter-notifications/index.ts` | Update email templates |
+| `src/hooks/useLetters.ts` | Add immediate notification call |
+| Database migration | Add `initial_notification_sent` column |
+
