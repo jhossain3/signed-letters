@@ -133,15 +133,15 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get current time normalized to start of day
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    // Get end of today (23:59:59.999) to include all letters scheduled for today
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
 
     // Find letters that are ready to be opened and haven't been notified
     const { data: letters, error: fetchError } = await supabase
       .from("letters")
       .select("id, title, user_id, delivery_date")
-      .lte("delivery_date", now.toISOString())
+      .lte("delivery_date", endOfToday.toISOString())
       .eq("notification_sent", false);
 
     if (fetchError) {
