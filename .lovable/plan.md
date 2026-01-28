@@ -1,57 +1,57 @@
 
-# Plan: Persist Sketch Data to Draft
+## Fix: Email Notifications Not Finding Same-Day Letters
 
-## Summary
-Add sketch pages to the draft persistence system so handwritten content survives the authentication redirect.
+### Problem Identified
+The edge function's date comparison is too strict. It normalizes "now" to midnight UTC (`00:00:00`), then queries for `delivery_date <= midnight`. But when you save a letter with today's date, the `delivery_date` includes the current time (e.g., `11:01:15`), which is greater than midnight, so the letter isn't found.
 
----
+**Example:**
+- Query checks: `delivery_date <= 2026-01-28T00:00:00Z`
+- Your letter has: `delivery_date = 2026-01-28T11:01:15Z`
+- Result: Not matched (11 AM is not <= midnight)
 
-## Implementation Steps
+### Solution
+Modify the edge function to compare against the **end of today** (23:59:59.999Z) instead of the start. This ensures any letter with a delivery date on or before today will be found.
 
-### 1. Update Draft Interface
-Add the `sketchPages` field to store serialized stroke data for each sketch page.
+### Technical Changes
 
-**File:** `src/pages/WriteLetter.tsx`
+**File:** `supabase/functions/send-letter-notifications/index.ts`
 
+**Current code (lines 136-144):**
 ```typescript
-interface LetterDraft {
-  // ... existing fields ...
-  sketchPages: string[];  // Add this
-}
+// Get current time normalized to start of day
+const now = new Date();
+now.setHours(0, 0, 0, 0);
+
+// Find letters that are ready to be opened and haven't been notified
+const { data: letters, error: fetchError } = await supabase
+  .from("letters")
+  .select("id, title, user_id, delivery_date")
+  .lte("delivery_date", now.toISOString())
+  .eq("notification_sent", false);
 ```
 
-### 2. Save Sketch Pages in Draft
-Include `sketchPages` when saving the draft before auth redirect.
+**Updated code:**
+```typescript
+// Get end of today (23:59:59.999) to include all letters scheduled for today
+const endOfToday = new Date();
+endOfToday.setHours(23, 59, 59, 999);
 
-**In the `saveDraft` function:**
-- Add `sketchPages` to the draft object
+// Find letters that are ready to be opened and haven't been notified
+const { data: letters, error: fetchError } = await supabase
+  .from("letters")
+  .select("id, title, user_id, delivery_date")
+  .lte("delivery_date", endOfToday.toISOString())
+  .eq("notification_sent", false);
+```
 
-### 3. Restore Sketch Pages on Mount
-When restoring a draft, load the sketch pages and set state.
+### Why This Works
+- A letter saved with today's date at any time (e.g., 11:01:15) will be matched
+- Letters with future dates (tomorrow, next week) will NOT be matched
+- The cron job at midnight UTC will correctly notify for all letters due that day
+- The immediate trigger (when bypass flag is on) will also work correctly
 
-**In the restoration `useEffect`:**
-- Add `setSketchPages(draft.sketchPages.length > 0 ? draft.sketchPages : [""])`
-
-### 4. Pass Initial Data to SketchCanvas
-Each sketch canvas needs to receive its saved strokes so it can render them.
-
-**In the sketch page render loop:**
-- Add `initialData={sketchPages[pageIndex]}` prop to each `SketchCanvas`
-
----
-
-## Technical Notes
-
-- Sketch strokes are already serialized as JSON arrays (e.g., `[{points: [[x,y],...], color: "...", size: 3}]`)
-- localStorage has a ~5MB limit — sufficient for typical handwritten letters
-- The compact serialization already minimizes storage footprint
-- No async operations needed since `sketchPages` state already contains the serialized strings
-
----
-
-## Estimated Changes
-
-| File | Changes |
-|------|---------|
-| `src/pages/WriteLetter.tsx` | ~10 lines |
-
+### Testing After Fix
+1. Deploy the updated edge function
+2. Create a new letter with today's delivery date
+3. Verify the notification is sent immediately (with bypass flag enabled)
+4. Check edge function logs to confirm it found the letter
