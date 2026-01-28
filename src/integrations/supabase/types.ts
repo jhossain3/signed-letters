@@ -24,6 +24,7 @@ export type Database = {
           ink_color: string | null
           is_lined: boolean | null
           is_typed: boolean | null
+          notification_sent: boolean | null
           paper_color: string | null
           photos: string[] | null
           recipient_email: string | null
@@ -45,6 +46,7 @@ export type Database = {
           ink_color?: string | null
           is_lined?: boolean | null
           is_typed?: boolean | null
+          notification_sent?: boolean | null
           paper_color?: string | null
           photos?: string[] | null
           recipient_email?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           ink_color?: string | null
           is_lined?: boolean | null
           is_typed?: boolean | null
+          notification_sent?: boolean | null
           paper_color?: string | null
           photos?: string[] | null
           recipient_email?: string | null
