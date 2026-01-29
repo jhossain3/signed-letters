@@ -317,15 +317,22 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Send the notification email
         const emailResponse = await resend.emails.send({
-          from: "signed <team@notify.signedletter.com>", // Replace with your verified domain
+          from: "signed <team@notify.signedletter.com>",
           to: [targetEmail],
           subject: emailSubject,
           html: emailHtml,
         });
 
-        console.log(`Email sent to ${targetEmail} for letter ${letter.id}:`, emailResponse);
+        console.log(`Email response for ${targetEmail}, letter ${letter.id}:`, JSON.stringify(emailResponse));
 
-        // Mark letter as notified
+        // Check if Resend returned an error
+        if (emailResponse.error) {
+          console.error(`Resend error for letter ${letter.id}:`, emailResponse.error);
+          errors.push(`Letter ${letter.id}: Resend error - ${emailResponse.error.message}`);
+          continue; // Don't mark as notified, allow retry
+        }
+
+        // Only mark letter as notified if email was successfully sent
         const { error: updateError } = await supabase
           .from("letters")
           .update({ notification_sent: true })
@@ -335,6 +342,7 @@ const handler = async (req: Request): Promise<Response> => {
           console.error(`Failed to mark letter ${letter.id} as notified:`, updateError);
           errors.push(`Letter ${letter.id}: Failed to update notification status`);
         } else {
+          console.log(`Successfully notified for letter ${letter.id}`);
           sentCount++;
         }
       } catch (letterError: unknown) {
