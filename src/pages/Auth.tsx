@@ -18,6 +18,7 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   
   const { signIn, signUp, resetPassword, updatePassword, session } = useAuth();
   const navigate = useNavigate();
@@ -32,6 +33,16 @@ const Auth = () => {
       setMode("reset");
     }
   }, [searchParams, session]);
+
+  // Handle countdown timer
+  useEffect(() => {
+    if (rateLimitCountdown > 0) {
+      const timer = setTimeout(() => {
+        setRateLimitCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [rateLimitCountdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,8 +102,15 @@ const Auth = () => {
         const { error } = await signUp(email, password);
         if (error) {
           // Handle rate limit errors specifically
-          if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit") || error.message.includes("too many requests")) {
-            toast.error("Our servers are experiencing high traffic. Please wait 30 seconds and try again.", {
+          const isRateLimited = 
+            error.message.includes("Too many signup attempts") ||
+            error.message.includes("rate limit") || 
+            error.message.includes("over_email_send_rate_limit") || 
+            error.message.includes("too many requests");
+          
+          if (isRateLimited) {
+            setRateLimitCountdown(30);
+            toast.error("High traffic detected. We're retrying automatically—please wait a moment.", {
               duration: 6000,
             });
           } else if (error.message.includes("User already registered")) {
@@ -248,10 +266,12 @@ const Auth = () => {
             <Button
               type="submit"
               className="w-full h-12 rounded-xl font-body text-base"
-              disabled={isLoading}
+              disabled={isLoading || rateLimitCountdown > 0}
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              ) : rateLimitCountdown > 0 ? (
+                `Please wait ${rateLimitCountdown}s...`
               ) : (
                 getButtonText()
               )}
