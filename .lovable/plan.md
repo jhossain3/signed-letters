@@ -1,44 +1,76 @@
 
-## Fix Email Notifications with New Resend API Key
+## Fix Self-Sent Same-Day Email Notifications
 
-The edge functions are correctly configured to use `team@notify.signedletter.com` as the sender, but emails are failing because Resend is still treating the API key as being in "testing mode." This happens when the API key was created before domain verification completed, or is from a different account.
-
----
-
-### Root Cause
-
-The `RESEND_API_KEY` currently stored in your backend was likely generated before `notify.signedletter.com` was verified. Resend API keys are tied to the account's verification status at the time of creation.
+Currently, when a user sends a letter to themselves for today, the email notification doesn't arrive. This is due to two issues in the notification flow.
 
 ---
 
-### Solution
+### Problem 1: Notification Flag Set Before Confirming Email Delivery
 
-Generate a fresh API key from your Resend account (where the domain is verified) and update the secret.
+The edge function marks `notification_sent = true` immediately after calling Resend, without checking if the email was actually sent successfully. If Resend returns an error, the letter is still flagged as "notified" and won't be retried.
 
-**Steps:**
-
-1. Go to https://resend.com/api-keys
-2. Create a new API key with "Full access" or "Sending access" permissions
-3. Copy the new key (it will only be shown once)
-4. Update the `RESEND_API_KEY` secret with the new value
+**Fix:** Check Resend's response for errors before updating the database flag.
 
 ---
 
-### What Happens Next
+### Problem 2: Edge Function Not Actually Invoking from Frontend
 
-After updating the API key:
-- The cron job that runs at midnight will attempt to send notifications for any letters with a delivery date of today
-- You can also manually trigger a test by calling the edge function directly
+The console logs show no evidence of `triggerImmediateNotification()` being called. The function only triggers when `BYPASS_DELIVERY_DATE` is enabled AND the delivery date matches today - but the check happens in `onSuccess` after a 500ms delay, which may be causing timing issues.
+
+**Fix:** Trigger the notification immediately after letter creation for self-sent same-day letters, with better logging.
 
 ---
 
-### No Code Changes Required
+### Technical Changes
 
-Both edge functions are already correctly configured:
+**1. Update `send-letter-notifications/index.ts`**
 
-| Function | Sender Address |
-|----------|---------------|
-| `send-letter-notifications` | `signed <team@notify.signedletter.com>` |
-| `send-recipient-notification` | `signed <team@notify.signedletter.com>` |
+Add proper error handling for Resend responses:
 
-The issue is purely the API key authentication, not the code.
+```text
+┌──────────────────────────────────────────────┐
+│ Current Flow                                  │
+├──────────────────────────────────────────────┤
+│ 1. Call resend.emails.send()                 │
+│ 2. Mark notification_sent = true              │
+│    (even if Resend returned an error!)       │
+└──────────────────────────────────────────────┘
+              ↓
+┌──────────────────────────────────────────────┐
+│ Fixed Flow                                    │
+├──────────────────────────────────────────────┤
+│ 1. Call resend.emails.send()                 │
+│ 2. Check response for error                  │
+│ 3. Only mark notification_sent = true        │
+│    if email was successfully sent            │
+└──────────────────────────────────────────────┘
+```
+
+**2. Update `useLetters.ts`**
+
+- Call `triggerImmediateNotification()` directly for self-sent same-day letters, not just when `BYPASS_DELIVERY_DATE` is true
+- Add console logging to confirm the function is being invoked
+- Remove the 500ms delay that may cause race conditions
+
+---
+
+### Database Reset (One-Time)
+
+Since existing letters were incorrectly marked as `notification_sent = true` despite emails never being delivered, we can optionally reset recent letters to allow re-delivery:
+
+```sql
+UPDATE letters 
+SET notification_sent = false 
+WHERE recipient_type = 'myself' 
+  AND delivery_date::date = CURRENT_DATE
+  AND notification_sent = true;
+```
+
+---
+
+### Summary of Files to Modify
+
+| File | Change |
+|------|--------|
+| `supabase/functions/send-letter-notifications/index.ts` | Check Resend response for errors before setting `notification_sent` |
+| `src/hooks/useLetters.ts` | Always trigger immediate notification for same-day self-sent letters |
