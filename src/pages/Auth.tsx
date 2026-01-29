@@ -101,10 +101,12 @@ const Auth = () => {
         const { error } = await signUp(email, password);
         if (error) {
           // Handle specific error codes with user-friendly messages
-          if (error.message.includes("weak_password") || error.message.includes("pwned")) {
+          if (error.message.includes("weak_password") || error.message.includes("pwned") || error.message.includes("easy to guess")) {
             toast.error("This password has been found in data breaches. Please choose a stronger, unique password.");
-          } else if (error.message.includes("rate limit")) {
-            toast.error("Too many attempts. Please check your inbox for an existing verification email or wait a few minutes.");
+          } else if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
+            toast.error("We've already sent you a verification email! Please check your inbox (and spam folder) or wait a few minutes before trying again.");
+          } else if (error.message.includes("already registered") || error.message.includes("already been registered")) {
+            toast.error("This email is already registered. Try signing in instead.");
           } else {
             toast.error(error.message);
           }
