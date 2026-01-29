@@ -90,7 +90,12 @@ const Auth = () => {
       if (mode === "signup") {
         const { error } = await signUp(email, password);
         if (error) {
-          toast.error(error.message);
+          // Handle rate limit error specifically
+          if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
+            toast.error("Too many signup attempts. Please wait a few minutes and try again, or check if you already have an account.");
+          } else {
+            toast.error(error.message);
+          }
         } else {
           toast.success("Account created successfully!");
           navigate(from, { replace: true });
