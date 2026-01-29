@@ -90,9 +90,13 @@ const Auth = () => {
       if (mode === "signup") {
         const { error } = await signUp(email, password);
         if (error) {
-          // Handle rate limit error specifically
-          if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
-            toast.error("Too many signup attempts. Please wait a few minutes and try again, or check if you already have an account.");
+          // Handle rate limit errors specifically
+          if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit") || error.message.includes("too many requests")) {
+            toast.error("Our servers are experiencing high traffic. Please wait 30 seconds and try again.", {
+              duration: 6000,
+            });
+          } else if (error.message.includes("User already registered")) {
+            toast.error("An account with this email already exists. Try signing in instead.");
           } else {
             toast.error(error.message);
           }
