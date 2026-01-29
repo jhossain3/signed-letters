@@ -19,6 +19,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [signupEmail, setSignupEmail] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
   
   const { signIn, signUp, resetPassword, updatePassword, session } = useAuth();
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     
     if (mode === "forgot") {
       if (!email.trim()) {
@@ -102,12 +104,20 @@ const Auth = () => {
         if (error) {
           // Handle specific error codes with user-friendly messages
           if (error.message.includes("weak_password") || error.message.includes("pwned") || error.message.includes("easy to guess")) {
-            toast.error("This password has been found in data breaches. Please choose a stronger, unique password.");
+            const msg = "This password has been found in data breaches. Please choose a stronger, unique password.";
+            setFormError(msg);
+            toast.error(msg);
           } else if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
-            toast.error("We've already sent you a verification email! Please check your inbox (and spam folder) or wait a few minutes before trying again.");
+            // Treat as success from a UX standpoint: the first verification email was likely already sent.
+            setSignupEmail(email);
+            setMode("verify");
+            toast.info("If you don’t see the email yet, check spam or wait a couple minutes — we can’t resend immediately.");
           } else if (error.message.includes("already registered") || error.message.includes("already been registered")) {
-            toast.error("This email is already registered. Try signing in instead.");
+            const msg = "This email is already registered. Try signing in instead.";
+            setFormError(msg);
+            toast.error(msg);
           } else {
+            setFormError(error.message);
             toast.error(error.message);
           }
         } else {
