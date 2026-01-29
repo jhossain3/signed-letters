@@ -373,7 +373,7 @@ const WriteLetter = () => {
     const hasTextContent = textBody.trim().length > 0;
 
     try {
-      await addLetter({
+      const savedLetter = await addLetter({
         title,
         body: textBody,
         date: format(new Date(), "MMMM d, yyyy"),
@@ -394,8 +394,9 @@ const WriteLetter = () => {
       // Clear any saved draft on success
       clearDraft();
 
+      // Navigate with the new letter ID so Vault can wait for it to be available
       setTimeout(() => {
-        navigate("/vault");
+        navigate("/vault", { state: { newLetterId: savedLetter.id } });
       }, 500);
     } catch (error) {
       setIsSealing(false);
