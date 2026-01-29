@@ -5,19 +5,18 @@ import { toast } from "sonner";
 import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 
-// Trigger immediate notification when bypass is enabled and delivery is today
+// Trigger immediate notification for same-day letters
 const triggerImmediateNotification = async () => {
-  if (!FEATURE_FLAGS.BYPASS_DELIVERY_DATE) return;
-  
+  console.log('[triggerImmediateNotification] Invoking send-letter-notifications edge function...');
   try {
     const response = await supabase.functions.invoke('send-letter-notifications');
     if (response.error) {
-      console.error('Failed to trigger immediate notification:', response.error);
+      console.error('[triggerImmediateNotification] Failed:', response.error);
     } else {
-      console.log('Immediate notification triggered:', response.data);
+      console.log('[triggerImmediateNotification] Success:', response.data);
     }
   } catch (error) {
-    console.error('Error triggering immediate notification:', error);
+    console.error('[triggerImmediateNotification] Error:', error);
   }
 };
 
@@ -192,15 +191,18 @@ export const useLetters = () => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
       toast.success("Letter sealed and saved!");
       
-      // Check if delivery date is today and bypass is enabled - trigger immediate notification
+      // For self-sent same-day letters, trigger immediate notification
       const deliveryDate = new Date(savedLetter.deliveryDate);
       const today = new Date();
       deliveryDate.setHours(0, 0, 0, 0);
       today.setHours(0, 0, 0, 0);
       
-      if (deliveryDate.getTime() === today.getTime() && FEATURE_FLAGS.BYPASS_DELIVERY_DATE) {
-        // Small delay to ensure the letter is fully saved before triggering
-        setTimeout(() => triggerImmediateNotification(), 500);
+      const isSameDay = deliveryDate.getTime() === today.getTime();
+      const isSelfSent = savedLetter.recipientType === "myself";
+      
+      if (isSameDay && isSelfSent) {
+        console.log('[addLetterMutation] Same-day self-sent letter detected, triggering immediate notification');
+        triggerImmediateNotification();
       }
     },
     onError: (error) => {
