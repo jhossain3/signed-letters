@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, retryCount = 0): Promise<{ error: Error | null }> => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -49,6 +49,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         emailRedirectTo: window.location.origin,
       },
     });
+    
+    // Check for rate limit errors and retry once after delay
+    if (error && retryCount < 1) {
+      const isRateLimited = 
+        error.message.includes("Too many signup attempts") ||
+        error.message.includes("rate limit") ||
+        error.message.includes("too many requests");
+      
+      if (isRateLimited) {
+        // Wait 5 seconds and retry once
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return signUp(email, password, retryCount + 1);
+      }
+    }
+    
     return { error };
   };
 
