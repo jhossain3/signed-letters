@@ -562,7 +562,22 @@ const WriteLetter = () => {
           <div className="flex justify-center gap-3 mb-8">
             <Button
               variant={inputMode === "type" ? "default" : "outline"}
-              onClick={() => setInputMode("type")}
+              onClick={() => {
+                // Before switching to type mode, capture all current sketch data from refs
+                // This ensures any pending strokes are saved before unmounting
+                if (inputMode === "sketch") {
+                  sketchCanvasRefs.current.forEach((ref, pageIndex) => {
+                    if (ref) {
+                      ref.getDataUrl().then((data) => {
+                        if (data && data !== "[]") {
+                          updateSketchPage(pageIndex, data);
+                        }
+                      });
+                    }
+                  });
+                }
+                setInputMode("type");
+              }}
               className="rounded-full px-6"
             >
               <Type className="w-4 h-4 mr-2" />
