@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, MailCheck, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-type AuthMode = "signin" | "signup" | "forgot" | "reset" | "verify";
+type AuthMode = "signin" | "signup" | "forgot" | "reset";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -18,23 +18,12 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [signupEmail, setSignupEmail] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
   
   const { signIn, signUp, resetPassword, updatePassword, session } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  const DRAFT_STORAGE_KEY = "letter-draft";
-  
-  // Check if there's a saved draft - if so, redirect to /write after auth
-  const getRedirectPath = () => {
-    const hasDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (hasDraft) {
-      return "/write";
-    }
-    return (location.state as { from?: { pathname: string } })?.from?.pathname || "/vault";
-  };
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/vault";
 
   // Check for reset mode from URL (after clicking email link)
   useEffect(() => {
@@ -46,7 +35,6 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
     
     if (mode === "forgot") {
       if (!email.trim()) {
@@ -102,41 +90,18 @@ const Auth = () => {
       if (mode === "signup") {
         const { error } = await signUp(email, password);
         if (error) {
-          // Handle specific error codes with user-friendly messages
-          if (error.message.includes("weak_password") || error.message.includes("pwned") || error.message.includes("easy to guess")) {
-            const msg = "This password has been found in data breaches. Please choose a stronger, unique password.";
-            setFormError(msg);
-            toast.error(msg);
-          } else if (error.message.includes("rate limit") || error.message.includes("over_email_send_rate_limit")) {
-            // Treat as success from a UX standpoint: the first verification email was likely already sent.
-            setSignupEmail(email);
-            setMode("verify");
-            toast.info("If you don’t see the email yet, check spam or wait a couple minutes — we can’t resend immediately.");
-          } else if (error.message.includes("already registered") || error.message.includes("already been registered")) {
-            const msg = "This email is already registered. Try signing in instead.";
-            setFormError(msg);
-            toast.error(msg);
-          } else {
-            setFormError(error.message);
-            toast.error(error.message);
-          }
+          toast.error(error.message);
         } else {
-          // Show verification screen instead of navigating
-          setSignupEmail(email);
-          setMode("verify");
+          toast.success("Account created successfully!");
+          navigate(from, { replace: true });
         }
       } else {
         const { error } = await signIn(email, password);
         if (error) {
-          // Check if user needs to verify email
-          if (error.message.includes("Email not confirmed")) {
-            toast.error("Please verify your email before signing in. Check your spam folder!");
-          } else {
-            toast.error(error.message);
-          }
+          toast.error(error.message);
         } else {
           toast.success("Welcome back!");
-          navigate(getRedirectPath(), { replace: true });
+          navigate(from, { replace: true });
         }
       }
     } catch (error) {
@@ -151,7 +116,6 @@ const Auth = () => {
       case "signup": return "Join signed";
       case "forgot": return "Reset Password";
       case "reset": return "New Password";
-      case "verify": return "Check Your Email";
       default: return "Welcome Back";
     }
   };
@@ -161,7 +125,6 @@ const Auth = () => {
       case "signup": return "Create an account to start writing letters";
       case "forgot": return "Enter your email to receive a reset link";
       case "reset": return "Enter your new password";
-      case "verify": return `We sent a verification link to ${signupEmail}`;
       default: return "Sign in to access your letters";
     }
   };
@@ -207,181 +170,124 @@ const Auth = () => {
             </p>
           </div>
 
-          {/* Verification Success Screen */}
-          {mode === "verify" ? (
-            <div className="space-y-6">
-              {/* Success Icon */}
-              <div className="flex justify-center">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  <MailCheck className="w-10 h-10 text-primary" />
-                </div>
-              </div>
-
-              {/* Important Spam Warning */}
-              <div className="bg-accent/50 border border-accent rounded-xl p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div className="space-y-2">
-                    <p className="font-medium text-foreground">
-                      Check your spam folder!
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Our verification email may land in spam. To ensure you receive your future letters:
-                    </p>
-                    <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
-                      <li>Find the email from <strong>signed</strong></li>
-                      <li>Mark it as "Not Spam"</li>
-                      <li>Add <strong>team@notify.signedletter.com</strong> to your contacts</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-
-              {/* Back to Sign In */}
-              <Button
-                type="button"
-                onClick={() => setMode("signin")}
-                className="w-full h-12 rounded-xl font-body text-base"
-              >
-                I've verified — Sign In
-              </Button>
-
-              <p className="text-center text-sm text-muted-foreground">
-                Didn't receive the email?{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail(signupEmail);
-                    setMode("signup");
-                  }}
-                  className="text-primary hover:underline"
-                >
-                  Try again
-                </button>
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Auth Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
-                  {/* Email - shown for signin, signup, forgot */}
-                  {mode !== "reset" && (
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="Email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12 rounded-xl border-border/50 bg-card/50"
-                      />
-                    </div>
-                  )}
-
-                  {/* Password - shown for signin, signup, reset */}
-                  {mode !== "forgot" && (
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder={mode === "reset" ? "New password" : "Password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-12 rounded-xl border-border/50 bg-card/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Confirm Password - shown for reset */}
-                  {mode === "reset" && (
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Confirm new password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-10 pr-10 h-12 rounded-xl border-border/50 bg-card/50"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Forgot Password Link */}
-                {mode === "signin" && (
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => setMode("forgot")}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full h-12 rounded-xl font-body text-base"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    getButtonText()
-                  )}
-                </Button>
-              </form>
-
-              {/* Toggle Mode */}
+          {/* Auth Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              {/* Email - shown for signin, signup, forgot */}
               {mode !== "reset" && (
-                <div className="text-center mt-8">
-                  <p className="text-muted-foreground font-body">
-                    {mode === "signin" && (
-                      <>
-                        Don't have an account?
-                        <button
-                          onClick={() => setMode("signup")}
-                          className="ml-2 text-primary hover:underline font-medium"
-                        >
-                          Sign up
-                        </button>
-                      </>
-                    )}
-                    {mode === "signup" && (
-                      <>
-                        Already have an account?
-                        <button
-                          onClick={() => setMode("signin")}
-                          className="ml-2 text-primary hover:underline font-medium"
-                        >
-                          Sign in
-                        </button>
-                      </>
-                    )}
-                    {mode === "forgot" && (
-                      <>
-                        Remember your password?
-                        <button
-                          onClick={() => setMode("signin")}
-                          className="ml-2 text-primary hover:underline font-medium"
-                        >
-                          Sign in
-                        </button>
-                      </>
-                    )}
-                  </p>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-12 rounded-xl border-border/50 bg-card/50"
+                  />
                 </div>
               )}
-            </>
+
+              {/* Password - shown for signin, signup, reset */}
+              {mode !== "forgot" && (
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder={mode === "reset" ? "New password" : "Password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10 h-12 rounded-xl border-border/50 bg-card/50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              )}
+
+              {/* Confirm Password - shown for reset */}
+              {mode === "reset" && (
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 pr-10 h-12 rounded-xl border-border/50 bg-card/50"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Forgot Password Link */}
+            {mode === "signin" && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot")}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full h-12 rounded-xl font-body text-base"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              ) : (
+                getButtonText()
+              )}
+            </Button>
+          </form>
+
+          {/* Toggle Mode */}
+          {mode !== "reset" && (
+            <div className="text-center mt-8">
+              <p className="text-muted-foreground font-body">
+                {mode === "signin" && (
+                  <>
+                    Don't have an account?
+                    <button
+                      onClick={() => setMode("signup")}
+                      className="ml-2 text-primary hover:underline font-medium"
+                    >
+                      Sign up
+                    </button>
+                  </>
+                )}
+                {mode === "signup" && (
+                  <>
+                    Already have an account?
+                    <button
+                      onClick={() => setMode("signin")}
+                      className="ml-2 text-primary hover:underline font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </>
+                )}
+                {mode === "forgot" && (
+                  <>
+                    Remember your password?
+                    <button
+                      onClick={() => setMode("signin")}
+                      className="ml-2 text-primary hover:underline font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </>
+                )}
+              </p>
+            </div>
           )}
         </motion.div>
       </main>
