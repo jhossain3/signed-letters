@@ -1,26 +1,68 @@
-# Self-Sent Same-Day Email Notifications - FIXED
 
-## Changes Made
 
-### 1. Edge Function (`send-letter-notifications/index.ts`)
-- ✅ Added error checking for Resend API response before marking `notification_sent = true`
-- ✅ If Resend returns an error, the letter is skipped (not marked as notified) to allow retries
-- ✅ Added detailed logging with JSON.stringify for debugging
+## Plan: Fix Signup Rate Limit Issues
 
-### 2. Frontend (`src/hooks/useLetters.ts`)
-- ✅ Removed `BYPASS_DELIVERY_DATE` gate from `triggerImmediateNotification()`
-- ✅ Now triggers for ALL same-day self-sent letters regardless of feature flag
-- ✅ Removed the 500ms delay that could cause race conditions
-- ✅ Added `[triggerImmediateNotification]` logging prefix for easy filtering
+### Problem Summary
+Users are hitting signup rate limits even on their first attempt because:
+1. Supabase has an IP-based rate limit for signup attempts (applies across ALL emails from the same IP)
+2. Previous testing from the same network consumed the rate limit budget
+3. The old error message is appearing because it comes directly from Supabase's API, not our custom handling
 
-### 3. Database Reset
-- ✅ Reset `notification_sent = false` for today's self-sent letters to allow re-delivery
+### Solution
 
-## How It Works Now
+**1. Improve Error Message Detection**
+Update the error handling to catch the exact Supabase error message pattern and provide a clearer, friendlier message to users.
 
-1. User seals a letter to themselves for today
-2. Letter saves successfully → `onSuccess` fires
-3. Frontend detects same-day + self-sent → calls `triggerImmediateNotification()` immediately
-4. Edge function finds the letter, sends email via Resend
-5. **Only if** Resend confirms success → marks `notification_sent = true`
-6. User receives email notification
+**2. Enable Auto-Confirm for Signups**
+This was previously attempted but may not have taken effect. Auto-confirm allows users to be immediately logged in without email verification, which reduces the number of API calls that count toward rate limits.
+
+**3. Add Retry Logic with Exponential Backoff**
+Automatically retry the signup request once after a short delay when a rate limit is hit, which often succeeds.
+
+---
+
+### Technical Details
+
+**File: `src/pages/Auth.tsx`**
+
+Changes to error handling:
+- Detect the exact error string "Too many signup attempts" from Supabase
+- Add a visual retry countdown timer when rate limited
+- Implement automatic retry after 5 seconds
+- Show clearer guidance: "Please try again in a moment" vs blaming the user
+
+```text
+Error Detection Pattern:
+  Before: Only checking for "rate limit", "over_email_send_rate_limit", "too many requests"
+  After:  Also check for "Too many signup attempts" (exact Supabase message)
+```
+
+**New UI behavior when rate-limited:**
+- Show a helpful message explaining the situation
+- Display a countdown timer
+- Auto-retry after the countdown completes
+- If retry fails, suggest trying from a different network (mobile data vs WiFi)
+
+**File: `src/contexts/AuthContext.tsx`**
+
+Add retry wrapper for signUp function:
+- First attempt as normal
+- If rate limited, wait 5 seconds and retry once
+- If still failing, return the error to the UI
+
+---
+
+### Why This Happens
+
+The Supabase rate limit is designed to prevent abuse but can be triggered legitimately when:
+- Testing from a development environment with multiple test accounts
+- Users on shared IP addresses (office, university, mobile carrier NAT)
+- VPN users sharing exit nodes
+
+### Expected Outcome
+
+After implementation:
+- Users will see a friendlier message when rate limited
+- Automatic retry will succeed in most cases after a short wait
+- Users won't blame themselves or think the site is broken
+
