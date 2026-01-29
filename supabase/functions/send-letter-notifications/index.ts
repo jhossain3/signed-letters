@@ -258,16 +258,33 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if this is a direct invocation with a specific letter ID and plaintext title
+    let requestBody: { letterId?: string; plaintextTitle?: string } = {};
+    try {
+      requestBody = await req.json();
+    } catch {
+      // No body or invalid JSON - that's fine, we'll process all pending letters
+    }
+
+    const { letterId: specificLetterId, plaintextTitle } = requestBody;
+
     // Get end of today (23:59:59.999) to include all letters scheduled for today
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    // Find letters that are ready to be opened and haven't been notified
-    const { data: letters, error: fetchError } = await supabase
+    // Build the query - either for a specific letter or all pending
+    let query = supabase
       .from("letters")
       .select("id, title, user_id, recipient_email, recipient_type, recipient_user_id")
       .lte("delivery_date", endOfToday.toISOString())
       .eq("notification_sent", false);
+
+    if (specificLetterId) {
+      query = query.eq("id", specificLetterId);
+      console.log(`Processing specific letter: ${specificLetterId}`);
+    }
+
+    const { data: letters, error: fetchError } = await query;
 
     if (fetchError) {
       throw new Error(`Failed to fetch letters: ${fetchError.message}`);
@@ -282,11 +299,21 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Found ${letters.length} letters to notify`);
 
+    // Map to store plaintext titles for encrypted letters (passed from frontend)
+    const titleOverrides: Record<string, string> = {};
+    if (specificLetterId && plaintextTitle) {
+      titleOverrides[specificLetterId] = plaintextTitle;
+      console.log(`Using plaintext title for ${specificLetterId}: "${plaintextTitle}"`);
+    }
+
     let sentCount = 0;
     const errors: string[] = [];
 
     for (const letter of letters as LetterToNotify[]) {
       try {
+        // Use plaintext title override if provided (for encrypted self-sent letters)
+        const displayTitle = titleOverrides[letter.id] || letter.title;
+        
         // Determine who to notify based on recipient type
         const isForSomeoneElse = letter.recipient_type === "someone" && letter.recipient_email;
 
@@ -297,8 +324,8 @@ const handler = async (req: Request): Promise<Response> => {
         if (isForSomeoneElse) {
           // Letter is for an external recipient - delivery date has arrived
           targetEmail = letter.recipient_email!;
-          emailHtml = generateRecipientDeliveryEmailHtml(letter.title);
-          emailSubject = `Your letter "${letter.title}" is ready to open!`;
+          emailHtml = generateRecipientDeliveryEmailHtml(displayTitle);
+          emailSubject = `Your letter "${displayTitle}" is ready to open!`;
           console.log(`Sending delivery notification to recipient: ${targetEmail}`);
         } else {
           // Letter is for the author (self-sent)
@@ -311,8 +338,8 @@ const handler = async (req: Request): Promise<Response> => {
           }
 
           targetEmail = userData.user.email;
-          emailHtml = generateAuthorEmailHtml(letter.title);
-          emailSubject = `Your letter "${letter.title}" is ready to open`;
+          emailHtml = generateAuthorEmailHtml(displayTitle);
+          emailSubject = `Your letter "${displayTitle}" is ready to open`;
         }
 
         // Send the notification email

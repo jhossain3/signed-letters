@@ -5,11 +5,14 @@ import { toast } from "sonner";
 import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 
-// Trigger immediate notification for same-day letters
-const triggerImmediateNotification = async () => {
-  console.log('[triggerImmediateNotification] Invoking send-letter-notifications edge function...');
+// Trigger immediate notification for same-day self-sent letters
+// Pass the plaintext title since the stored title is encrypted
+const triggerImmediateNotification = async (letterId: string, plaintextTitle: string) => {
+  console.log('[triggerImmediateNotification] Invoking send-letter-notifications with plaintext title...');
   try {
-    const response = await supabase.functions.invoke('send-letter-notifications');
+    const response = await supabase.functions.invoke('send-letter-notifications', {
+      body: { letterId, plaintextTitle }
+    });
     if (response.error) {
       console.error('[triggerImmediateNotification] Failed:', response.error);
     } else {
@@ -187,7 +190,7 @@ export const useLetters = () => {
       const mappedLetter = mapDbToLetter(data);
       return isForSelf ? decryptLetterFields(mappedLetter, user.id) : mappedLetter;
     },
-    onSuccess: (savedLetter) => {
+    onSuccess: (savedLetter, originalInput) => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
       toast.success("Letter sealed and saved!");
       
@@ -202,7 +205,8 @@ export const useLetters = () => {
       
       if (isSameDay && isSelfSent) {
         console.log('[addLetterMutation] Same-day self-sent letter detected, triggering immediate notification');
-        triggerImmediateNotification();
+        // Pass the plaintext title from the original input (before encryption)
+        triggerImmediateNotification(savedLetter.id, originalInput.title);
       }
     },
     onError: (error) => {
