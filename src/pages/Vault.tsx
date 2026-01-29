@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut } from "lucide-react";
 
 import EnvelopeCard from "@/components/EnvelopeCard";
@@ -102,9 +102,31 @@ const Vault = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [isWaitingForLetter, setIsWaitingForLetter] = useState(false);
   
+  const location = useLocation();
   const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
   const { signOut, user } = useAuth();
+  
+  // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
+  const newLetterId = (location.state as { newLetterId?: string } | null)?.newLetterId;
+  
+  useEffect(() => {
+    if (newLetterId && FEATURE_FLAGS.AUTH_ENABLED) {
+      // Check if the letter is already in the list
+      const letterExists = dbLetters.some(letter => letter.id === newLetterId);
+      if (letterExists) {
+        setIsWaitingForLetter(false);
+        // Clear the navigation state
+        window.history.replaceState({}, document.title);
+      } else if (!isLoading) {
+        // Letter not found yet and not loading - keep waiting
+        setIsWaitingForLetter(true);
+      }
+    } else {
+      setIsWaitingForLetter(false);
+    }
+  }, [newLetterId, dbLetters, isLoading]);
 
   // Auto-migrate legacy encrypted letters
   useEffect(() => {
@@ -187,13 +209,13 @@ const Vault = () => {
     }
   };
 
-  if (isLoading || isMigrating) {
+  if (isLoading || isMigrating || isWaitingForLetter) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-editorial">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground font-body">
-            {isMigrating ? "Migrating your letters..." : "Loading your letters..."}
+            {isMigrating ? "Migrating your letters..." : isWaitingForLetter ? "Sealing your letter..." : "Loading your letters..."}
           </p>
         </div>
       </div>
