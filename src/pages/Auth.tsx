@@ -24,7 +24,16 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/vault";
+  const DRAFT_STORAGE_KEY = "letter-draft";
+  
+  // Check if there's a saved draft - if so, redirect to /write after auth
+  const getRedirectPath = () => {
+    const hasDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (hasDraft) {
+      return "/write";
+    }
+    return (location.state as { from?: { pathname: string } })?.from?.pathname || "/vault";
+  };
 
   // Check for reset mode from URL (after clicking email link)
   useEffect(() => {
@@ -108,7 +117,7 @@ const Auth = () => {
           }
         } else {
           toast.success("Welcome back!");
-          navigate(from, { replace: true });
+          navigate(getRedirectPath(), { replace: true });
         }
       }
     } catch (error) {
