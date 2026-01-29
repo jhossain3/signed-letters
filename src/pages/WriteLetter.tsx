@@ -232,15 +232,15 @@ const WriteLetter = () => {
   const getCombinedBody = () => textPages.join("\n\n--- Page Break ---\n\n");
 
   // Combine all sketch pages into compact flat array format
-  const getCombinedSketchData = async () => {
+  // Uses sketchPages state directly (not refs) to work even when sketch mode is not active
+  const getCombinedSketchData = () => {
     const allPagesData: { pageIndex: number; strokes: import("@/components/sketch/FreehandCanvas").Stroke[] }[] = [];
 
     for (let i = 0; i < sketchPages.length; i++) {
-      const ref = sketchCanvasRefs.current.get(i);
-      if (ref) {
-        const data = await ref.getDataUrl();
+      const pageData = sketchPages[i];
+      if (pageData && pageData !== "" && pageData !== "[]") {
         try {
-          const strokes = JSON.parse(data);
+          const strokes = JSON.parse(pageData);
           if (Array.isArray(strokes) && strokes.length > 0) {
             allPagesData.push({ pageIndex: i, strokes });
           }
@@ -366,8 +366,8 @@ const WriteLetter = () => {
   };
 
   const completeSeal = async () => {
-    // Always collect sketch data if any sketches exist
-    const finalSketchData = await getCombinedSketchData();
+    // Get sketch data from state (works regardless of current mode)
+    const finalSketchData = getCombinedSketchData();
     const hasSketchContent = finalSketchData && finalSketchData !== "[]" && finalSketchData.length > 0;
     const textBody = getCombinedBody();
     const hasTextContent = textBody.trim().length > 0;
