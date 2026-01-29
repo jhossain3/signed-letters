@@ -100,7 +100,14 @@ const Auth = () => {
       if (mode === "signup") {
         const { error } = await signUp(email, password);
         if (error) {
-          toast.error(error.message);
+          // Handle specific error codes with user-friendly messages
+          if (error.message.includes("weak_password") || error.message.includes("pwned")) {
+            toast.error("This password has been found in data breaches. Please choose a stronger, unique password.");
+          } else if (error.message.includes("rate limit")) {
+            toast.error("Too many attempts. Please check your inbox for an existing verification email or wait a few minutes.");
+          } else {
+            toast.error(error.message);
+          }
         } else {
           // Show verification screen instead of navigating
           setSignupEmail(email);
