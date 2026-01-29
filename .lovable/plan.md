@@ -1,109 +1,44 @@
 
+## Fix Email Notifications with New Resend API Key
 
-## Two-Stage Email Notification System
-
-This plan implements a dual-notification flow for letters sent to external recipients, while keeping the single notification for self-sent letters.
-
-### Current Behavior vs. Desired Behavior
-
-| Scenario | Current | Desired |
-|----------|---------|---------|
-| Self-sent letter | 1 email on delivery date | 1 email on delivery date (no change) |
-| Letter to someone else | 1 email on delivery date | 2 emails: one when sent + one on delivery date |
+The edge functions are correctly configured to use `team@notify.signedletter.com` as the sender, but emails are failing because Resend is still treating the API key as being in "testing mode." This happens when the API key was created before domain verification completed, or is from a different account.
 
 ---
 
-### Implementation Overview
+### Root Cause
 
-**1. Database Changes**
-
-Add a new column to track whether the initial "letter sent" notification has been delivered:
-
-- Add `initial_notification_sent` boolean column (default: `false`) to the `letters` table
-- This separates the "you've been sent a letter" notification from the "letter is ready to open" notification
-
-**2. New Edge Function: Send Initial Recipient Notification**
-
-Create a new edge function `send-recipient-notification` that:
-- Is called immediately when a letter is created for someone else
-- Sends a "Someone is writing you a letter" email to the recipient
-- Includes the unseal/delivery date in the email so they know when to expect it
-- Updates `initial_notification_sent` to `true`
-
-**3. Frontend Changes**
-
-Update `useLetters.ts` to:
-- After successfully creating a letter with `recipientType === "someone"`, immediately invoke the new `send-recipient-notification` edge function
-- Pass the letter ID so the function knows which letter to process
-
-**4. Update Existing Edge Function**
-
-Modify `send-letter-notifications` to:
-- For self-sent letters: continue sending "Your letter is ready" email (no change)
-- For letters to others: send a "Your letter is ready to open" email (different from the initial notification)
-- Keep using the existing `notification_sent` flag for delivery-date notifications
-
-**5. New Email Templates**
-
-Create two distinct email templates for external recipients:
-
-| Email | When Sent | Message | CTA |
-|-------|-----------|---------|-----|
-| Initial | Immediately on letter creation | "Someone is writing you a letter that will arrive on [date]" | "Create Account" |
-| Delivery | On unseal date | "Your letter is ready to open!" | "Open Your Vault" |
+The `RESEND_API_KEY` currently stored in your backend was likely generated before `notify.signedletter.com` was verified. Resend API keys are tied to the account's verification status at the time of creation.
 
 ---
 
-### Technical Details
+### Solution
 
-**Database Migration:**
-```sql
-ALTER TABLE public.letters 
-ADD COLUMN initial_notification_sent boolean DEFAULT false;
-```
+Generate a fresh API key from your Resend account (where the domain is verified) and update the secret.
 
-**New Edge Function (`send-recipient-notification`):**
-- Accepts letter ID as input
-- Validates the letter exists and has `recipient_type = 'someone'`
-- Sends the initial notification email with delivery date information
-- Sets `initial_notification_sent = true`
+**Steps:**
 
-**Updated `useLetters.ts`:**
-```typescript
-// After successful letter creation for someone else
-if (letter.recipientType === "someone" && letter.recipientEmail) {
-  await supabase.functions.invoke('send-recipient-notification', {
-    body: { letterId: data.id }
-  });
-}
-```
-
-**Modified `send-letter-notifications`:**
-- For external recipients on delivery date: uses a "ready to open" template
-- For self-sent on delivery date: uses existing "your letter has arrived" template
+1. Go to https://resend.com/api-keys
+2. Create a new API key with "Full access" or "Sending access" permissions
+3. Copy the new key (it will only be shown once)
+4. Update the `RESEND_API_KEY` secret with the new value
 
 ---
 
-### Email Content Summary
+### What Happens Next
 
-**Initial Notification (sent immediately):**
-- Subject: "Someone is sending you a letter"
-- Body: A letter titled "[title]" will arrive on [delivery_date]. Sign up to receive it.
-- CTA: "Create Account"
-
-**Delivery Notification (sent on unseal date):**
-- Subject: "Your letter is ready to open!"
-- Body: The letter "[title]" is now available in your vault.
-- CTA: "Open Your Vault" (or "Create Account" if not registered)
+After updating the API key:
+- The cron job that runs at midnight will attempt to send notifications for any letters with a delivery date of today
+- You can also manually trigger a test by calling the edge function directly
 
 ---
 
-### Files to Create/Modify
+### No Code Changes Required
 
-| File | Action |
-|------|--------|
-| `supabase/functions/send-recipient-notification/index.ts` | Create new |
-| `supabase/functions/send-letter-notifications/index.ts` | Update email templates |
-| `src/hooks/useLetters.ts` | Add immediate notification call |
-| Database migration | Add `initial_notification_sent` column |
+Both edge functions are already correctly configured:
 
+| Function | Sender Address |
+|----------|---------------|
+| `send-letter-notifications` | `signed <team@notify.signedletter.com>` |
+| `send-recipient-notification` | `signed <team@notify.signedletter.com>` |
+
+The issue is purely the API key authentication, not the code.
