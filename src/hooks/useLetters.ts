@@ -215,13 +215,10 @@ export const useLetters = () => {
   });
 
   const isLetterOpenable = (letter: Letter) => {
-    // Bypass delivery date check for testing
-    if (FEATURE_FLAGS.BYPASS_DELIVERY_DATE) {
-      return true;
-    }
-    
+    // Always check delivery date - letters can only be opened on or after their delivery date
+    // The BYPASS_DELIVERY_DATE flag only controls whether users can SELECT today's date when sealing,
+    // not whether letters can be opened early
     const deliveryDate = new Date(letter.deliveryDate);
-    const now = new Date();
     // Allow opening on the same day (compare dates only, not time)
     deliveryDate.setHours(0, 0, 0, 0);
     const today = new Date();
