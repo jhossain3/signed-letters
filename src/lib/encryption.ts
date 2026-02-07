@@ -105,6 +105,31 @@ export function clearKeyCache(): void {
   keyCache.clear();
 }
 
+/**
+ * Initialize the encryption key for a user with retry logic.
+ * Call this after signup to ensure the key exists before any encryption attempts.
+ * Returns true if successful, false if all retries failed.
+ */
+export async function initializeUserEncryptionKey(userId: string): Promise<boolean> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 500; // ms
+  
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      await getOrCreateUserKey(userId);
+      console.log('[Encryption] User key initialized successfully');
+      return true;
+    } catch (error) {
+      console.warn(`[Encryption] Key init attempt ${attempt + 1} failed:`, error);
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY));
+      }
+    }
+  }
+  console.error('[Encryption] Failed to initialize user key after retries');
+  return false;
+}
+
 // Helper to convert Uint8Array to base64 without stack overflow
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   const CHUNK_SIZE = 0x8000; // 32KB chunks to avoid call stack issues
