@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { clearKeyCache } from "@/lib/encryption";
+import { clearKeyCache, initializeUserEncryptionKey } from "@/lib/encryption";
 
 interface AuthContextType {
   user: User | null;
@@ -24,10 +24,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener BEFORE checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        
+        // Initialize encryption key for new sign-ins (fire and forget)
+        if (event === 'SIGNED_IN' && session?.user) {
+          initializeUserEncryptionKey(session.user.id).catch(console.error);
+        }
       }
     );
 
