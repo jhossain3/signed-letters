@@ -70,7 +70,7 @@ const Index = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
-                className="max-w-md space-y-4"
+                className="max-w-md space-y-4 rounded-xl border border-border/60 bg-card/40 p-5"
               >
                 <div className="space-y-2">
                   <h2 className="font-editorial text-2xl text-foreground">Join Us for Our Launch Event</h2>
