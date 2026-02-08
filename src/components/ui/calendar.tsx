@@ -60,13 +60,13 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         }}
         {...props}
       />
-      {/* Year navigation buttons */}
+      {/* Year navigation buttons — aligned with month nav row */}
       <button
         type="button"
         onClick={handleYearBack}
         className={cn(
           buttonVariants({ variant: "outline" }),
-          "absolute top-4 left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          "absolute top-[13px] left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         )}
         aria-label="Go back one year"
         data-testid="calendar-year-back"
@@ -78,7 +78,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         onClick={handleYearForward}
         className={cn(
           buttonVariants({ variant: "outline" }),
-          "absolute top-4 right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          "absolute top-[13px] right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         )}
         aria-label="Go forward one year"
         data-testid="calendar-year-forward"
