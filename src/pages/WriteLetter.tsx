@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram, Plus, Trash2, MessageCircle } from "lucide-react";
 import SketchCanvas, { SketchCanvasRef } from "@/components/SketchCanvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,9 +85,6 @@ const WriteLetter = () => {
   const [inkColor, setInkColor] = useState(INK_COLORS[0]);
   const [showLines, setShowLines] = useState(true);
   const [isSealing, setIsSealing] = useState(false);
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -296,33 +293,6 @@ const WriteLetter = () => {
       case "10years":
         setDeliveryDate(addYears(now, 10));
         break;
-    }
-  };
-
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setIsSubmitting(true);
-
-    const formData = new URLSearchParams();
-    formData.append("entry.1045781291", email);
-
-    try {
-      await fetch(
-        "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
-        {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData,
-        },
-      );
-      setIsSubscribed(true);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -948,53 +918,26 @@ const WriteLetter = () => {
       {/* Footer */}
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Compact waitlist form */}
-            {!isSubscribed ? (
-              <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
-                <Input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="h-9 w-52 sm:w-56 text-sm rounded-md pl-4 pr-3 bg-card/80 border-border focus:border-primary transition-colors"
-                />
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  size="sm"
-                  className="h-9 px-4 rounded-md bg-muted hover:bg-accent text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  {isSubmitting ? "..." : "Join Waitlist"}
-                </Button>
-              </form>
-            ) : (
-              <span className="text-primary text-sm font-medium">✓ You're on the list</span>
-            )}
-
-            {/* Social links */}
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-sm font-body">Letters through time</span>
             <div className="flex items-center gap-6">
-              <a
-                href="https://www.instagram.com/signed_letters"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="https://www.tiktok.com/@letters_for_later"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <TikTokIcon />
-              </a>
+              <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
+              <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Tally Feedback Button */}
+      <button
+        data-tally-open="VLzk5E"
+        data-tally-emoji-text="💬"
+        data-tally-emoji-animation="wave"
+        className="fixed bottom-6 right-6 p-4 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl z-50 flex items-center justify-center"
+        aria-label="Give feedback"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </button>
     </div>
   );
 };
