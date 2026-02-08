@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut } from "lucide-react";
+import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut, MessageCircle } from "lucide-react";
 
 import EnvelopeCard from "@/components/EnvelopeCard";
 import EnvelopeOpening from "@/components/EnvelopeOpening";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useLetters, Letter } from "@/hooks/useLetters";
 import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
@@ -98,9 +97,6 @@ const Vault = () => {
   const [activeTab, setActiveTab] = useState<"received" | "sent">("sent");
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [isWaitingForLetter, setIsWaitingForLetter] = useState(false);
   
@@ -182,32 +178,6 @@ const Vault = () => {
     await signOut();
   };
 
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setIsSubmitting(true);
-
-    const formData = new URLSearchParams();
-    formData.append("entry.1045781291", email);
-
-    try {
-      await fetch(
-        "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
-        {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData,
-        }
-      );
-      setIsSubscribed(true);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (isLoading || isMigrating || isWaitingForLetter) {
     return (
@@ -311,32 +281,8 @@ const Vault = () => {
 
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Compact waitlist form */}
-            {!isSubscribed ? (
-              <form onSubmit={handleWaitlistSubmit} className="flex items-center gap-2">
-                <Input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="h-9 w-52 sm:w-56 text-sm rounded-md pl-4 pr-3 bg-card/80 border-border focus:border-primary transition-colors"
-                />
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  size="sm"
-                  className="h-9 px-4 rounded-md bg-muted hover:bg-accent text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  {isSubmitting ? "..." : "Join Waitlist"}
-                </Button>
-              </form>
-            ) : (
-              <span className="text-primary text-sm font-medium">✓ You're on the list</span>
-            )}
-
-            {/* Social links */}
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-sm font-body">Letters through time</span>
             <div className="flex items-center gap-6">
               <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
               <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
@@ -344,6 +290,17 @@ const Vault = () => {
           </div>
         </div>
       </footer>
+
+      {/* Tally Feedback Button */}
+      <button
+        data-tally-open="VLzk5E"
+        data-tally-emoji-text="💬"
+        data-tally-emoji-animation="wave"
+        className="fixed bottom-6 right-6 p-4 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl z-50 flex items-center justify-center"
+        aria-label="Give feedback"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </button>
 
       <AnimatePresence>{selectedLetter && <EnvelopeOpening letter={selectedLetter} onClose={() => setSelectedLetter(null)} />}</AnimatePresence>
     </div>
