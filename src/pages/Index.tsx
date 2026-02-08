@@ -79,7 +79,7 @@ const Index = () => {
                     <span>February 14, 2026</span>
                   </div>
                   <p className="text-muted-foreground text-sm leading-relaxed font-body">
-                    An afternoon of reflection with keynote speakers and a guided workshop — set meaningful goals and write a letter to your future self.
+                    An afternoon of reflection with award-winning author Dr Jinan Yousef and a guided workshop — set meaningful goals and write a letter to your future self.
                   </p>
                 </div>
                 <Button
