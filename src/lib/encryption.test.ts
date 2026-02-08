@@ -35,7 +35,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 // Import after mocking
-import { encryptValue, decryptValue, encryptLetterFields, decryptLetterFields, clearKeyCache } from "./encryption";
+import { encryptValue, decryptValue, encryptLetterFields, decryptLetterFields, clearKeyCache, initializeUserEncryptionKey } from "./encryption";
 
 describe("encryption", () => {
   // Use UUID for userId (matches database schema)
@@ -165,6 +165,8 @@ describe("encryption", () => {
   });
 
   describe("decryptLetterFields", () => {
+    // ... keep existing code (lines 220-218 tests)
+
     it("should decrypt all letter fields", async () => {
       const original = {
         title: "My Letter",
@@ -251,6 +253,88 @@ With love and hope ❤️`,
       const parsedSketch = JSON.parse(decrypted.sketchData!);
       expect(parsedSketch).toHaveLength(2);
       expect(parsedSketch[0].points).toHaveLength(3);
+    });
+  });
+
+  describe("initializeUserEncryptionKey", () => {
+    it("should return true on successful initialization", async () => {
+      const result = await initializeUserEncryptionKey(testUserId);
+      expect(result).toBe(true);
+    });
+
+    it("should cache key after initialization for instant access", async () => {
+      await initializeUserEncryptionKey(testUserId);
+      // Subsequent encrypt should succeed immediately (uses cached key)
+      const encrypted = await encryptValue("Quick test", testUserId);
+      expect(encrypted).toMatch(/^enc:/);
+    });
+  });
+
+  describe("security guarantees", () => {
+    it("should use AES-GCM with random IV (integrity built-in)", async () => {
+      // AES-GCM provides both encryption and authentication (AEAD)
+      // Tampering with ciphertext causes decryption to fail
+      const encrypted = await encryptValue("Tamper test", testUserId);
+      const rawB64 = encrypted.slice(4); // remove 'enc:'
+      
+      // Modify a character in the middle of the ciphertext
+      const chars = rawB64.split('');
+      const midIdx = Math.floor(chars.length / 2);
+      chars[midIdx] = chars[midIdx] === 'A' ? 'B' : 'A';
+      const tampered = 'enc:' + chars.join('');
+      
+      const result = await decryptValue(tampered, testUserId);
+      expect(result).toBe("[Unable to decrypt]");
+    });
+
+    it("should base64 encode all encrypted output", async () => {
+      const encrypted = await encryptValue("Base64 check", testUserId);
+      const b64Part = encrypted.slice(4); // remove 'enc:'
+      // Valid base64 should not throw
+      expect(() => atob(b64Part)).not.toThrow();
+    });
+
+    it("should never produce the same ciphertext for repeated encryptions", async () => {
+      const results = new Set<string>();
+      for (let i = 0; i < 5; i++) {
+        results.add(await encryptValue("Repeated", testUserId));
+      }
+      expect(results.size).toBe(5);
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle single character encryption", async () => {
+      const encrypted = await encryptValue("x", testUserId);
+      const decrypted = await decryptValue(encrypted, testUserId);
+      expect(decrypted).toBe("x");
+    });
+
+    it("should handle string with only whitespace", async () => {
+      const encrypted = await encryptValue("   \n\t  ", testUserId);
+      const decrypted = await decryptValue(encrypted, testUserId);
+      expect(decrypted).toBe("   \n\t  ");
+    });
+
+    it("should handle very long sketch data (50,000+ chars)", async () => {
+      const longSketch = JSON.stringify(
+        Array.from({ length: 500 }, (_, i) => ({
+          points: Array.from({ length: 20 }, (_, j) => [i * j, i + j]),
+          color: "black",
+          size: 2,
+        }))
+      );
+      expect(longSketch.length).toBeGreaterThan(50000);
+      const encrypted = await encryptValue(longSketch, testUserId);
+      const decrypted = await decryptValue(encrypted, testUserId);
+      expect(decrypted).toBe(longSketch);
+    });
+
+    it("should handle HTML-like content without issues", async () => {
+      const html = '<script>alert("xss")</script><div class="test">Hello & goodbye</div>';
+      const encrypted = await encryptValue(html, testUserId);
+      const decrypted = await decryptValue(encrypted, testUserId);
+      expect(decrypted).toBe(html);
     });
   });
 });

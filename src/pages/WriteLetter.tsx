@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, addMonths, addYears, addDays } from "date-fns";
 import { useLetters } from "@/hooks/useLetters";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEncryptionReady } from "@/hooks/useEncryptionReady";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { toast } from "sonner";
 import { serializeMultiPage } from "@/lib/sketchSerialization";
@@ -67,6 +68,7 @@ const WriteLetter = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addLetter, isAddingLetter } = useLetters();
+  const { isReady: isEncryptionReady, isInitializing: isEncryptionInitializing, error: encryptionError } = useEncryptionReady();
 
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
   const [inputMode, setInputMode] = useState<"type" | "sketch">("type");
@@ -332,6 +334,16 @@ const WriteLetter = () => {
       // Redirect to auth with return path
       navigate("/auth", { state: { from: { pathname: "/write" } } });
       toast.info("Please sign in to seal your letter");
+      return;
+    }
+
+    // Check encryption readiness for self-sent letters
+    if (recipientType === "myself" && !isEncryptionReady) {
+      if (encryptionError) {
+        toast.error(encryptionError);
+      } else {
+        toast.error("Secure storage is still initializing. Please wait a moment.");
+      }
       return;
     }
 
@@ -913,11 +925,19 @@ const WriteLetter = () => {
           {/* Seal Button */}
           <Button
             onClick={handleSealLetter}
+            disabled={recipientType === "myself" && isEncryptionInitializing}
             size="lg"
             className="w-full text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
           >
-            Seal
+            {recipientType === "myself" && isEncryptionInitializing
+              ? "Securing your letter..."
+              : "Seal"}
           </Button>
+          {encryptionError && recipientType === "myself" && (
+            <p className="text-center text-destructive text-sm mt-2 font-body">
+              {encryptionError}
+            </p>
+          )}
 
           <p className="text-center text-muted-foreground text-sm mt-4 font-body italic">
             Once sealed, this letter cannot be viewed, edited, or rewritten until delivery.
