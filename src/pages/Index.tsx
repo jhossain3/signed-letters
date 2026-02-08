@@ -97,13 +97,13 @@ const Index = () => {
                 </Button>
               </motion.div>
 
-              {/* Explore link - Secondary */}
+              {/* Secondary CTA */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }}>
                 <Link
                   to="/write"
                   className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group border-b border-transparent hover:border-muted-foreground/30 pb-0.5"
                 >
-                  <span>Explore the demo</span>
+                  <span>Write your letter</span>
                   <span className="group-hover:translate-x-1 transition-transform">→</span>
                 </Link>
               </motion.div>
