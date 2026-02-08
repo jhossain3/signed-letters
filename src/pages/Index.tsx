@@ -1,6 +1,7 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Instagram, PenLine, Clock, Mail, Calendar } from "lucide-react";
+import { Instagram, PenLine, Clock, Mail, Calendar, MessageCircle, X } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-editorial.jpg";
@@ -12,6 +13,8 @@ const TikTokIcon = () => (
 );
 
 const Index = () => {
+  const [tallyOpen, setTallyOpen] = useState(false);
+
   const steps = [
     {
       icon: PenLine,
@@ -199,6 +202,45 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Tally Popup */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <AnimatePresence>
+          {tallyOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-14 left-0 w-[min(400px,80vw)] h-[50vh] rounded-xl border border-border/60 bg-background shadow-xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border/40">
+                <span className="text-sm font-medium text-foreground">Get in touch</span>
+                <button
+                  onClick={() => setTallyOpen(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <iframe
+                src="https://tally.so/r/VLz2Rg?transparentBackground=1"
+                className="w-full h-[calc(100%-41px)]"
+                title="Contact form"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <motion.button
+          onClick={() => setTallyOpen((o) => !o)}
+          className="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Open contact form"
+        >
+          {tallyOpen ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
+        </motion.button>
+      </div>
     </div>
   );
 };
