@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Instagram, PenLine, Clock, Mail } from "lucide-react";
+import { Instagram, PenLine, Clock, Mail, Calendar } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import heroImage from "@/assets/hero-editorial.jpg";
 
 const TikTokIcon = () => (
@@ -14,50 +12,6 @@ const TikTokIcon = () => (
 );
 
 const Index = () => {
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    console.log("🚀 STARTING SUBMISSION");
-    console.log("📧 Email value:", email);
-
-    setIsSubmitting(true);
-
-    // Google Form submission
-    const formData = new URLSearchParams();
-    formData.append("entry.1045781291", email);
-
-    console.log("📦 FormData contents:", formData.toString());
-    console.log(
-      "🌐 Submitting to URL:",
-      "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
-    );
-
-    try {
-      await fetch(
-        "https://docs.google.com/forms/d/e/1FAIpQLSf02XrrVaQG7fT43FrArCoYWFTPcEPBHBhIffOD_6qBDIvcTQ/formResponse",
-        {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData,
-        },
-      );
-
-      console.log("✅ Fetch completed successfully");
-
-      setIsSubscribed(true);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const steps = [
     {
       icon: PenLine,
@@ -111,39 +65,36 @@ const Index = () => {
                 someone you hold dear.
               </p>
 
-              {/* Waitlist Form - Primary CTA */}
+              {/* Event Promotion - Primary CTA */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
+                className="max-w-md space-y-4"
               >
-                {!isSubscribed ? (
-                  <div className="space-y-4">
-                    <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md">
-                      <Input
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="flex-1 h-12 rounded-lg px-5 bg-card/80 border-border focus:border-primary transition-colors"
-                      />
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="h-12 px-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                      >
-                        {isSubmitting ? "Joining..." : "Join Waitlist"}
-                      </Button>
-                    </form>
-                    <p className="text-sm text-muted-foreground">Be the first to know when we launch.</p>
+                <div className="space-y-2">
+                  <h2 className="font-editorial text-2xl text-foreground">Join Us for Our Launch Event</h2>
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-body">
+                    <Calendar className="h-4 w-4" />
+                    <span>February 14, 2026</span>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-3 text-primary font-medium">
-                    <span className="text-xl">✓</span>
-                    <span>You're on the list. We'll be in touch.</span>
-                  </div>
-                )}
+                  <p className="text-muted-foreground text-sm leading-relaxed font-body">
+                    An afternoon of reflection with keynote speakers and a guided workshop — set meaningful goals and write a letter to your future self.
+                  </p>
+                </div>
+                <Button
+                  asChild
+                  className="h-12 px-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                >
+                  <a
+                    href="https://buy.stripe.com/14A28k1496AhcPKf6924000"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Reserve your spot for the Signed Letters launch event"
+                  >
+                    Reserve Your Spot
+                  </a>
+                </Button>
               </motion.div>
 
               {/* Explore link - Secondary */}
