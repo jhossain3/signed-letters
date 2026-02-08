@@ -214,8 +214,8 @@ const Index = () => {
               transition={{ duration: 0.2 }}
               className="absolute bottom-14 left-0 w-[min(400px,80vw)] h-[50vh] rounded-xl border border-border/60 bg-background shadow-xl overflow-hidden"
             >
-              <div className="flex items-center justify-between px-4 py-2 border-b border-border/40">
-                <span className="text-sm font-medium text-foreground">Get in touch</span>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 bg-card">
+                <span className="text-sm font-medium text-foreground font-editorial">Get in touch</span>
                 <button
                   onClick={() => setTallyOpen(false)}
                   className="text-muted-foreground hover:text-foreground transition-colors"
@@ -223,11 +223,13 @@ const Index = () => {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <iframe
-                src="https://tally.so/r/VLz2Rg?transparentBackground=1"
-                className="w-full h-[calc(100%-41px)]"
-                title="Contact form"
-              />
+              <div className="w-full h-[calc(100%-41px)] bg-card overflow-auto">
+                <iframe
+                  src="https://tally.so/r/VLz2Rg?transparentBackground=1"
+                  className="w-full h-full"
+                  title="Contact form"
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
