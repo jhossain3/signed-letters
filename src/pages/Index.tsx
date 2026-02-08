@@ -203,7 +203,7 @@ const Index = () => {
 
       {/* Tally Feedback Button */}
       <button
-        data-tally-open="VLz2Rg"
+        data-tally-open="VLzk5E"
         data-tally-emoji-text="💬"
         data-tally-emoji-animation="wave"
         className="fixed bottom-6 right-6 p-4 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl z-50 flex items-center justify-center"
