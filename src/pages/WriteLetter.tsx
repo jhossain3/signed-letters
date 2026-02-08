@@ -700,7 +700,7 @@ const WriteLetter = () => {
                         )}
 
                         <Textarea
-                          placeholder={pageIndex === 0 ? "Dear future me..." : "Continue writing..."}
+                          placeholder={pageIndex === 0 ? (recipientType === "someone" ? "Dear..." : "Dear future me...") : "Continue writing..."}
                           value={pageContent}
                           onChange={(e) => updateTextPage(pageIndex, e.target.value)}
                           className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
@@ -909,7 +909,7 @@ const WriteLetter = () => {
             </div>
 
             <Input
-              placeholder="With love..."
+              placeholder="Signed..."
               value={signature}
               onChange={(e) => setSignature(e.target.value)}
               className={`bg-card/50 rounded-xl text-lg ${signatureFont.class}`}
