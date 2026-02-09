@@ -333,7 +333,7 @@ const WriteLetter = () => {
       saveDraft();
       // Redirect to auth with return path
       navigate("/auth", { state: { from: { pathname: "/write" } } });
-      toast.info("Please sign in to seal");
+      toast.info("Please sign in to seal your words");
       return;
     }
 
@@ -354,7 +354,7 @@ const WriteLetter = () => {
 
     const currentBody = getCombinedBody();
     if (inputMode === "type" && !currentBody.trim()) {
-      toast.error("Please write something for the future");
+      toast.error("Please write something to revisit");
       return;
     }
 
@@ -509,7 +509,7 @@ const WriteLetter = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2 }}
               >
-                Your letter is sealed
+                Your entry is sealed
               </motion.p>
 
               <motion.p
@@ -544,7 +544,7 @@ const WriteLetter = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           {/* Page Title */}
           <div className="text-center mb-10">
-            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write a Letter</h1>
+            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write now, open later</h1>
             <p className="text-muted-foreground font-body">Take your time. Make it meaningful.</p>
           </div>
 
@@ -663,7 +663,7 @@ const WriteLetter = () => {
             <div className="p-6 md:p-8">
               {/* Title Input */}
               <Input
-                placeholder="Letter title..."
+                placeholder="Title..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-xl font-editorial border-0 border-b border-border/50 rounded-none px-0 mb-6 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
@@ -696,13 +696,7 @@ const WriteLetter = () => {
                         )}
 
                         <Textarea
-                          placeholder={
-                            pageIndex === 0
-                              ? recipientType === "someone"
-                                ? "Dear..."
-                                : "Dear future me..."
-                              : "Continue writing..."
-                          }
+                          placeholder={pageIndex === 0 ? "A message for later..." : "Continue writing..."}
                           value={pageContent}
                           onChange={(e) => updateTextPage(pageIndex, e.target.value)}
                           className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${

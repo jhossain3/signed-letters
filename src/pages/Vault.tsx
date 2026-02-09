@@ -23,7 +23,7 @@ const TikTokIcon = () => (
 const DEMO_LETTERS: Letter[] = [
   {
     id: "demo-sent-1",
-    title: "Note to Future Me",
+    title: "Letter to Future Me",
     body: "Dear future me, I hope you're doing well and have achieved everything you set out to do...",
     date: "January 15, 2026",
     deliveryDate: addDays(new Date(), 30).toISOString(),
@@ -133,12 +133,12 @@ const Vault = () => {
         const needsMig = await needsMigration(user.id);
         if (needsMig) {
           setIsMigrating(true);
-          toast.info("Migrating your letters to new encryption...");
+          toast.info("Migrating to new encryption...");
 
           const result = await migrateLettersToRandomKey(user.id, user.email);
 
           if (result.success && result.migratedCount > 0) {
-            toast.success(`Migrated ${result.migratedCount} letters successfully!`);
+            toast.success(`Migrated ${result.migratedCount} successfully!`);
             // Refresh the page to reload letters with new keys
             window.location.reload();
           } else if (!result.success) {
@@ -185,10 +185,10 @@ const Vault = () => {
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground font-body">
             {isMigrating
-              ? "Migrating your letters..."
+              ? "Migrating your entries..."
               : isWaitingForLetter
-                ? "Sealing your letter..."
-                : "Loading your letters..."}
+                ? "Sealing your words..."
+                : "Loading your entries..."}
           </p>
         </div>
       </div>
@@ -227,7 +227,7 @@ const Vault = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div className="text-center mb-10">
             <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Your Vault</h1>
-            <p className="text-muted-foreground font-body">Where your letters wait</p>
+            <p className="text-muted-foreground font-body">Where your thoughts wait</p>
             {user?.email && <p className="text-xs text-muted-foreground/70 mt-1">{user.email}</p>}
           </div>
 
@@ -320,7 +320,7 @@ const Vault = () => {
               </p>
               {activeTab === "sent" && (
                 <Button asChild className="mt-6 rounded-full">
-                  <Link to="/write">Write a Letter</Link>
+                  <Link to="/write">Write now, open later</Link>
                 </Button>
               )}
             </div>
@@ -331,7 +331,7 @@ const Vault = () => {
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-sm font-body">Letters through time</span>
+            <span className="text-muted-foreground text-sm font-body">Words through time</span>
             <div className="flex items-center gap-6">
               <a
                 href="https://www.instagram.com/signed_letters"
