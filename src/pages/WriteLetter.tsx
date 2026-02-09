@@ -130,7 +130,7 @@ const WriteLetter = () => {
         setPhotos(draft.photos);
         // Clear draft after restoring
         localStorage.removeItem(DRAFT_STORAGE_KEY);
-        toast.success("Your draft has been restored");
+        toast.success("Your letter draft has been restored");
       } catch (e) {
         console.error("Failed to restore draft:", e);
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -333,7 +333,7 @@ const WriteLetter = () => {
       saveDraft();
       // Redirect to auth with return path
       navigate("/auth", { state: { from: { pathname: "/write" } } });
-      toast.info("Please sign in to seal your words");
+      toast.info("Please sign in to seal your letter");
       return;
     }
 
@@ -348,13 +348,13 @@ const WriteLetter = () => {
     }
 
     if (!title.trim()) {
-      toast.error("Please add a title");
+      toast.error("Please add a title to your letter");
       return;
     }
 
     const currentBody = getCombinedBody();
     if (inputMode === "type" && !currentBody.trim()) {
-      toast.error("Please write something to revisit");
+      toast.error("Please write something in your letter");
       return;
     }
 
@@ -509,7 +509,7 @@ const WriteLetter = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2 }}
               >
-                Your entry is sealed
+                Your letter is sealed
               </motion.p>
 
               <motion.p
@@ -544,7 +544,7 @@ const WriteLetter = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           {/* Page Title */}
           <div className="text-center mb-10">
-            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write now, open later</h1>
+            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write a Letter</h1>
             <p className="text-muted-foreground font-body">Take your time. Make it meaningful.</p>
           </div>
 
@@ -663,7 +663,7 @@ const WriteLetter = () => {
             <div className="p-6 md:p-8">
               {/* Title Input */}
               <Input
-                placeholder="Title..."
+                placeholder="Letter title..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-xl font-editorial border-0 border-b border-border/50 rounded-none px-0 mb-6 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
@@ -696,7 +696,13 @@ const WriteLetter = () => {
                         )}
 
                         <Textarea
-                          placeholder={pageIndex === 0 ? "A message for later..." : "Continue writing..."}
+                          placeholder={
+                            pageIndex === 0
+                              ? recipientType === "someone"
+                                ? "Dear..."
+                                : "Dear future me..."
+                              : "Continue writing..."
+                          }
                           value={pageContent}
                           onChange={(e) => updateTextPage(pageIndex, e.target.value)}
                           className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
@@ -930,7 +936,7 @@ const WriteLetter = () => {
           )}
 
           <p className="text-center text-muted-foreground text-sm mt-4 font-body italic">
-            Once sealed, this letter cannot be viewed, edited, or rewritten until delivery.
+            Once sealed, this cannot be viewed, edited, or rewritten until delivery.
           </p>
         </motion.div>
       </main>
