@@ -31,47 +31,71 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
     >
       <AnimatePresence mode="wait">
         {(stage === "envelope" || stage === "opening") && (
-          <motion.div key="envelope" className="relative" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0, y: -100 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            key="envelope"
+            className="relative"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0, y: -100 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="relative w-72 h-52" style={{ perspective: "800px" }}>
-              <svg viewBox="0 0 160 110" className="w-full h-full drop-shadow-2xl" style={{ overflow: 'visible' }}>
+              <svg viewBox="0 0 160 110" className="w-full h-full drop-shadow-2xl" style={{ overflow: "visible" }}>
                 {/* Envelope body */}
-                <rect x="5" y="30" width="150" height="75" rx="4" fill="hsl(var(--envelope-cream))" stroke="hsl(var(--border))" strokeWidth="1.5" />
-                
-                {/* Letter inside */}
-                <motion.rect 
-                  x="15" 
-                  width="130" 
-                  height="60" 
-                  rx="3" 
-                  fill="hsl(var(--background))" 
-                  stroke="hsl(var(--border))" 
-                  strokeWidth="0.5" 
-                  initial={{ y: 35 }}
-                  animate={stage === "opening" ? { y: 10 } : { y: 35 }} 
-                  transition={{ duration: 1, delay: 0.5, ease: "easeOut" }} 
-                />
-                
-                {/* Envelope flap */}
-                <motion.path 
-                  d="M 5 30 L 80 60 L 155 30 Z" 
-                  fill="hsl(var(--cream))" 
-                  stroke="hsl(var(--border))" 
+                <rect
+                  x="5"
+                  y="30"
+                  width="150"
+                  height="75"
+                  rx="4"
+                  fill="hsl(var(--envelope-cream))"
+                  stroke="hsl(var(--border))"
                   strokeWidth="1.5"
-                  style={{ transformOrigin: "80px 30px" }} 
+                />
+
+                {/* Letter inside */}
+                <motion.rect
+                  x="15"
+                  width="130"
+                  height="60"
+                  rx="3"
+                  fill="hsl(var(--background))"
+                  stroke="hsl(var(--border))"
+                  strokeWidth="0.5"
+                  initial={{ y: 35 }}
+                  animate={stage === "opening" ? { y: 10 } : { y: 35 }}
+                  transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                />
+
+                {/* Envelope flap */}
+                <motion.path
+                  d="M 5 30 L 80 60 L 155 30 Z"
+                  fill="hsl(var(--cream))"
+                  stroke="hsl(var(--border))"
+                  strokeWidth="1.5"
+                  style={{ transformOrigin: "80px 30px" }}
                   initial={{ rotateX: 0 }}
-                  animate={stage === "opening" ? { rotateX: -180, opacity: 0 } : { rotateX: 0, opacity: 1 }} 
+                  animate={stage === "opening" ? { rotateX: -180, opacity: 0 } : { rotateX: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeInOut" }}
                 />
-                
+
                 {/* Wax seal with logo mark - positioned absolutely */}
                 <motion.g
                   initial={{ opacity: 1 }}
-                  animate={stage === "opening" ? { opacity: 0 } : { opacity: 1 }} 
+                  animate={stage === "opening" ? { opacity: 0 } : { opacity: 1 }}
                   transition={{ duration: 0.2, delay: stage === "opening" ? 0.3 : 0 }}
                 >
                   <circle cx="80" cy="48" r="10" fill="hsl(var(--seal-maroon))" />
                   {/* Logo mark - horizontal line + dot above right */}
-                  <line x1="76" y1="49" x2="82" y2="49" stroke="hsl(var(--primary-foreground))" strokeWidth="1.5" strokeLinecap="square" />
+                  <line
+                    x1="76"
+                    y1="49"
+                    x2="82"
+                    y2="49"
+                    stroke="hsl(var(--primary-foreground))"
+                    strokeWidth="1.5"
+                    strokeLinecap="square"
+                  />
                   <circle cx="85" cy="46.5" r="1.5" fill="hsl(var(--primary-foreground))" />
                 </motion.g>
               </svg>
@@ -84,18 +108,25 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
         )}
 
         {stage === "letter" && (
-          <motion.div key="letter" className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-border" initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5 }}>
-            <div 
+          <motion.div
+            key="letter"
+            className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-border"
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div
               className="min-h-[300px] p-6 rounded-xl border border-border relative overflow-hidden"
-              style={{ backgroundColor: letter.paperColor || 'hsl(var(--paper))' }}
+              style={{ backgroundColor: letter.paperColor || "hsl(var(--paper))" }}
             >
               {/* Lined paper effect */}
               {letter.isLined !== false && (
-                <div 
+                <div
                   className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden"
                   style={{
-                    backgroundImage: 'repeating-linear-gradient(transparent, transparent 27px, hsl(var(--border) / 0.3) 27px, hsl(var(--border) / 0.3) 28px)',
-                    backgroundPositionY: '48px',
+                    backgroundImage:
+                      "repeating-linear-gradient(transparent, transparent 27px, hsl(var(--border) / 0.3) 27px, hsl(var(--border) / 0.3) 28px)",
+                    backgroundPositionY: "48px",
                   }}
                 />
               )}
@@ -103,17 +134,15 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                 <h2 className="font-editorial text-2xl text-foreground mb-6 break-words">{letter.title}</h2>
                 {/* Show typed content if exists */}
                 {letter.isTyped && letter.body && letter.body.trim() && (
-                  <div 
+                  <div
                     className="text-foreground leading-relaxed font-body break-words overflow-hidden"
-                    style={{ color: letter.inkColor, wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                    style={{ color: letter.inkColor, wordBreak: "break-word", overflowWrap: "break-word" }}
                   >
                     {/* Render pages with visual separators instead of text */}
                     {letter.body.split("\n\n--- Page Break ---\n\n").map((page, index, arr) => (
                       <div key={index}>
                         <p className="whitespace-pre-wrap">{page}</p>
-                        {index < arr.length - 1 && (
-                          <div className="my-8 border-t border-dashed border-border/40" />
-                        )}
+                        {index < arr.length - 1 && <div className="my-8 border-t border-dashed border-border/40" />}
                       </div>
                     ))}
                   </div>
@@ -121,8 +150,8 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                 {/* Show sketch content below typed content if both exist */}
                 {letter.sketchData && (
                   <div className={letter.isTyped && letter.body?.trim() ? "mt-8" : ""}>
-                    <SketchRenderer 
-                      sketchData={letter.sketchData} 
+                    <SketchRenderer
+                      sketchData={letter.sketchData}
                       paperColor="transparent"
                       inkColor={letter.inkColor}
                       showLines={letter.isLined !== false}
@@ -132,16 +161,28 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                 {letter.photos && letter.photos.length > 0 && (
                   <div className="flex gap-3 mt-6 flex-wrap">
                     {letter.photos.map((photo, index) => (
-                      <img key={index} src={photo} alt={`Attachment ${index + 1}`} className="w-24 h-24 object-cover rounded-lg border border-border shadow-editorial" />
+                      <img
+                        key={index}
+                        src={photo}
+                        alt={`Attachment ${index + 1}`}
+                        className="w-24 h-24 object-cover rounded-lg border border-border shadow-editorial"
+                      />
                     ))}
                   </div>
                 )}
-                <p className={`text-xl mt-8 text-foreground break-words ${letter.signatureFont || "font-signature"}`}>{letter.signature}</p>
+                <p className={`text-xl mt-8 text-foreground break-words ${letter.signatureFont || "font-signature"}`}>
+                  {letter.signature}
+                </p>
               </div>
             </div>
-            <p className="text-center text-muted-foreground mt-6 font-editorial italic text-sm">This moment was worth waiting for.</p>
-            <button onClick={onClose} className="mt-6 w-full py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-all shadow-editorial">
-              Close Letter
+            <p className="text-center text-muted-foreground mt-6 font-editorial italic text-sm">
+              This moment was worth waiting for.
+            </p>
+            <button
+              onClick={onClose}
+              className="mt-6 w-full py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-all shadow-editorial"
+            >
+              Close
             </button>
           </motion.div>
         )}
