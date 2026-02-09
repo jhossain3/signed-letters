@@ -19,11 +19,11 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
-  
+
   const { signIn, signUp, resetPassword, updatePassword, session } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/vault";
 
   // Check for reset mode from URL (after clicking email link)
@@ -38,7 +38,7 @@ const Auth = () => {
   useEffect(() => {
     if (rateLimitCountdown > 0) {
       const timer = setTimeout(() => {
-        setRateLimitCountdown(prev => prev - 1);
+        setRateLimitCountdown((prev) => prev - 1);
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -46,7 +46,7 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (mode === "forgot") {
       if (!email.trim()) {
         toast.error("Please enter your email");
@@ -102,12 +102,12 @@ const Auth = () => {
         const { error } = await signUp(email, password);
         if (error) {
           // Handle rate limit errors specifically
-          const isRateLimited = 
+          const isRateLimited =
             error.message.includes("Too many signup attempts") ||
-            error.message.includes("rate limit") || 
-            error.message.includes("over_email_send_rate_limit") || 
+            error.message.includes("rate limit") ||
+            error.message.includes("over_email_send_rate_limit") ||
             error.message.includes("too many requests");
-          
+
           if (isRateLimited) {
             setRateLimitCountdown(30);
             toast.error("High traffic detected. We're retrying automatically—please wait a moment.", {
@@ -140,28 +140,40 @@ const Auth = () => {
 
   const getTitle = () => {
     switch (mode) {
-      case "signup": return "Join signed";
-      case "forgot": return "Reset Password";
-      case "reset": return "New Password";
-      default: return "Welcome Back";
+      case "signup":
+        return "Join signed";
+      case "forgot":
+        return "Reset Password";
+      case "reset":
+        return "New Password";
+      default:
+        return "Welcome Back";
     }
   };
 
   const getSubtitle = () => {
     switch (mode) {
-      case "signup": return "Create an account to start writing letters";
-      case "forgot": return "Enter your email to receive a reset link";
-      case "reset": return "Enter your new password";
-      default: return "Sign in to access your letters";
+      case "signup":
+        return "Create an account to start writing";
+      case "forgot":
+        return "Enter your email to receive a reset link";
+      case "reset":
+        return "Enter your new password";
+      default:
+        return "Sign in to access your entries";
     }
   };
 
   const getButtonText = () => {
     switch (mode) {
-      case "signup": return "Create Account";
-      case "forgot": return "Send Reset Link";
-      case "reset": return "Update Password";
-      default: return "Sign In";
+      case "signup":
+        return "Create Account";
+      case "forgot":
+        return "Send Reset Link";
+      case "reset":
+        return "Update Password";
+      default:
+        return "Sign In";
     }
   };
 
@@ -172,7 +184,10 @@ const Auth = () => {
       {/* Header */}
       <header className="container mx-auto px-4 py-6 relative z-10">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </Link>
@@ -182,19 +197,11 @@ const Auth = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-md relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           {/* Page Title */}
           <div className="text-center mb-10">
-            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">
-              {getTitle()}
-            </h1>
-            <p className="text-muted-foreground font-body">
-              {getSubtitle()}
-            </p>
+            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">{getTitle()}</h1>
+            <p className="text-muted-foreground font-body">{getSubtitle()}</p>
           </div>
 
           {/* Auth Form */}
@@ -285,10 +292,7 @@ const Auth = () => {
                 {mode === "signin" && (
                   <>
                     Don't have an account?
-                    <button
-                      onClick={() => setMode("signup")}
-                      className="ml-2 text-primary hover:underline font-medium"
-                    >
+                    <button onClick={() => setMode("signup")} className="ml-2 text-primary hover:underline font-medium">
                       Sign up
                     </button>
                   </>
@@ -296,10 +300,7 @@ const Auth = () => {
                 {mode === "signup" && (
                   <>
                     Already have an account?
-                    <button
-                      onClick={() => setMode("signin")}
-                      className="ml-2 text-primary hover:underline font-medium"
-                    >
+                    <button onClick={() => setMode("signin")} className="ml-2 text-primary hover:underline font-medium">
                       Sign in
                     </button>
                   </>
@@ -307,10 +308,7 @@ const Auth = () => {
                 {mode === "forgot" && (
                   <>
                     Remember your password?
-                    <button
-                      onClick={() => setMode("signin")}
-                      className="ml-2 text-primary hover:underline font-medium"
-                    >
+                    <button onClick={() => setMode("signin")} className="ml-2 text-primary hover:underline font-medium">
                       Sign in
                     </button>
                   </>

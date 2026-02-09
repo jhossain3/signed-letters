@@ -696,7 +696,7 @@ const WriteLetter = () => {
                         )}
 
                         <Textarea
-                          placeholder={pageIndex === 0 ? "Start writing" : "Continue writing..."}
+                          placeholder={pageIndex === 0 ? "Start writing..." : "Continue writing..."}
                           value={pageContent}
                           onChange={(e) => updateTextPage(pageIndex, e.target.value)}
                           className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
