@@ -12,12 +12,11 @@ const TikTokIcon = () => (
 );
 
 const Index = () => {
-
   const steps = [
     {
       icon: PenLine,
       title: "Write",
-      description: "Pour your thoughts into a letter — typed or handwritten.",
+      description: "Put your thoughts into words — typed or handwritten.",
     },
     {
       icon: Clock,
@@ -62,8 +61,8 @@ const Index = () => {
 
               {/* Description */}
               <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-md font-body">
-                A quiet space to write letters across time. Reflect, remember, and send words to your future self or
-                someone you hold dear.
+                A quiet space to write across time. Reflect, remember, and send words to your future self or someone you
+                hold dear.
               </p>
 
               {/* Event Promotion - Primary CTA */}
@@ -80,7 +79,8 @@ const Index = () => {
                     <span>February 14, 2026</span>
                   </div>
                   <p className="text-muted-foreground text-sm leading-relaxed font-body">
-                    An afternoon of reflection with award-winning author Dr Jinan Yousef and a guided workshop — set meaningful goals and write a letter to your future self.
+                    An afternoon of reflection with award-winning author Dr Jinan Yousef and a guided workshop — set
+                    meaningful goals and write a letter to your future self.
                   </p>
                 </div>
                 <Button
@@ -104,7 +104,7 @@ const Index = () => {
                   to="/write"
                   className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm group border-b border-transparent hover:border-muted-foreground/30 pb-0.5"
                 >
-                  <span>Write your letter</span>
+                  <span>Write for the future</span>
                   <span className="group-hover:translate-x-1 transition-transform">→</span>
                 </Link>
               </motion.div>
