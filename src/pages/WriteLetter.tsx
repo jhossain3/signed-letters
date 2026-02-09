@@ -333,7 +333,7 @@ const WriteLetter = () => {
       saveDraft();
       // Redirect to auth with return path
       navigate("/auth", { state: { from: { pathname: "/write" } } });
-      toast.info("Please sign in to preserve this moment");
+      toast.info("Please sign in to seal");
       return;
     }
 
@@ -509,7 +509,7 @@ const WriteLetter = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2 }}
               >
-                Your words are sealed
+                Your letter is sealed
               </motion.p>
 
               <motion.p
@@ -663,7 +663,7 @@ const WriteLetter = () => {
             <div className="p-6 md:p-8">
               {/* Title Input */}
               <Input
-                placeholder="Title..."
+                placeholder="Letter title..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-xl font-editorial border-0 border-b border-border/50 rounded-none px-0 mb-6 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
@@ -929,14 +929,14 @@ const WriteLetter = () => {
             size="lg"
             className="w-full text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
           >
-            {recipientType === "myself" && isEncryptionInitializing ? "Securing your words..." : "Seal"}
+            {recipientType === "myself" && isEncryptionInitializing ? "Securing your letter..." : "Seal"}
           </Button>
           {encryptionError && recipientType === "myself" && (
             <p className="text-center text-destructive text-sm mt-2 font-body">{encryptionError}</p>
           )}
 
           <p className="text-center text-muted-foreground text-sm mt-4 font-body italic">
-            Once sealed, this entry cannot be viewed, edited, or rewritten until delivery.
+            Once sealed, this letter cannot be viewed, edited, or rewritten until delivery.
           </p>
         </motion.div>
       </main>
@@ -945,7 +945,7 @@ const WriteLetter = () => {
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-sm font-body">Words through time</span>
+            <span className="text-muted-foreground text-sm font-body">Letters through time</span>
             <div className="flex items-center gap-6">
               <a
                 href="https://www.instagram.com/signed_letters"
