@@ -1,7 +1,19 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Instagram, Plus, Trash2, MessageCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Image,
+  PenTool,
+  Type,
+  X,
+  Check,
+  Instagram,
+  Plus,
+  Trash2,
+  MessageCircle,
+} from "lucide-react";
 import SketchCanvas, { SketchCanvasRef } from "@/components/SketchCanvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,11 +66,11 @@ interface LetterDraft {
   title: string;
   deliveryDate: string | null;
   signature: string;
-  signatureFont: typeof SIGNATURE_FONTS[0];
+  signatureFont: (typeof SIGNATURE_FONTS)[0];
   inputMode: "type" | "sketch";
   showLines: boolean;
-  paperColor: typeof PAPER_COLORS[0];
-  inkColor: typeof INK_COLORS[0];
+  paperColor: (typeof PAPER_COLORS)[0];
+  inkColor: (typeof INK_COLORS)[0];
   textPages: string[];
   sketchPages: string[];
   photos: string[];
@@ -68,7 +80,11 @@ const WriteLetter = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addLetter, isAddingLetter } = useLetters();
-  const { isReady: isEncryptionReady, isInitializing: isEncryptionInitializing, error: encryptionError } = useEncryptionReady();
+  const {
+    isReady: isEncryptionReady,
+    isInitializing: isEncryptionInitializing,
+    error: encryptionError,
+  } = useEncryptionReady();
 
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
   const [inputMode, setInputMode] = useState<"type" | "sketch">("type");
@@ -114,7 +130,7 @@ const WriteLetter = () => {
         setPhotos(draft.photos);
         // Clear draft after restoring
         localStorage.removeItem(DRAFT_STORAGE_KEY);
-        toast.success("Your letter draft has been restored");
+        toast.success("Your draft has been restored");
       } catch (e) {
         console.error("Failed to restore draft:", e);
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -141,7 +157,21 @@ const WriteLetter = () => {
       photos,
     };
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  }, [recipientType, recipientEmail, title, deliveryDate, signature, signatureFont, inputMode, showLines, paperColor, inkColor, textPages, sketchPages, photos]);
+  }, [
+    recipientType,
+    recipientEmail,
+    title,
+    deliveryDate,
+    signature,
+    signatureFont,
+    inputMode,
+    showLines,
+    paperColor,
+    inkColor,
+    textPages,
+    sketchPages,
+    photos,
+  ]);
 
   const clearDraft = useCallback(() => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -303,7 +333,7 @@ const WriteLetter = () => {
       saveDraft();
       // Redirect to auth with return path
       navigate("/auth", { state: { from: { pathname: "/write" } } });
-      toast.info("Please sign in to seal your letter");
+      toast.info("Please sign in to preserve this moment");
       return;
     }
 
@@ -318,13 +348,13 @@ const WriteLetter = () => {
     }
 
     if (!title.trim()) {
-      toast.error("Please add a title to your letter");
+      toast.error("Please add a title");
       return;
     }
 
     const currentBody = getCombinedBody();
     if (inputMode === "type" && !currentBody.trim()) {
-      toast.error("Please write something in your letter");
+      toast.error("Please write something for the future");
       return;
     }
 
@@ -438,15 +468,11 @@ const WriteLetter = () => {
                   />
 
                   {/* Wax seal appears - use absolute positioning instead of transform */}
-                  <motion.g
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1, duration: 0.4 }}
-                  >
-                    <motion.circle 
-                      cx="80" 
-                      cy="65" 
-                      r="16" 
+                  <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1, duration: 0.4 }}>
+                    <motion.circle
+                      cx="80"
+                      cy="65"
+                      r="16"
                       fill="hsl(var(--seal-maroon))"
                       initial={{ r: 0 }}
                       animate={{ r: 16 }}
@@ -464,10 +490,10 @@ const WriteLetter = () => {
                       animate={{ opacity: 1 }}
                       transition={{ delay: 1.2 }}
                     />
-                    <motion.circle 
-                      cx="88" 
-                      cy="65" 
-                      r="2.5" 
+                    <motion.circle
+                      cx="88"
+                      cy="65"
+                      r="2.5"
                       fill="hsl(var(--primary-foreground))"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -483,7 +509,7 @@ const WriteLetter = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2 }}
               >
-                Your letter is sealed
+                Your words are sealed
               </motion.p>
 
               <motion.p
@@ -637,7 +663,7 @@ const WriteLetter = () => {
             <div className="p-6 md:p-8">
               {/* Title Input */}
               <Input
-                placeholder="Letter title..."
+                placeholder="Title..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-xl font-editorial border-0 border-b border-border/50 rounded-none px-0 mb-6 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
@@ -670,7 +696,13 @@ const WriteLetter = () => {
                         )}
 
                         <Textarea
-                          placeholder={pageIndex === 0 ? (recipientType === "someone" ? "Dear..." : "Dear future me...") : "Continue writing..."}
+                          placeholder={
+                            pageIndex === 0
+                              ? recipientType === "someone"
+                                ? "Dear..."
+                                : "Dear future me..."
+                              : "Continue writing..."
+                          }
                           value={pageContent}
                           onChange={(e) => updateTextPage(pageIndex, e.target.value)}
                           className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
@@ -731,9 +763,7 @@ const WriteLetter = () => {
               </div>
 
               {/* Add Page button */}
-              <div
-                className="flex items-center justify-between mt-6 pt-4 border-t border-border/30 select-none"
-              >
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30 select-none">
                 <span className="text-sm text-muted-foreground font-body">
                   {currentPages.length} {currentPages.length === 1 ? "page" : "pages"}
                 </span>
@@ -899,18 +929,14 @@ const WriteLetter = () => {
             size="lg"
             className="w-full text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
           >
-            {recipientType === "myself" && isEncryptionInitializing
-              ? "Securing your letter..."
-              : "Seal"}
+            {recipientType === "myself" && isEncryptionInitializing ? "Securing your words..." : "Seal"}
           </Button>
           {encryptionError && recipientType === "myself" && (
-            <p className="text-center text-destructive text-sm mt-2 font-body">
-              {encryptionError}
-            </p>
+            <p className="text-center text-destructive text-sm mt-2 font-body">{encryptionError}</p>
           )}
 
           <p className="text-center text-muted-foreground text-sm mt-4 font-body italic">
-            Once sealed, this letter cannot be viewed, edited, or rewritten until delivery.
+            Once sealed, this entry cannot be viewed, edited, or rewritten until delivery.
           </p>
         </motion.div>
       </main>
@@ -919,10 +945,24 @@ const WriteLetter = () => {
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-sm font-body">Letters through time</span>
+            <span className="text-muted-foreground text-sm font-body">Words through time</span>
             <div className="flex items-center gap-6">
-              <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
-              <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
+              <a
+                href="https://www.instagram.com/signed_letters"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@letters_for_later"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <TikTokIcon />
+              </a>
             </div>
           </div>
         </div>

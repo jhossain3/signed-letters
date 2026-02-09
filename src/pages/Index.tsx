@@ -173,7 +173,7 @@ const Index = () => {
             {/* Logo and tagline */}
             <div className="flex items-center gap-4">
               <Logo size="sm" animate={false} showText />
-              <span className="text-muted-foreground text-sm hidden sm:inline">Letters through time</span>
+              <span className="text-muted-foreground text-sm hidden sm:inline">Write through time</span>
             </div>
 
             {/* Social links */}

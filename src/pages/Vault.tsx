@@ -15,7 +15,7 @@ import { needsMigration, migrateLettersToRandomKey } from "@/lib/migrateLegacyEn
 
 const TikTokIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
   </svg>
 );
 
@@ -23,7 +23,7 @@ const TikTokIcon = () => (
 const DEMO_LETTERS: Letter[] = [
   {
     id: "demo-sent-1",
-    title: "Letter to Future Me",
+    title: "Note to Future Me",
     body: "Dear future me, I hope you're doing well and have achieved everything you set out to do...",
     date: "January 15, 2026",
     deliveryDate: addDays(new Date(), 30).toISOString(),
@@ -99,18 +99,18 @@ const Vault = () => {
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [isMigrating, setIsMigrating] = useState(false);
   const [isWaitingForLetter, setIsWaitingForLetter] = useState(false);
-  
+
   const location = useLocation();
   const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
   const { signOut, user } = useAuth();
-  
+
   // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
   const newLetterId = (location.state as { newLetterId?: string } | null)?.newLetterId;
-  
+
   useEffect(() => {
     if (newLetterId && FEATURE_FLAGS.AUTH_ENABLED) {
       // Check if the letter is already in the list
-      const letterExists = dbLetters.some(letter => letter.id === newLetterId);
+      const letterExists = dbLetters.some((letter) => letter.id === newLetterId);
       if (letterExists) {
         setIsWaitingForLetter(false);
         // Clear the navigation state
@@ -128,15 +128,15 @@ const Vault = () => {
   useEffect(() => {
     const runMigration = async () => {
       if (!user?.id || !user?.email || isMigrating) return;
-      
+
       try {
         const needsMig = await needsMigration(user.id);
         if (needsMig) {
           setIsMigrating(true);
           toast.info("Migrating your letters to new encryption...");
-          
+
           const result = await migrateLettersToRandomKey(user.id, user.email);
-          
+
           if (result.success && result.migratedCount > 0) {
             toast.success(`Migrated ${result.migratedCount} letters successfully!`);
             // Refresh the page to reload letters with new keys
@@ -151,7 +151,7 @@ const Vault = () => {
         setIsMigrating(false);
       }
     };
-    
+
     runMigration();
   }, [user?.id, user?.email]);
 
@@ -178,14 +178,17 @@ const Vault = () => {
     await signOut();
   };
 
-
   if (isLoading || isMigrating || isWaitingForLetter) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-editorial">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground font-body">
-            {isMigrating ? "Migrating your letters..." : isWaitingForLetter ? "Sealing your letter..." : "Loading your letters..."}
+            {isMigrating
+              ? "Migrating your letters..."
+              : isWaitingForLetter
+                ? "Sealing your letter..."
+                : "Loading your letters..."}
           </p>
         </div>
       </div>
@@ -199,7 +202,10 @@ const Vault = () => {
       {/* Header */}
       <header className="container mx-auto px-4 py-6 relative z-10">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </Link>
@@ -222,26 +228,40 @@ const Vault = () => {
           <div className="text-center mb-10">
             <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Your Vault</h1>
             <p className="text-muted-foreground font-body">Where your letters wait</p>
-            {user?.email && (
-              <p className="text-xs text-muted-foreground/70 mt-1">{user.email}</p>
-            )}
+            {user?.email && <p className="text-xs text-muted-foreground/70 mt-1">{user.email}</p>}
           </div>
 
           {/* Controls */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10">
             <div className="flex gap-2">
-              <Button variant={activeTab === "sent" ? "default" : "outline"} onClick={() => setActiveTab("sent")} className="rounded-full">
-                <Send className="w-4 h-4 mr-2" />Sent
+              <Button
+                variant={activeTab === "sent" ? "default" : "outline"}
+                onClick={() => setActiveTab("sent")}
+                className="rounded-full"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Sent
               </Button>
-              <Button variant={activeTab === "received" ? "default" : "outline"} onClick={() => setActiveTab("received")} className="rounded-full">
-                <Inbox className="w-4 h-4 mr-2" />Received
+              <Button
+                variant={activeTab === "received" ? "default" : "outline"}
+                onClick={() => setActiveTab("received")}
+                className="rounded-full"
+              >
+                <Inbox className="w-4 h-4 mr-2" />
+                Received
               </Button>
             </div>
             <div className="flex gap-1 bg-card/50 rounded-full p-1 border border-border/50">
-              <button onClick={() => setViewMode("grid")} className={`p-2 rounded-full transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-full transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
                 <LayoutGrid className="w-4 h-4" />
               </button>
-              <button onClick={() => setViewMode("timeline")} className={`p-2 rounded-full transition-colors ${viewMode === "timeline" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <button
+                onClick={() => setViewMode("timeline")}
+                className={`p-2 rounded-full transition-colors ${viewMode === "timeline" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
                 <GitBranch className="w-4 h-4" />
               </button>
             </div>
@@ -252,8 +272,19 @@ const Vault = () => {
             viewMode === "grid" ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 {filteredLetters.map((letter, index) => (
-                  <motion.div key={letter.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.1 }}>
-                    <EnvelopeCard id={letter.id} title={letter.title} date={format(new Date(letter.deliveryDate), "MMM d, yyyy")} isOpenable={isLetterOpenable(letter)} onClick={() => handleEnvelopeClick(letter)} />
+                  <motion.div
+                    key={letter.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <EnvelopeCard
+                      id={letter.id}
+                      title={letter.title}
+                      date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                      isOpenable={isLetterOpenable(letter)}
+                      onClick={() => handleEnvelopeClick(letter)}
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -261,10 +292,22 @@ const Vault = () => {
               <div className="relative max-w-2xl mx-auto">
                 <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border -translate-x-1/2" />
                 {filteredLetters.map((letter, index) => (
-                  <motion.div key={letter.id} className={`relative flex ${index % 2 === 0 ? "justify-start pr-1/2" : "justify-end pl-1/2"} mb-8`} initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: index * 0.1 }}>
+                  <motion.div
+                    key={letter.id}
+                    className={`relative flex ${index % 2 === 0 ? "justify-start pr-1/2" : "justify-end pl-1/2"} mb-8`}
+                    initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
                     <div className="absolute left-1/2 top-1/2 w-3 h-3 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
                     <div className={`w-5/12 ${index % 2 === 0 ? "mr-8" : "ml-8"}`}>
-                      <EnvelopeCard id={letter.id} title={letter.title} date={format(new Date(letter.deliveryDate), "MMM d, yyyy")} isOpenable={isLetterOpenable(letter)} onClick={() => handleEnvelopeClick(letter)} />
+                      <EnvelopeCard
+                        id={letter.id}
+                        title={letter.title}
+                        date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                        isOpenable={isLetterOpenable(letter)}
+                        onClick={() => handleEnvelopeClick(letter)}
+                      />
                     </div>
                   </motion.div>
                 ))}
@@ -272,8 +315,14 @@ const Vault = () => {
             )
           ) : (
             <div className="text-center py-16">
-              <p className="text-muted-foreground text-lg mb-2 font-body">{activeTab === "sent" ? "No letters sent yet" : "No letters received yet"}</p>
-              {activeTab === "sent" && <Button asChild className="mt-6 rounded-full"><Link to="/write">Write a Letter</Link></Button>}
+              <p className="text-muted-foreground text-lg mb-2 font-body">
+                {activeTab === "sent" ? "No letters sent yet" : "No letters received yet"}
+              </p>
+              {activeTab === "sent" && (
+                <Button asChild className="mt-6 rounded-full">
+                  <Link to="/write">Write a Letter</Link>
+                </Button>
+              )}
             </div>
           )}
         </motion.div>
@@ -284,8 +333,22 @@ const Vault = () => {
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground text-sm font-body">Letters through time</span>
             <div className="flex items-center gap-6">
-              <a href="https://www.instagram.com/signed_letters" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
-              <a href="https://www.tiktok.com/@letters_for_later" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors"><TikTokIcon /></a>
+              <a
+                href="https://www.instagram.com/signed_letters"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@letters_for_later"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <TikTokIcon />
+              </a>
             </div>
           </div>
         </div>
@@ -302,7 +365,9 @@ const Vault = () => {
         <MessageCircle className="w-6 h-6" />
       </button>
 
-      <AnimatePresence>{selectedLetter && <EnvelopeOpening letter={selectedLetter} onClose={() => setSelectedLetter(null)} />}</AnimatePresence>
+      <AnimatePresence>
+        {selectedLetter && <EnvelopeOpening letter={selectedLetter} onClose={() => setSelectedLetter(null)} />}
+      </AnimatePresence>
     </div>
   );
 };
