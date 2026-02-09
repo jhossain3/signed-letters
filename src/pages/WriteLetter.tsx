@@ -130,7 +130,7 @@ const WriteLetter = () => {
         setPhotos(draft.photos);
         // Clear draft after restoring
         localStorage.removeItem(DRAFT_STORAGE_KEY);
-        toast.success("Your letter draft has been restored");
+        toast.success("Your draft has been restored");
       } catch (e) {
         console.error("Failed to restore draft:", e);
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -333,7 +333,7 @@ const WriteLetter = () => {
       saveDraft();
       // Redirect to auth with return path
       navigate("/auth", { state: { from: { pathname: "/write" } } });
-      toast.info("Please sign in to seal your letter");
+      toast.info("Please sign in to seal");
       return;
     }
 
@@ -348,13 +348,13 @@ const WriteLetter = () => {
     }
 
     if (!title.trim()) {
-      toast.error("Please add a title to your letter");
+      toast.error("Please add a title");
       return;
     }
 
     const currentBody = getCombinedBody();
     if (inputMode === "type" && !currentBody.trim()) {
-      toast.error("Please write something in your letter");
+      toast.error("Please write something for the future");
       return;
     }
 
@@ -509,7 +509,7 @@ const WriteLetter = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.2 }}
               >
-                Your letter is sealed
+                Your entry is sealed
               </motion.p>
 
               <motion.p
@@ -663,7 +663,7 @@ const WriteLetter = () => {
             <div className="p-6 md:p-8">
               {/* Title Input */}
               <Input
-                placeholder="Letter title..."
+                placeholder="Title..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-xl font-editorial border-0 border-b border-border/50 rounded-none px-0 mb-6 focus-visible:ring-0 bg-transparent placeholder:text-muted-foreground/50"
@@ -929,7 +929,7 @@ const WriteLetter = () => {
             size="lg"
             className="w-full text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
           >
-            {recipientType === "myself" && isEncryptionInitializing ? "Securing your letter..." : "Seal"}
+            {recipientType === "myself" && isEncryptionInitializing ? "Securing your entry..." : "Seal"}
           </Button>
           {encryptionError && recipientType === "myself" && (
             <p className="text-center text-destructive text-sm mt-2 font-body">{encryptionError}</p>
@@ -945,7 +945,7 @@ const WriteLetter = () => {
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-sm font-body">Letters through time</span>
+            <span className="text-muted-foreground text-sm font-body">Write through time</span>
             <div className="flex items-center gap-6">
               <a
                 href="https://www.instagram.com/signed_letters"
