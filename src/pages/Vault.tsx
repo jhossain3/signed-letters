@@ -316,7 +316,7 @@ const Vault = () => {
           ) : (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg mb-2 font-body">
-                {activeTab === "sent" ? "No letters sent yet" : "No letters received yet"}
+                {activeTab === "sent" ? "Nothing sent yet" : "Nothing received yet"}
               </p>
               {activeTab === "sent" && (
                 <Button asChild className="mt-6 rounded-full">
