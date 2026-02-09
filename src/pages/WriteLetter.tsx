@@ -544,7 +544,7 @@ const WriteLetter = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           {/* Page Title */}
           <div className="text-center mb-10">
-            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write a Letter</h1>
+            <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write now, open later</h1>
             <p className="text-muted-foreground font-body">Take your time. Make it meaningful.</p>
           </div>
 
@@ -696,13 +696,7 @@ const WriteLetter = () => {
                         )}
 
                         <Textarea
-                          placeholder={
-                            pageIndex === 0
-                              ? recipientType === "someone"
-                                ? "Dear..."
-                                : "Dear future me..."
-                              : "Continue writing..."
-                          }
+                          placeholder={pageIndex === 0 ? "Start writing" : "Continue writing..."}
                           value={pageContent}
                           onChange={(e) => updateTextPage(pageIndex, e.target.value)}
                           className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
