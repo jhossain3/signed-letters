@@ -169,15 +169,10 @@ const Index = () => {
       {/* Footer */}
       <footer className="relative z-10 border-t border-border/50 bg-card/20">
         <div className="container mx-auto px-6 md:px-12 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Logo and tagline */}
-            <div className="flex items-center gap-4">
-              <Logo size="sm" animate={false} showText />
-              <span className="text-muted-foreground text-sm hidden sm:inline">Write through time</span>
-            </div>
-
-            {/* Social links */}
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
+              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">About</Link>
+              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">FAQ</Link>
               <a
                 href="https://www.instagram.com/signed_letters"
                 target="_blank"
@@ -197,6 +192,7 @@ const Index = () => {
                 <TikTokIcon />
               </a>
             </div>
+            <span className="text-muted-foreground text-sm font-body">Write through time</span>
           </div>
         </div>
       </footer>
