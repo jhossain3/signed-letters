@@ -53,7 +53,7 @@ describe("letterStore", () => {
     it("should add a new letter to the store", () => {
       const newLetter: Letter = {
         id: "3",
-        title: "New Letter",
+        title: "New Note",
         body: "New content",
         date: "2024-02-01",
         deliveryDate: "2024-03-01",
@@ -71,13 +71,13 @@ describe("letterStore", () => {
 
       expect(letters).toHaveLength(3);
       expect(letters[2].id).toBe("3");
-      expect(letters[2].title).toBe("New Letter");
+      expect(letters[2].title).toBe("New Note");
     });
 
     it("should add letter with sketch data", () => {
       const sketchLetter: Letter = {
         id: "4",
-        title: "Sketch Letter",
+        title: "Sketch Note",
         body: "",
         date: "2024-02-01",
         deliveryDate: "2024-03-01",
@@ -118,7 +118,7 @@ describe("letterStore", () => {
 
       const todayLetter: Letter = {
         id: "today",
-        title: "Today's Letter",
+        title: "Today's Note",
         body: "Delivered today",
         date: todayStr,
         deliveryDate: todayStr,
@@ -145,7 +145,7 @@ describe("letterStore", () => {
 
       const midnightLetter: Letter = {
         id: "midnight",
-        title: "Midnight Letter",
+        title: "Midnight Note",
         body: "Delivered at midnight",
         date: todayStr,
         deliveryDate: todayStr,

@@ -23,7 +23,7 @@ const TikTokIcon = () => (
 const DEMO_LETTERS: Letter[] = [
   {
     id: "demo-sent-1",
-    title: "Letter to Future Me",
+    title: "Note to Future Me",
     body: "Dear future me, I hope you're doing well and have achieved everything you set out to do...",
     date: "January 15, 2026",
     deliveryDate: addDays(new Date(), 30).toISOString(),

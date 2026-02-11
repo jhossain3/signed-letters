@@ -20,7 +20,7 @@ export interface Letter {
 const mockLetters: Letter[] = [
   {
     id: '1',
-    title: 'A letter to my future self',
+    title: 'A note to my future self',
     body: 'Dear future me,\n\nI hope you\'re doing well and that life has been kind to you. Remember to always chase your dreams and never give up on what matters most. Take care of yourself and the people you love.\n\nWith hope and love,\nPast you ✨',
     date: '2024-12-01',
     deliveryDate: '2025-01-01',
@@ -34,7 +34,7 @@ const mockLetters: Letter[] = [
   {
     id: '2',
     title: 'Birthday wishes 🎂',
-    body: 'Happy Birthday to the most amazing person I know! 🎉\n\nI wrote this letter months ago just so you\'d have something special waiting for you today. I hope your day is filled with joy, laughter, and all the cake you can eat!\n\nCelebrate yourself today! 🦋',
+    body: 'Happy Birthday to the most amazing person I know! 🎉\n\nI wrote this months ago just so you\'d have something special waiting for you today. I hope your day is filled with joy, laughter, and all the cake you can eat!\n\nCelebrate yourself today! 🦋',
     date: '2024-11-15',
     deliveryDate: '2025-01-10',
     signature: 'Your biggest fan',
