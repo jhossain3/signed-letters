@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
-import { Moon, Sun, Archive, PenLine, LogOut } from "lucide-react";
+import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
@@ -39,32 +46,48 @@ const Navbar = () => {
             )}
           </Button>
 
-          {/* Write letter link */}
-          <Button variant="ghost" size="icon" asChild className="rounded-full">
-            <Link to="/write" aria-label="Write a letter">
-              <PenLine className="h-5 w-5" />
-            </Link>
-          </Button>
-
-          {/* Vault link */}
-          <Button variant="ghost" size="icon" asChild className="rounded-full">
-            <Link to="/vault" aria-label="Vault">
-              <Archive className="h-5 w-5" />
-            </Link>
-          </Button>
-
-          {/* Sign out button - only show when logged in and auth is enabled */}
-          {FEATURE_FLAGS.AUTH_ENABLED && user && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={signOut}
-              className="rounded-full"
-              aria-label="Sign out"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-          )}
+          {/* Account dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
+                <UserCircle className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {FEATURE_FLAGS.AUTH_ENABLED && !user && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/auth" className="flex items-center gap-2 cursor-pointer">
+                      <LogIn className="h-4 w-4" />
+                      Sign in / Sign up
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem asChild>
+                <Link to="/write" className="flex items-center gap-2 cursor-pointer">
+                  <PenLine className="h-4 w-4" />
+                  Write
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/vault" className="flex items-center gap-2 cursor-pointer">
+                  <Archive className="h-4 w-4" />
+                  My Vault
+                </Link>
+              </DropdownMenuItem>
+              {FEATURE_FLAGS.AUTH_ENABLED && user && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer">
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </nav>
