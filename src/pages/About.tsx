@@ -1,5 +1,41 @@
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Instagram, MessageCircle } from "lucide-react";
+
+const TikTokIcon = () => (
+  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+  </svg>
+);
+
+const paragraphs = [
+  {
+    text: "Four friends with one idea: we've lost the ability to reflect.",
+    highlight: true,
+  },
+  {
+    text: "We met through work and reconnected at goal-setting sessions that made us ask: Why isn't there a better way to do this?",
+  },
+  {
+    text: "Everything out there felt corporate, soulless, or just… wrong. So we did what any slightly delusional group of friends would do: we built what we wanted for ourselves.",
+  },
+  {
+    text: "Supported by a network of thoughtful, values-driven people, we created signed — a place to capture what matters and lock it away until it's time.",
+  },
+  {
+    text: "Write. Record a video. Sketch something. Add photos. Then seal it. You can't peek, edit, or take it back. We deliver it on the date you choose.",
+    accent: true,
+  },
+  {
+    text: "It's for your future self who needs the reminder. For your kid when they turn 18. For forcing yourself to pause when life won't slow down.",
+  },
+  {
+    text: "At its heart, signed brings back something timeless: writing to your future, to the people you love. Moments preserved with intention, revealed on time.",
+  },
+  {
+    text: "We made this to help people reflect, grow, and appreciate what matters before it's too late.",
+  },
+];
 
 const About = () => {
   return (
@@ -9,20 +45,94 @@ const About = () => {
       <main className="container mx-auto px-6 md:px-12 py-16 relative z-10 flex-1">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-12"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-16"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="font-body">Back</span>
         </Link>
 
         <div className="max-w-2xl mx-auto">
-          <h1 className="font-editorial text-4xl md:text-5xl text-foreground mb-6">About</h1>
-          <div className="w-12 h-px bg-foreground/20 mb-8" />
-          <p className="text-muted-foreground text-lg leading-relaxed font-body">
-            Content coming soon.
-          </p>
+          {/* Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-16"
+          >
+            <h1 className="font-editorial text-4xl md:text-5xl text-foreground mb-4">About</h1>
+            <div className="w-16 h-px bg-foreground/20" />
+          </motion.div>
+
+          {/* Body */}
+          <div className="space-y-8">
+            {paragraphs.map((p, i) => (
+              <motion.p
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 + i * 0.08 }}
+                className={
+                  p.highlight
+                    ? "font-editorial text-2xl md:text-3xl text-foreground leading-snug"
+                    : p.accent
+                      ? "text-foreground font-medium text-base md:text-lg leading-relaxed font-body border-l-2 border-primary/40 pl-5"
+                      : "text-muted-foreground text-base md:text-lg leading-relaxed font-body"
+                }
+              >
+                {p.text}
+              </motion.p>
+            ))}
+
+            {/* Closing */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 + paragraphs.length * 0.08 }}
+              className="font-editorial text-xl md:text-2xl text-foreground pt-4"
+            >
+              Welcome to <em className="italic">signed</em>.
+            </motion.p>
+          </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-border/50 bg-card/30">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-sm font-body">Write through time</span>
+            <div className="flex items-center gap-6">
+              <a
+                href="https://www.instagram.com/signed_letters"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@letters_for_later"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <TikTokIcon />
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Tally Feedback Button */}
+      <button
+        data-tally-open="VLzk5E"
+        data-tally-emoji-text="💬"
+        data-tally-emoji-animation="wave"
+        className="fixed bottom-6 right-6 p-4 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl z-50 flex items-center justify-center"
+        aria-label="Give feedback"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </button>
     </div>
   );
 };
