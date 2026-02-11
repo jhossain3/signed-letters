@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Instagram, MessageCircle } from "lucide-react";
@@ -7,12 +8,70 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 const TikTokIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
   </svg>
 );
+
+const ContactModal = ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-editorial text-2xl">Get in touch</DialogTitle>
+          <DialogDescription className="font-body">
+            Let us know what's going on and we'll get back to you as soon as we can.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="contact-email" className="font-body">Your email</Label>
+            <Input
+              id="contact-email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="font-body"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="contact-message" className="font-body">How can we help?</Label>
+            <Textarea
+              id="contact-message"
+              placeholder="Tell us what happened..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="font-body min-h-[120px]"
+            />
+          </div>
+          <Button disabled className="w-full rounded-full" size="lg">
+            Send
+          </Button>
+          <p className="text-xs text-muted-foreground text-center font-body">
+            This form isn't active yet — we're working on it.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const faqs = [
   {
@@ -52,10 +111,6 @@ const faqs = [
     answer: "Right now, signed is focused on writing to yourself.\n\nWriting to others is something we're exploring carefully for the future.",
   },
   {
-    question: "What if something goes wrong?",
-    answer: "If you experience a technical issue, don't worry — we're here to help.\n\nYou can reach us directly, and we'll get back to you as quickly as possible. As an early product, feedback also helps us improve, and we genuinely appreciate it.",
-  },
-  {
     question: "Is signed free to use?",
     answer: "signed is currently available as part of our early access period.\n\nWe're focused on building something meaningful and learning from our community. Any future changes will be communicated clearly and well in advance.",
   },
@@ -65,7 +120,21 @@ const faqs = [
   },
 ];
 
+// The "What if something goes wrong?" FAQ is handled separately because it contains a link
+const SUPPORT_FAQ_INDEX = 9; // Position to insert it (after "Can I write to someone else?")
+
 const FAQ = () => {
+  const [contactOpen, setContactOpen] = useState(false);
+
+  const allFaqs = [
+    ...faqs.slice(0, SUPPORT_FAQ_INDEX),
+    {
+      question: "What if something goes wrong?",
+      answer: null, // Custom render
+    },
+    ...faqs.slice(SUPPORT_FAQ_INDEX),
+  ];
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
       <div className="absolute inset-0 paper-texture pointer-events-none opacity-50" />
@@ -96,13 +165,28 @@ const FAQ = () => {
             transition={{ duration: 0.5, delay: 0.15 }}
           >
             <Accordion type="single" collapsible className="w-full">
-              {faqs.map((faq, i) => (
+              {allFaqs.map((faq, i) => (
                 <AccordionItem key={i} value={`item-${i}`} className="border-border/50">
                   <AccordionTrigger className="font-editorial text-lg text-foreground hover:no-underline py-5">
                     {faq.question}
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground font-body text-base leading-relaxed whitespace-pre-line pb-6">
-                    {faq.answer}
+                    {faq.answer !== null ? (
+                      faq.answer
+                    ) : (
+                      <>
+                        If you experience a technical issue, don't worry — we're here to help.
+                        {"\n\n"}
+                        You can{" "}
+                        <button
+                          onClick={() => setContactOpen(true)}
+                          className="underline underline-offset-4 text-foreground hover:text-primary transition-colors"
+                        >
+                          reach us directly
+                        </button>
+                        , and we'll get back to you as quickly as possible. As an early product, feedback also helps us improve, and we genuinely appreciate it.
+                      </>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               ))}
@@ -111,12 +195,17 @@ const FAQ = () => {
         </div>
       </main>
 
+      {/* Contact Modal */}
+      <ContactModal open={contactOpen} onOpenChange={setContactOpen} />
+
       {/* Footer */}
       <footer className="relative z-10 border-t border-border/50 bg-card/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground text-sm font-body">Write through time</span>
             <div className="flex items-center gap-6">
+              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">About</Link>
+              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">FAQ</Link>
               <a
                 href="https://www.instagram.com/signed_letters"
                 target="_blank"

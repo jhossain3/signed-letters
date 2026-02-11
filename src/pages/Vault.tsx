@@ -333,6 +333,8 @@ const Vault = () => {
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground text-sm font-body">Words through time</span>
             <div className="flex items-center gap-6">
+              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">About</Link>
+              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">FAQ</Link>
               <a
                 href="https://www.instagram.com/signed_letters"
                 target="_blank"
