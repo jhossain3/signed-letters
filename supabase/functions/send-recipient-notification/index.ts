@@ -135,6 +135,12 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string) =>
 </html>
 `;
 
+// Detect if a title is encrypted (has 'enc:' prefix from client-side encryption)
+function getSafeDisplayTitle(title: string): string {
+  if (title.startsWith('enc:')) return "A note is waiting for you";
+  return title;
+}
+
 interface NotificationRequest {
   letterId: string;
 }
@@ -197,12 +203,15 @@ const handler = async (req: Request): Promise<Response> => {
     // Format the delivery date
     const deliveryDate = format(new Date(letter.delivery_date), "MMMM d, yyyy");
 
+    // Ensure title is safe to display (not encrypted ciphertext)
+    const displayTitle = getSafeDisplayTitle(letter.title);
+
     // Send the initial notification email
     const emailResponse = await resend.emails.send({
       from: "signed <team@notify.signedletter.com>",
       to: [letter.recipient_email],
-      subject: `Someone is sending you a letter: "${letter.title}"`,
-      html: generateInitialNotificationHtml(letter.title, deliveryDate),
+      subject: `Someone is sending you a letter: "${displayTitle}"`,
+      html: generateInitialNotificationHtml(displayTitle, deliveryDate),
     });
 
     console.log(`Initial notification sent to ${letter.recipient_email} for letter ${letter.id}:`, emailResponse);

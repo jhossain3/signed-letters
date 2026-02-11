@@ -228,6 +228,18 @@ const generateRecipientDeliveryEmailHtml = (title: string) => `
 </html>
 `;
 
+// Detect if a title is encrypted (has 'enc:' prefix from client-side encryption)
+function isEncryptedTitle(title: string): boolean {
+  return title.startsWith('enc:');
+}
+
+// Get a safe display title, falling back to a generic message if encrypted
+function getSafeDisplayTitle(title: string, override?: string): string {
+  if (override) return override;
+  if (isEncryptedTitle(title)) return "A note is waiting for you";
+  return title;
+}
+
 interface LetterToNotify {
   id: string;
   title: string;
@@ -311,8 +323,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     for (const letter of letters as LetterToNotify[]) {
       try {
-        // Use plaintext title override if provided (for encrypted self-sent letters)
-        const displayTitle = titleOverrides[letter.id] || letter.title;
+        // Use plaintext title override if provided, otherwise detect and handle encrypted titles
+        const displayTitle = getSafeDisplayTitle(letter.title, titleOverrides[letter.id]);
         
         // Determine who to notify based on recipient type
         const isForSomeoneElse = letter.recipient_type === "someone" && letter.recipient_email;
