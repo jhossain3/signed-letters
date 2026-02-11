@@ -23,7 +23,7 @@ vi.mock("framer-motion", () => ({
 describe("EnvelopeCard", () => {
   const defaultProps = {
     id: "test-1",
-    title: "Test Letter",
+    title: "Test Note",
     date: "2024-12-25",
     isOpenable: true,
     onClick: vi.fn(),
@@ -36,7 +36,7 @@ describe("EnvelopeCard", () => {
   describe("rendering", () => {
     it("should render the title", () => {
       const { getByText } = render(<EnvelopeCard {...defaultProps} />);
-      expect(getByText("Test Letter")).toBeTruthy();
+      expect(getByText("Test Note")).toBeTruthy();
     });
 
     it("should render the date", () => {
@@ -73,9 +73,9 @@ describe("EnvelopeCard", () => {
   describe("interactions", () => {
     it("should call onClick when clicked", () => {
       const handleClick = vi.fn();
-      const { getByTestId } = render(<EnvelopeCard {...defaultProps} onClick={handleClick} />);
+      const { getAllByTestId } = render(<EnvelopeCard {...defaultProps} onClick={handleClick} />);
 
-      const container = getByTestId("envelope-container");
+      const container = getAllByTestId("envelope-container")[0];
       container.click();
 
       expect(handleClick).toHaveBeenCalledTimes(1);
@@ -89,11 +89,11 @@ describe("EnvelopeCard", () => {
 
     it("should be clickable when sealed", () => {
       const handleClick = vi.fn();
-      const { getByTestId } = render(
+      const { getAllByTestId } = render(
         <EnvelopeCard {...defaultProps} isOpenable={false} onClick={handleClick} />
       );
 
-      const container = getByTestId("envelope-container");
+      const container = getAllByTestId("envelope-container")[0];
       container.click();
 
       expect(handleClick).toHaveBeenCalledTimes(1);

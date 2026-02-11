@@ -80,7 +80,7 @@ const Index = () => {
                   </div>
                   <p className="text-muted-foreground text-sm leading-relaxed font-body">
                     An afternoon of reflection with award-winning author Dr Jinan Yousef and a guided workshop — set
-                    meaningful goals and write a letter to your future self.
+                    meaningful goals and write a note to your future self.
                   </p>
                 </div>
                 <Button
@@ -91,7 +91,7 @@ const Index = () => {
                     href="https://buy.stripe.com/14A28k1496AhcPKf6924000"
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Reserve your spot for the Signed Letters launch event"
+                    aria-label="Reserve your spot for the Signed launch event"
                   >
                     Reserve Your Spot
                   </a>
