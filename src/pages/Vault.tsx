@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut, MessageCircle } from "lucide-react";
+import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, MessageCircle } from "lucide-react";
 
 import EnvelopeCard from "@/components/EnvelopeCard";
 import EnvelopeOpening from "@/components/EnvelopeOpening";
@@ -210,16 +210,7 @@ const Vault = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </button>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
+          <div />
         </div>
       </header>
 
