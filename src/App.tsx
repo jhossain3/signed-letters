@@ -10,6 +10,8 @@ import { FEATURE_FLAGS } from "@/config/featureFlags";
 import Index from "./pages/Index";
 import WriteLetter from "./pages/WriteLetter";
 import Vault from "./pages/Vault";
+import About from "./pages/About";
+import FAQ from "./pages/FAQ";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
@@ -32,6 +34,8 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                 )}
                 <Route path="/write" element={<WriteLetter />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/faq" element={<FAQ />} />
                 <Route
                   path="/vault"
                   element={
