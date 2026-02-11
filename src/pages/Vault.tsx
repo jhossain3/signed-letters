@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, Instagram, LogOut, MessageCircle } from "lucide-react";
 
 import EnvelopeCard from "@/components/EnvelopeCard";
@@ -94,6 +94,7 @@ const DEMO_LETTERS: Letter[] = [
 ];
 
 const Vault = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"received" | "sent">("sent");
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
@@ -202,13 +203,13 @@ const Vault = () => {
       {/* Header */}
       <header className="container mx-auto px-4 py-6 relative z-10">
         <div className="flex items-center justify-between">
-          <Link
-            to="/"
+          <button
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
-          </Link>
+          </button>
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"

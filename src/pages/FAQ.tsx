@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Instagram, MessageCircle } from "lucide-react";
 import {
   Accordion,
@@ -124,6 +124,7 @@ const faqs = [
 const SUPPORT_FAQ_INDEX = 9; // Position to insert it (after "Can I write to someone else?")
 
 const FAQ = () => {
+  const navigate = useNavigate();
   const [contactOpen, setContactOpen] = useState(false);
 
   const allFaqs = [
@@ -140,13 +141,13 @@ const FAQ = () => {
       <div className="absolute inset-0 paper-texture pointer-events-none opacity-50" />
 
       <main className="container mx-auto px-6 md:px-12 py-16 relative z-10 flex-1">
-        <Link
-          to="/"
+        <button
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-16"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="font-body">Back</span>
-        </Link>
+        </button>
 
         <div className="max-w-2xl mx-auto">
           <motion.div
