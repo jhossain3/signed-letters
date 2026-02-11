@@ -170,6 +170,7 @@ const Index = () => {
       <footer className="relative z-10 border-t border-border/50 bg-card/20">
         <div className="container mx-auto px-6 md:px-12 py-6">
           <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-sm font-body">Write through time</span>
             <div className="flex items-center gap-6">
               <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">About</Link>
               <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">FAQ</Link>
@@ -192,7 +193,6 @@ const Index = () => {
                 <TikTokIcon />
               </a>
             </div>
-            <span className="text-muted-foreground text-sm font-body">Write through time</span>
           </div>
         </div>
       </footer>
