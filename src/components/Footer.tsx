@@ -21,7 +21,7 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="flex flex-col items-start sm:items-end space-y-3">
+          <div className="flex flex-col items-start space-y-3">
             <span className="text-foreground text-sm font-editorial tracking-wide">Contact</span>
             <div className="flex items-center gap-4">
               <a
