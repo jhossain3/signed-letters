@@ -21,8 +21,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Right — Contact heading + social icons */}
-          <div className="space-y-3 sm:text-right">
+          <div className="flex flex-col items-start sm:items-end space-y-3">
             <span className="text-foreground text-sm font-editorial tracking-wide">Contact</span>
             <div className="flex items-center gap-4">
               <a
@@ -56,9 +55,7 @@ const Footer = () => {
             <a
               href="mailto:help@notify.signedletter.com"
               onClick={(e) => {
-                // Test if mailto can be handled; if not, copy email and show fallback
                 const timeout = setTimeout(() => {
-                  // If we're still on the page after a short delay, mailto likely failed
                   navigator.clipboard.writeText("help@notify.signedletter.com").catch(() => {});
                 }, 500);
                 window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
