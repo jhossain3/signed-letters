@@ -53,6 +53,20 @@ const Footer = () => {
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
+            <a
+              href="mailto:help@notify.signedletter.com"
+              onClick={(e) => {
+                // Test if mailto can be handled; if not, copy email and show fallback
+                const timeout = setTimeout(() => {
+                  // If we're still on the page after a short delay, mailto likely failed
+                  navigator.clipboard.writeText("help@notify.signedletter.com").catch(() => {});
+                }, 500);
+                window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
+              }}
+              className="text-muted-foreground hover:text-foreground transition-colors text-xs font-body"
+            >
+              help@notify.signedletter.com
+            </a>
           </div>
         </div>
       </div>
