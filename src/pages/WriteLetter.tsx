@@ -150,7 +150,19 @@ const WriteLetter = () => {
       sketchPages,
       photos,
     };
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    try {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch (e) {
+      // localStorage quota exceeded — clear old drafts and try once more
+      console.warn("Draft save failed, clearing storage and retrying", e);
+      try {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      } catch {
+        // Still too large — skip saving silently
+        console.warn("Draft too large for localStorage, skipping save");
+      }
+    }
   }, [
     recipientType,
     recipientEmail,
