@@ -15,7 +15,7 @@ const Footer = () => {
         <div className="flex flex-col sm:flex-row items-start justify-between gap-8">
           {/* Left — Logo + tagline */}
           <div className="flex flex-col items-start space-y-2">
-            <Logo />
+            <Logo size="sm" animate={false} showText />
             <span className="text-muted-foreground text-sm font-editorial tracking-wide">Write through time</span>
           </div>
 
