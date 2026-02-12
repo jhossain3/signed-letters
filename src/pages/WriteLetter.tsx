@@ -9,11 +9,11 @@ import {
   Type,
   X,
   Check,
-  Instagram,
   Plus,
   Trash2,
   MessageCircle,
 } from "lucide-react";
+import Footer from "@/components/Footer";
 import SketchCanvas, { SketchCanvasRef } from "@/components/SketchCanvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,12 +51,6 @@ const INK_COLORS = [
   { name: "Navy", value: "hsl(220, 40%, 25%)", class: "text-blue-900" },
 ];
 
-// TikTok Icon
-const TikTokIcon = () => (
-  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-  </svg>
-);
 
 const DRAFT_STORAGE_KEY = "letter-draft";
 
@@ -935,34 +929,7 @@ const WriteLetter = () => {
         </motion.div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-border/50 bg-card/30">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-sm font-body">Write through time</span>
-            <div className="flex items-center gap-6">
-              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">About</Link>
-              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">FAQ</Link>
-              <a
-                href="https://www.instagram.com/signed_letters"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="https://www.tiktok.com/@letters_for_later"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <TikTokIcon />
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Tally Feedback Button */}
       <button
