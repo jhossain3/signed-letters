@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { PenLine, Clock, Mail, Calendar, MessageCircle } from "lucide-react";
+import { PenLine, Clock, Mail, Lock, MessageCircle } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-editorial.jpg";
@@ -61,36 +61,31 @@ const Index = () => {
                 hold dear.
               </p>
 
-              {/* Event Promotion - Primary CTA */}
+              {/* Privacy Note */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
-                className="max-w-md space-y-4 rounded-xl border border-border/60 bg-card/40 p-5"
+                className="max-w-md space-y-5 rounded-xl border border-border/60 bg-card/40 p-6"
               >
-                <div className="space-y-2">
-                  <h2 className="font-editorial text-2xl text-foreground">Join Us for Our Launch Event</h2>
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-body">
-                    <Calendar className="h-4 w-4" />
-                    <span>February 14, 2026</span>
+                <div className="flex items-start gap-4">
+                  <div className="mt-0.5 flex-shrink-0 w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-muted-foreground" />
                   </div>
-                  <p className="text-muted-foreground text-sm leading-relaxed font-body">
-                    An afternoon of reflection with award-winning author Dr Jinan Yousef and a guided workshop — set
-                    meaningful goals and write a note to your future self.
-                  </p>
+                  <div className="space-y-1.5">
+                    <h2 className="font-editorial text-xl text-foreground">Your notes are for your eyes only</h2>
+                    <p className="text-muted-foreground text-sm font-body">
+                      Private & encrypted · Stored securely
+                    </p>
+                  </div>
                 </div>
                 <Button
                   asChild
                   className="h-12 px-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 >
-                  <a
-                    href="https://buy.stripe.com/14A28k1496AhcPKf6924000"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Reserve your spot for the Signed launch event"
-                  >
-                    Reserve Your Spot
-                  </a>
+                  <Link to="/auth">
+                    Sign Up / Sign In
+                  </Link>
                 </Button>
               </motion.div>
 
