@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -20,19 +20,23 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
 
-  const { signIn, signUp, resetPassword, updatePassword, session } = useAuth();
+  const { signIn, signUp, resetPassword, updatePassword, session, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/vault";
 
-  // Check for reset mode from URL (after clicking email link)
+  // Redirect already-authenticated users to /write (unless resetting password)
   useEffect(() => {
     const urlMode = searchParams.get("mode");
+    if (session && !authLoading && urlMode !== "reset") {
+      navigate("/write", { replace: true });
+      return;
+    }
     if (urlMode === "reset" && session) {
       setMode("reset");
     }
-  }, [searchParams, session]);
+  }, [searchParams, session, authLoading, navigate]);
 
   // Handle countdown timer
   useEffect(() => {
