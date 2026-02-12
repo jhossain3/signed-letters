@@ -100,11 +100,7 @@ const faqs = [
   },
   {
     question: "Is my writing private?",
-    answer: "Yes. Completely.\n\nYour messages are private and encrypted. No one reads them, and they're never shared. signed exists to serve you — not to mine your thoughts.",
-  },
-  {
-    question: "Is signed faith-based?",
-    answer: "signed is inspired by reflection — a practice deeply rooted in Islam — but the platform itself is open to everyone.\n\nYou don't need to be religious to use it, and you're free to reflect in whatever way feels authentic to you.",
+    answer: "Yes. Your reflections are private to your account and are not shared publicly.\n\nWe store your data securely using encrypted infrastructure.\n\nWe implement appropriate technical and organisational safeguards to protect your data against unauthorised access, loss, or misuse.",
   },
   {
     question: "Can I write to someone else?",
