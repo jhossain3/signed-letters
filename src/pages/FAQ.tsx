@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Instagram, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, MessageCircle } from "lucide-react";
+import Footer from "@/components/Footer";
 import {
   Accordion,
   AccordionContent,
@@ -195,34 +196,7 @@ const FAQ = () => {
       {/* Contact Modal */}
       <ContactModal open={contactOpen} onOpenChange={setContactOpen} />
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-border/50 bg-card/30">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-sm font-body">Write through time</span>
-            <div className="flex items-center gap-6">
-              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">About</Link>
-              <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">FAQ</Link>
-              <a
-                href="https://www.instagram.com/signed_letters"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="https://www.tiktok.com/@letters_for_later"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <TikTokIcon />
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Tally Feedback Button */}
       <button
