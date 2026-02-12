@@ -13,7 +13,13 @@ const Footer = () => {
     <footer className="relative z-10 border-t border-border/50 bg-card/30">
       <div className="container mx-auto px-6 md:px-12 py-10">
         <div className="flex flex-col sm:flex-row items-start justify-between gap-8">
-          {/* Left — Explore + Contact */}
+          {/* Left — Logo + tagline */}
+          <div className="flex flex-col items-start space-y-2">
+            <Logo />
+            <span className="text-muted-foreground text-sm font-editorial tracking-wide">Write through time</span>
+          </div>
+
+          {/* Right — Explore + Contact */}
           <div className="flex gap-12 sm:gap-16">
             {/* Explore */}
             <div className="flex flex-col space-y-3">
@@ -69,12 +75,6 @@ const Footer = () => {
                 help@notify.signedletter.com
               </a>
             </div>
-          </div>
-
-          {/* Right — Logo + tagline */}
-          <div className="flex flex-col items-start sm:items-end space-y-2">
-            <Logo />
-            <span className="text-muted-foreground text-sm font-editorial tracking-wide">Write through time</span>
           </div>
         </div>
       </div>
