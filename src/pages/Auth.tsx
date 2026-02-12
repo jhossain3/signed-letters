@@ -191,7 +191,6 @@ const Auth = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </button>
-          <Logo size="sm" animate={false} showText />
         </div>
       </header>
 
