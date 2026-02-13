@@ -81,7 +81,7 @@ const faqs = [
   },
   {
     question: "How does it work?",
-    answer: "It's simple:\n\n• You write a message to yourself\n• Choose a future delivery date\n• Sign and seal it\n• We send it back to you when the time comes\n\nUntil then, it stays unopened. No peeking, no editing and no unsending!",
+    answer: "It's simple:\n\n• You write a message to yourself\n• Choose a future delivery date\n• Sign and seal it\n• We send it back to you when the time comes\n\nUntil then, it stays unopened. No peeking and no editing!",
   },
   {
     question: "Is this journalling?",
@@ -101,7 +101,7 @@ const faqs = [
   },
   {
     question: "Is my writing private?",
-    answer: "Yes. Your reflections are private to your account and are not shared publicly.\n\nWe store your data securely using encrypted infrastructure.\n\nWe implement appropriate technical and organisational safeguards to protect your data against unauthorised access, loss, or misuse.",
+    answer: null, // Custom render for privacy FAQ
   },
   {
     question: "Can I write to someone else?",
@@ -171,6 +171,31 @@ const FAQ = () => {
                   <AccordionContent className="text-muted-foreground font-body text-base leading-relaxed whitespace-pre-line pb-6">
                     {faq.answer !== null ? (
                       faq.answer
+                    ) : faq.question === "Is my writing private?" ? (
+                      <>
+                        Yes. Your reflections are private to your account and are not shared publicly.
+                        {"\n\n"}
+                        We store your data securely using encrypted infrastructure.
+                        {"\n\n"}
+                        We implement appropriate technical and organisational safeguards to protect your data against unauthorised access, loss, or misuse.
+                        {"\n\n"}
+                        Please view our privacy policy for further detail.
+                        {"\n\n"}
+                        You can delete your account any time by emailing us at{" "}
+                        <a
+                          href="mailto:support@signedletter.com"
+                          onClick={() => {
+                            const timeout = setTimeout(() => {
+                              navigator.clipboard.writeText("support@signedletter.com").catch(() => {});
+                            }, 500);
+                            window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
+                          }}
+                          className="underline underline-offset-4 text-foreground hover:text-primary transition-colors"
+                        >
+                          support@signedletter.com
+                        </a>
+                        .
+                      </>
                     ) : (
                       <>
                         If you experience a technical issue, don't worry — we're here to help.
