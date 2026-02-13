@@ -8,6 +8,20 @@ interface SketchPage {
   strokes: Stroke[];
 }
 
+// Calculate the bounding box of all strokes to determine the correct viewBox
+function computeViewBox(strokes: Stroke[]): { width: number; height: number } {
+  let maxX = 600;
+  let maxY = 500;
+  for (const stroke of strokes) {
+    for (const point of stroke.points) {
+      if (point[0] > maxX) maxX = point[0];
+      if (point[1] > maxY) maxY = point[1];
+    }
+  }
+  // Add small padding
+  return { width: Math.ceil(maxX + 10), height: Math.ceil(maxY + 10) };
+}
+
 interface SketchRendererProps {
   sketchData: string;
   paperColor?: string;
@@ -104,30 +118,35 @@ const SketchRenderer = ({
               backgroundPositionY: "8px",
             }}
           >
-            <svg
-              width="100%"
-              height="500px"
-              viewBox="0 0 600 500"
-              preserveAspectRatio="xMinYMin meet"
-              style={{ display: "block", shapeRendering: "geometricPrecision" }}
-            >
-              {page.strokes.map((stroke, strokeIndex) => {
-                const outlinePoints = getStroke(
-                  stroke.points,
-                  getStrokeOptions(stroke.size)
-                );
-                const pathData = getSvgPathFromStroke(outlinePoints);
+            {(() => {
+              const { width, height } = computeViewBox(page.strokes);
+              return (
+                <svg
+                  width="100%"
+                  height="500px"
+                  viewBox={`0 0 ${width} ${height}`}
+                  preserveAspectRatio="xMinYMin meet"
+                  style={{ display: "block", shapeRendering: "geometricPrecision" }}
+                >
+                  {page.strokes.map((stroke, strokeIndex) => {
+                    const outlinePoints = getStroke(
+                      stroke.points,
+                      getStrokeOptions(stroke.size)
+                    );
+                    const pathData = getSvgPathFromStroke(outlinePoints);
 
-                return (
-                  <path
-                    key={`stroke-${page.pageIndex}-${strokeIndex}`}
-                    d={pathData}
-                    fill={stroke.isEraser ? paperColor : (stroke.color || inkColor || "hsl(15, 20%, 18%)")}
-                    stroke="none"
-                  />
-                );
-              })}
-            </svg>
+                    return (
+                      <path
+                        key={`stroke-${page.pageIndex}-${strokeIndex}`}
+                        d={pathData}
+                        fill={stroke.isEraser ? paperColor : (stroke.color || inkColor || "hsl(15, 20%, 18%)")}
+                        stroke="none"
+                      />
+                    );
+                  })}
+                </svg>
+              );
+            })()}
           </div>
           {/* Page divider */}
           {index < pages.length - 1 && (
