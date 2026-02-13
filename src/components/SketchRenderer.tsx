@@ -111,11 +111,7 @@ const SketchRenderer = ({
           <div
             className="w-full rounded-xl border border-border overflow-hidden"
             style={{
-              background:
-                linePattern !== "none"
-                  ? `${linePattern}, ${paperColor}`
-                  : paperColor,
-              backgroundPositionY: "8px",
+              background: paperColor,
             }}
           >
             {(() => {
@@ -128,6 +124,22 @@ const SketchRenderer = ({
                   preserveAspectRatio="xMinYMin meet"
                   style={{ display: "block", shapeRendering: "geometricPrecision" }}
                 >
+                  {/* Render ruled lines inside SVG so they scale with ink */}
+                  {showLines && (() => {
+                    const lines: React.ReactElement[] = [];
+                    for (let y = 8 + 32; y < height; y += 32) {
+                      lines.push(
+                        <line
+                          key={`line-${y}`}
+                          x1="0" y1={y} x2={width} y2={y}
+                          stroke="hsl(20, 15%, 85%)"
+                          strokeOpacity="0.5"
+                          strokeWidth="1"
+                        />
+                      );
+                    }
+                    return lines;
+                  })()}
                   {(() => {
                     type Layer = { ink: React.ReactElement[]; erasers: React.ReactElement[] };
                     const layers: Layer[] = [{ ink: [], erasers: [] }];
