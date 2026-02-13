@@ -130,7 +130,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   }}
                 />
               )}
-              <div className="relative z-10 overflow-hidden">
+              <div className="relative z-10">
                 <h2 className="font-editorial text-2xl text-foreground mb-6 break-words" style={{ color: letter.inkColor }}>{letter.title}</h2>
                 {/* Show typed content if exists */}
                 {letter.isTyped && letter.body && letter.body.trim() && (
