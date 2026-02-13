@@ -118,14 +118,17 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
       }, 300);
     }, [onChange]);
 
-    // Get pointer position relative to SVG, mapped to viewBox coordinates
+    // Get pointer position mapped to SVG viewBox coordinates using inverse CTM
     const getPoint = useCallback((e: React.PointerEvent): number[] => {
       const svg = svgRef.current;
       if (!svg) return [0, 0];
       
-      const rect = svg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 600;
-      const y = ((e.clientY - rect.top) / rect.height) * 500;
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return [0, 0];
+      
+      const inverse = ctm.inverse();
+      const x = inverse.a * e.clientX + inverse.c * e.clientY + inverse.e;
+      const y = inverse.b * e.clientX + inverse.d * e.clientY + inverse.f;
       
       return [x, y];
     }, []);
