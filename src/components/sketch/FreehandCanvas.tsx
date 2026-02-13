@@ -118,14 +118,14 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
       }, 300);
     }, [onChange]);
 
-    // Get pointer position relative to SVG
+    // Get pointer position relative to SVG, mapped to viewBox coordinates
     const getPoint = useCallback((e: React.PointerEvent): number[] => {
       const svg = svgRef.current;
       if (!svg) return [0, 0];
       
       const rect = svg.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const x = ((e.clientX - rect.left) / rect.width) * 600;
+      const y = ((e.clientY - rect.top) / rect.height) * 500;
       
       return [x, y];
     }, []);
@@ -285,6 +285,8 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
           id={canvasId ?? `freehand-${instanceId.current}`}
           width="100%"
           height={height}
+          viewBox="0 0 600 500"
+          preserveAspectRatio="xMinYMin meet"
           style={{
             touchAction: "none",
             cursor: readOnly ? "default" : isEraser ? "cell" : "crosshair",
