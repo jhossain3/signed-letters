@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import getStroke from "perfect-freehand";
 import type { Stroke } from "./sketch/FreehandCanvas";
 import { deserializeMultiPage } from "@/lib/sketchSerialization";
@@ -128,22 +128,34 @@ const SketchRenderer = ({
                   preserveAspectRatio="xMinYMin meet"
                   style={{ display: "block", shapeRendering: "geometricPrecision" }}
                 >
-                  {page.strokes.map((stroke, strokeIndex) => {
-                    const outlinePoints = getStroke(
-                      stroke.points,
-                      getStrokeOptions(stroke.size)
-                    );
-                    const pathData = getSvgPathFromStroke(outlinePoints);
-
+                  {(() => {
+                    const inkPaths: React.ReactElement[] = [];
+                    const eraserPaths: React.ReactElement[] = [];
+                    page.strokes.forEach((stroke, strokeIndex) => {
+                      const outlinePoints = getStroke(stroke.points, getStrokeOptions(stroke.size));
+                      const pathData = getSvgPathFromStroke(outlinePoints);
+                      const key = `stroke-${page.pageIndex}-${strokeIndex}`;
+                      if (stroke.isEraser) {
+                        eraserPaths.push(<path key={key} d={pathData} fill="black" stroke="none" />);
+                      } else {
+                        inkPaths.push(<path key={key} d={pathData} fill={stroke.color || inkColor || "hsl(15, 20%, 18%)"} stroke="none" />);
+                      }
+                    });
+                    const maskId = `eraser-mask-render-${page.pageIndex}`;
                     return (
-                      <path
-                        key={`stroke-${page.pageIndex}-${strokeIndex}`}
-                        d={pathData}
-                        fill={stroke.isEraser ? paperColor : (stroke.color || inkColor || "hsl(15, 20%, 18%)")}
-                        stroke="none"
-                      />
+                      <>
+                        <defs>
+                          <mask id={maskId}>
+                            <rect width={width} height={height} fill="white" />
+                            {eraserPaths}
+                          </mask>
+                        </defs>
+                        <g mask={`url(#${maskId})`}>
+                          {inkPaths}
+                        </g>
+                      </>
                     );
-                  })}
+                  })()}
                 </svg>
               );
             })()}
