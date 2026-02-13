@@ -179,7 +179,15 @@ const FAQ = () => {
                         {"\n\n"}
                         We implement appropriate technical and organisational safeguards to protect your data against unauthorised access, loss, or misuse.
                         {"\n\n"}
-                        Please view our privacy policy for further detail.
+                        Please view our{" "}
+                        <a
+                          href="/privacy"
+                          onClick={(e) => { e.preventDefault(); navigate("/privacy"); }}
+                          className="underline underline-offset-4 text-foreground hover:text-primary transition-colors"
+                        >
+                          privacy policy
+                        </a>
+                        {" "}for further detail.
                         {"\n\n"}
                         You can delete your account any time by emailing us at{" "}
                         <a
