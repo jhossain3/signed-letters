@@ -63,16 +63,16 @@ const Footer = () => {
                 </a>
               </div>
               <a
-                href="mailto:help@notify.signedletter.com"
+                href="mailto:support@signedletter.com"
                 onClick={(e) => {
                   const timeout = setTimeout(() => {
-                    navigator.clipboard.writeText("help@notify.signedletter.com").catch(() => {});
+                    navigator.clipboard.writeText("support@signedletter.com").catch(() => {});
                   }, 500);
                   window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
                 }}
                 className="text-muted-foreground hover:text-foreground transition-colors text-xs font-body"
               >
-                help@notify.signedletter.com
+                support@signedletter.com
               </a>
             </div>
           </div>
