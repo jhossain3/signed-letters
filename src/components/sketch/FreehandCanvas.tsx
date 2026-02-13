@@ -159,10 +159,20 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
       const svg = svgRef.current;
       if (svg) {
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("fill", isEraser ? paperColor : inkColor);
         path.setAttribute("stroke", "none");
         path.id = "live-stroke";
-        svg.appendChild(path);
+        
+        if (isEraser) {
+          // Append eraser live stroke to the mask group so it cuts through ink
+          path.setAttribute("fill", "black");
+          const maskGroup = svg.querySelector(`#eraser-group-${canvasId || instanceId.current}`);
+          if (maskGroup) {
+            maskGroup.appendChild(path);
+          }
+        } else {
+          path.setAttribute("fill", inkColor);
+          svg.appendChild(path);
+        }
         currentPathRef.current = path;
         updateLivePath();
       }
@@ -236,25 +246,28 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
       },
     }), [strokes, onChange, debouncedOnChange]);
 
-    // Memoized stroke paths for completed strokes
-    const strokePaths = useMemo(() => {
-      return strokes.map((stroke, index) => {
+    // Split strokes into ink and eraser for masking
+    const { inkPaths, eraserPaths } = useMemo(() => {
+      const ink: React.ReactElement[] = [];
+      const eraser: React.ReactElement[] = [];
+
+      strokes.forEach((stroke, index) => {
         const options = stroke.isEraser ? eraserOptions : {
           ...penOptions,
           size: stroke.size,
         };
         const outlinePoints = getStroke(stroke.points, options);
         const pathData = getSvgPathFromStroke(outlinePoints);
-        
-        return (
-          <path
-            key={`stroke-${canvasId || instanceId.current}-${index}`}
-            d={pathData}
-            fill={stroke.color}
-            stroke="none"
-          />
-        );
+        const key = `stroke-${canvasId || instanceId.current}-${index}`;
+
+        if (stroke.isEraser) {
+          eraser.push(<path key={key} d={pathData} fill="black" stroke="none" />);
+        } else {
+          ink.push(<path key={key} d={pathData} fill={stroke.color} stroke="none" />);
+        }
       });
+
+      return { inkPaths: ink, eraserPaths: eraser };
     }, [strokes, penOptions, eraserOptions, canvasId]);
 
     // Generate line pattern for background
@@ -301,7 +314,17 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
           onPointerLeave={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          {strokePaths}
+          <defs>
+            <mask id={`eraser-mask-${canvasId || instanceId.current}`}>
+              <rect width="600" height="500" fill="white" />
+              <g id={`eraser-group-${canvasId || instanceId.current}`}>
+                {eraserPaths}
+              </g>
+            </mask>
+          </defs>
+          <g mask={`url(#eraser-mask-${canvasId || instanceId.current})`}>
+            {inkPaths}
+          </g>
         </svg>
       </div>
     );
