@@ -570,7 +570,7 @@ const WriteLetter = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="bg-accent text-accent-foreground text-xs font-medium px-2.5 py-1 rounded-full border border-border shadow-sm"
+                className="bg-accent text-accent-foreground text-sm font-medium px-3 py-1.5 rounded-full border border-border shadow-sm"
               >
                 In beta testing
               </motion.span>
