@@ -129,32 +129,45 @@ const SketchRenderer = ({
                   style={{ display: "block", shapeRendering: "geometricPrecision" }}
                 >
                   {(() => {
-                    const inkPaths: React.ReactElement[] = [];
-                    const eraserPaths: React.ReactElement[] = [];
+                    type Layer = { ink: React.ReactElement[]; erasers: React.ReactElement[] };
+                    const layers: Layer[] = [{ ink: [], erasers: [] }];
+                    let currentLayer = layers[0];
+                    let hadEraser = false;
+                    
                     page.strokes.forEach((stroke, strokeIndex) => {
                       const outlinePoints = getStroke(stroke.points, getStrokeOptions(stroke.size));
                       const pathData = getSvgPathFromStroke(outlinePoints);
                       const key = `stroke-${page.pageIndex}-${strokeIndex}`;
                       if (stroke.isEraser) {
-                        eraserPaths.push(<path key={key} d={pathData} fill="black" stroke="none" />);
+                        hadEraser = true;
+                        currentLayer.erasers.push(<path key={key} d={pathData} fill="black" stroke="none" />);
                       } else {
-                        inkPaths.push(<path key={key} d={pathData} fill={stroke.color || inkColor || "hsl(15, 20%, 18%)"} stroke="none" />);
+                        if (hadEraser) {
+                          currentLayer = { ink: [], erasers: [] };
+                          layers.push(currentLayer);
+                          hadEraser = false;
+                        }
+                        currentLayer.ink.push(<path key={key} d={pathData} fill={stroke.color || inkColor || "hsl(15, 20%, 18%)"} stroke="none" />);
                       }
                     });
-                    const maskId = `eraser-mask-render-${page.pageIndex}`;
-                    return (
-                      <>
-                        <defs>
-                          <mask id={maskId}>
-                            <rect width={width} height={height} fill="white" />
-                            {eraserPaths}
-                          </mask>
-                        </defs>
-                        <g mask={`url(#${maskId})`}>
-                          {inkPaths}
-                        </g>
-                      </>
-                    );
+                    
+                    return layers.map((layer, li) => {
+                      if (layer.erasers.length > 0) {
+                        const maskId = `eraser-mask-render-${page.pageIndex}-${li}`;
+                        return (
+                          <g key={`layer-${li}`}>
+                            <defs>
+                              <mask id={maskId}>
+                                <rect width={width} height={height} fill="white" />
+                                {layer.erasers}
+                              </mask>
+                            </defs>
+                            <g mask={`url(#${maskId})`}>{layer.ink}</g>
+                          </g>
+                        );
+                      }
+                      return <g key={`layer-${li}`}>{layer.ink}</g>;
+                    });
                   })()}
                 </svg>
               );

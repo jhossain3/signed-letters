@@ -246,10 +246,12 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
       },
     }), [strokes, onChange, debouncedOnChange]);
 
-    // Split strokes into ink and eraser for masking
-    const { inkPaths, eraserPaths } = useMemo(() => {
-      const ink: React.ReactElement[] = [];
-      const eraser: React.ReactElement[] = [];
+    // Group strokes into layers so erasers only affect preceding ink
+    const strokeLayers = useMemo(() => {
+      type Layer = { ink: React.ReactElement[]; erasers: React.ReactElement[] };
+      const layers: Layer[] = [{ ink: [], erasers: [] }];
+      let currentLayer = layers[0];
+      let hadEraserInCurrentLayer = false;
 
       strokes.forEach((stroke, index) => {
         const options = stroke.isEraser ? eraserOptions : {
@@ -261,13 +263,20 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
         const key = `stroke-${canvasId || instanceId.current}-${index}`;
 
         if (stroke.isEraser) {
-          eraser.push(<path key={key} d={pathData} fill="black" stroke="none" />);
+          hadEraserInCurrentLayer = true;
+          currentLayer.erasers.push(<path key={key} d={pathData} fill="black" stroke="none" />);
         } else {
-          ink.push(<path key={key} d={pathData} fill={stroke.color} stroke="none" />);
+          if (hadEraserInCurrentLayer) {
+            // Start new layer for ink after eraser
+            currentLayer = { ink: [], erasers: [] };
+            layers.push(currentLayer);
+            hadEraserInCurrentLayer = false;
+          }
+          currentLayer.ink.push(<path key={key} d={pathData} fill={stroke.color} stroke="none" />);
         }
       });
 
-      return { inkPaths: ink, eraserPaths: eraser };
+      return layers;
     }, [strokes, penOptions, eraserOptions, canvasId]);
 
     // Generate line pattern for background
@@ -317,14 +326,26 @@ const FreehandCanvas = forwardRef<FreehandCanvasRef, FreehandCanvasProps>(
           <defs>
             <mask id={`eraser-mask-${canvasId || instanceId.current}`}>
               <rect width="600" height="500" fill="white" />
-              <g id={`eraser-group-${canvasId || instanceId.current}`}>
-                {eraserPaths}
-              </g>
+              <g id={`eraser-group-${canvasId || instanceId.current}`} />
             </mask>
           </defs>
-          <g mask={`url(#eraser-mask-${canvasId || instanceId.current})`}>
-            {inkPaths}
-          </g>
+          {strokeLayers.map((layer, li) => {
+            if (layer.erasers.length > 0) {
+              const maskId = `eraser-mask-layer-${canvasId || instanceId.current}-${li}`;
+              return (
+                <g key={`layer-${li}`}>
+                  <defs>
+                    <mask id={maskId}>
+                      <rect width="600" height="500" fill="white" />
+                      {layer.erasers}
+                    </mask>
+                  </defs>
+                  <g mask={`url(#${maskId})`}>{layer.ink}</g>
+                </g>
+              );
+            }
+            return <g key={`layer-${li}`}>{layer.ink}</g>;
+          })}
         </svg>
       </div>
     );
