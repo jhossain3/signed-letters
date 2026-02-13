@@ -289,22 +289,44 @@ const WriteLetter = () => {
     return serializeMultiPage(allPagesData);
   };
 
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+  const MAX_IMAGE_SIZE_MB = 5;
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
     if (photos.length + files.length > 3) {
       toast.error("You can only attach up to 3 photos");
+      // Reset input so same file can be re-selected
+      e.target.value = "";
       return;
     }
 
-    Array.from(files).forEach((file) => {
+    const validFiles: File[] = [];
+    for (const file of Array.from(files)) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        toast.error(`"${file.name}" is not a supported format. Please use JPG, PNG, GIF, or WebP.`);
+        e.target.value = "";
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+        toast.error(`"${file.name}" is too large. Maximum size is ${MAX_IMAGE_SIZE_MB}MB.`);
+        e.target.value = "";
+        return;
+      }
+      validFiles.push(file);
+    }
+
+    validFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotos((prev) => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
     });
+
+    e.target.value = "";
   };
 
   const removePhoto = (index: number) => {
@@ -555,7 +577,7 @@ const WriteLetter = () => {
           </div>
 
           {/* Recipient Toggle */}
-          <div className="flex justify-center gap-3 mb-8">
+          <div className="flex justify-center gap-3 mb-8 relative">
             <Button
               variant={recipientType === "myself" ? "default" : "outline"}
               onClick={() => setRecipientType("myself")}
@@ -563,13 +585,20 @@ const WriteLetter = () => {
             >
               To Myself
             </Button>
-            <Button
-              variant={recipientType === "someone" ? "default" : "outline"}
-              onClick={() => setRecipientType("someone")}
-              className="rounded-full px-6"
-            >
-              To Someone Else
-            </Button>
+            <div className="relative">
+              <Button
+                variant={recipientType === "someone" ? "default" : "outline"}
+                onClick={() => setRecipientType("someone")}
+                className="rounded-full px-6"
+              >
+                To Someone Else
+              </Button>
+              {recipientType === "someone" && (
+                <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full border border-border shadow-sm whitespace-nowrap">
+                  In beta testing
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Input Mode Toggle */}
@@ -807,7 +836,7 @@ const WriteLetter = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
                 multiple
                 onChange={handlePhotoUpload}
                 className="hidden"
