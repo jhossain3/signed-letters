@@ -176,12 +176,18 @@ const FAQ = () => {
                         If you experience a technical issue, don't worry — we're here to help.
                         {"\n\n"}
                         You can{" "}
-                        <button
-                          onClick={() => setContactOpen(true)}
+                        <a
+                          href="mailto:support@signedletter.com"
+                          onClick={() => {
+                            const timeout = setTimeout(() => {
+                              navigator.clipboard.writeText("support@signedletter.com").catch(() => {});
+                            }, 500);
+                            window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
+                          }}
                           className="underline underline-offset-4 text-foreground hover:text-primary transition-colors"
                         >
                           reach us directly
-                        </button>
+                        </a>
                         , and we'll get back to you as quickly as possible. As an early product, feedback also helps us improve, and we genuinely appreciate it.
                       </>
                     )}
