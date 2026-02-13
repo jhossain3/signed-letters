@@ -12,6 +12,7 @@ import WriteLetter from "./pages/WriteLetter";
 import Vault from "./pages/Vault";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
@@ -36,6 +37,7 @@ const App = () => (
                 <Route path="/write" element={<WriteLetter />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route
                   path="/vault"
                   element={
