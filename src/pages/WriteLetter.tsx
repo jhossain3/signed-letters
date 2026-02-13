@@ -564,6 +564,18 @@ const WriteLetter = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="font-body">Back</span>
           </button>
+          <AnimatePresence>
+            {recipientType === "someone" && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="bg-accent text-accent-foreground text-xs font-medium px-2.5 py-1 rounded-full border border-border shadow-sm"
+              >
+                In beta testing
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
@@ -593,11 +605,6 @@ const WriteLetter = () => {
               >
                 To Someone Else
               </Button>
-              {recipientType === "someone" && (
-                <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full border border-border shadow-sm whitespace-nowrap">
-                  In beta testing
-                </span>
-              )}
             </div>
           </div>
 
