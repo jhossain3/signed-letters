@@ -61,6 +61,30 @@ export interface CreateLetterInput {
   isLined?: boolean;
 }
 
+// Resolve photo paths to signed URLs
+// Photos stored as storage paths (e.g. "userId/uuid.jpg") get signed URLs
+// Legacy base64 photos and full URLs are passed through as-is
+const resolvePhotoUrls = async (photos: string[]): Promise<string[]> => {
+  if (!photos || photos.length === 0) return [];
+  
+  const resolved = await Promise.all(
+    photos.map(async (photo) => {
+      // Skip base64 data URLs and full URLs (legacy data)
+      if (photo.startsWith("data:") || photo.startsWith("http")) return photo;
+      // It's a storage path — create a signed URL (1 hour expiry)
+      const { data, error } = await supabase.storage
+        .from("letter-photos")
+        .createSignedUrl(photo, 3600);
+      if (error || !data?.signedUrl) {
+        console.error("Failed to create signed URL for photo:", photo, error);
+        return "";
+      }
+      return data.signedUrl;
+    })
+  );
+  return resolved.filter(Boolean);
+};
+
 const mapDbToLetter = (row: any): Letter => ({
   id: row.id,
   title: row.title,
@@ -114,7 +138,15 @@ export const useLetters = () => {
         mappedLetters.map(letter => decryptLetterFields(letter, user.id))
       );
       
-      return decryptedLetters;
+      // Resolve storage paths to signed URLs for photos
+      const withResolvedPhotos = await Promise.all(
+        decryptedLetters.map(async (letter) => ({
+          ...letter,
+          photos: await resolvePhotoUrls(letter.photos),
+        }))
+      );
+      
+      return withResolvedPhotos;
     },
     enabled: !!user,
   });
