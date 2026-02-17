@@ -27,7 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEncryptionReady } from "@/hooks/useEncryptionReady";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { toast } from "sonner";
-import { serializeMultiPage } from "@/lib/sketchSerialization";
+import { serializeMultiPage, deserializeMultiPage } from "@/lib/sketchSerialization";
 import { supabase } from "@/integrations/supabase/client";
 import { useDrafts, Draft } from "@/hooks/useDrafts";
 import DraftsList from "@/components/DraftsList";
@@ -164,9 +164,15 @@ const WriteLetter = () => {
       setTextPages([""]);
     }
 
-    // Restore sketch data
+    // Restore sketch data — deserialize multi-page format back to per-page Stroke[] JSON
     if (draft.sketchData) {
-      setSketchPages([draft.sketchData]);
+      const pages = deserializeMultiPage(draft.sketchData);
+      if (pages && pages.length > 0) {
+        const sketchPagesData = pages.map(p => JSON.stringify(p.strokes));
+        setSketchPages(sketchPagesData);
+      } else {
+        setSketchPages([""]);
+      }
     } else {
       setSketchPages([""]);
     }
