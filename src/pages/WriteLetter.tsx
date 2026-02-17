@@ -101,7 +101,7 @@ const WriteLetter = () => {
   const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
   const letterScrollRef = useRef<HTMLDivElement>(null);
 
-  // Restore draft from localStorage on mount
+  // Restore draft from localStorage on mount (silent restore, no clearing)
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
     if (savedDraft) {
@@ -122,9 +122,6 @@ const WriteLetter = () => {
         setSketchPages(draft.sketchPages?.length > 0 ? draft.sketchPages : [""]);
         setTextPages(draft.textPages.length > 0 ? draft.textPages : [""]);
         setPhotos(draft.photos);
-        // Clear draft after restoring
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        toast.success("Your draft has been restored");
       } catch (e) {
         console.error("Failed to restore draft:", e);
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -133,7 +130,7 @@ const WriteLetter = () => {
     setDraftLoaded(true);
   }, []);
 
-  // Save draft to localStorage before auth redirect
+  // Save draft to localStorage
   const saveDraft = useCallback(() => {
     const draft: LetterDraft = {
       recipientType,
@@ -178,6 +175,12 @@ const WriteLetter = () => {
     sketchPages,
     photos,
   ]);
+
+  // Auto-save draft to localStorage on every change
+  useEffect(() => {
+    if (!draftLoaded) return;
+    saveDraft();
+  }, [draftLoaded, saveDraft]);
 
   const clearDraft = useCallback(() => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
