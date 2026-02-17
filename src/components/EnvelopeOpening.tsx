@@ -24,7 +24,8 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-foreground/70 backdrop-blur-md z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-foreground/70 backdrop-blur-md z-50 flex items-center justify-center p-4 cursor-pointer"
+      onClick={onClose}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -110,7 +111,8 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
         {stage === "letter" && (
           <motion.div
             key="letter"
-            className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-border"
+            className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-dreamy max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 border border-border cursor-auto"
+            onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5 }}
