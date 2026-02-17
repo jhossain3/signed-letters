@@ -27,6 +27,7 @@ import { useEncryptionReady } from "@/hooks/useEncryptionReady";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { toast } from "sonner";
 import { serializeMultiPage } from "@/lib/sketchSerialization";
+import { supabase } from "@/integrations/supabase/client";
 
 // Signature font options
 const SIGNATURE_FONTS = [
@@ -67,8 +68,27 @@ interface LetterDraft {
   inkColor: (typeof INK_COLORS)[0];
   textPages: string[];
   sketchPages: string[];
-  photos: string[];
 }
+
+const uploadPhotosToStorage = async (
+  files: File[],
+  userId: string
+): Promise<string[]> => {
+  const urls: string[] = [];
+  for (const file of files) {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("letter-photos")
+      .upload(path, file, { contentType: file.type });
+    if (error) throw error;
+    const { data } = supabase.storage
+      .from("letter-photos")
+      .getPublicUrl(path);
+    urls.push(data.publicUrl);
+  }
+  return urls;
+};
 
 const WriteLetter = () => {
   const navigate = useNavigate();
@@ -90,7 +110,8 @@ const WriteLetter = () => {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [signature, setSignature] = useState("");
   const [signatureFont, setSignatureFont] = useState(SIGNATURE_FONTS[0]);
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
   const [paperColor, setPaperColor] = useState(PAPER_COLORS[0]);
   const [inkColor, setInkColor] = useState(INK_COLORS[0]);
   const [showLines, setShowLines] = useState(true);
@@ -121,7 +142,6 @@ const WriteLetter = () => {
         setInkColor(draft.inkColor);
         setSketchPages(draft.sketchPages?.length > 0 ? draft.sketchPages : [""]);
         setTextPages(draft.textPages.length > 0 ? draft.textPages : [""]);
-        setPhotos(draft.photos);
       } catch (e) {
         console.error("Failed to restore draft:", e);
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -145,7 +165,6 @@ const WriteLetter = () => {
       inkColor,
       textPages,
       sketchPages,
-      photos,
     };
     try {
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
@@ -173,7 +192,6 @@ const WriteLetter = () => {
     inkColor,
     textPages,
     sketchPages,
-    photos,
   ]);
 
   // Auto-save draft to localStorage on every change
@@ -321,20 +339,25 @@ const WriteLetter = () => {
       validFiles.push(file);
     }
 
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotos((prev) => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    const newUrls = validFiles.map((file) => URL.createObjectURL(file));
+    setPhotos((prev) => [...prev, ...validFiles]);
+    setPhotoPreviewUrls((prev) => [...prev, ...newUrls]);
 
     e.target.value = "";
   };
 
   const removePhoto = (index: number) => {
+    URL.revokeObjectURL(photoPreviewUrls[index]);
     setPhotos((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
+
+  // Clean up object URLs on unmount
+  useEffect(() => {
+    return () => {
+      photoPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setDatePreset = (preset: string) => {
     const now = new Date();
@@ -416,6 +439,13 @@ const WriteLetter = () => {
     const hasTextContent = textBody.trim().length > 0;
 
     try {
+      // Upload photos to cloud storage
+      let photoUrls: string[] = [];
+      if (photos.length > 0 && user) {
+        toast.info("Uploading photos...");
+        photoUrls = await uploadPhotosToStorage(photos, user.id);
+      }
+
       const savedLetter = await addLetter({
         title,
         body: textBody,
@@ -425,9 +455,9 @@ const WriteLetter = () => {
         signatureFont: signatureFont.class,
         recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
         recipientType,
-        photos,
+        photos: photoUrls,
         sketchData: hasSketchContent ? finalSketchData : undefined,
-        isTyped: hasTextContent, // true if there's any typed content
+        isTyped: hasTextContent,
         type: "sent" as const,
         paperColor: paperColor.value,
         inkColor: inkColor.value,
@@ -820,10 +850,10 @@ const WriteLetter = () => {
               Photo Attachments (max 3)
             </label>
             <div className="flex gap-3 flex-wrap">
-              {photos.map((photo, index) => (
+              {photoPreviewUrls.map((previewUrl, index) => (
                 <div key={index} className="relative w-20 h-20">
                   <img
-                    src={photo}
+                    src={previewUrl}
                     alt={`Attachment ${index + 1}`}
                     className="w-full h-full object-cover rounded-xl border-2 border-border shadow-editorial"
                   />
