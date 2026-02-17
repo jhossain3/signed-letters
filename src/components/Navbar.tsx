@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle } from "lucide-react";
+import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle, FileText } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,14 @@ const Navbar = () => {
                   Write
                 </Link>
               </DropdownMenuItem>
+              {FEATURE_FLAGS.AUTH_ENABLED && user && (
+                <DropdownMenuItem asChild>
+                  <Link to="/drafts" className="flex items-center gap-2 cursor-pointer">
+                    <FileText className="h-4 w-4" />
+                    My Drafts
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link to="/vault" className="flex items-center gap-2 cursor-pointer">
                   <Archive className="h-4 w-4" />

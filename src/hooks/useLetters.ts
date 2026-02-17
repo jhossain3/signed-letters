@@ -59,6 +59,7 @@ export interface CreateLetterInput {
   paperColor?: string;
   inkColor?: string;
   isLined?: boolean;
+  draftId?: string; // If sealing from a draft, update instead of insert
 }
 
 // Resolve photo paths to signed URLs
@@ -119,6 +120,7 @@ export const useLetters = () => {
       const { data, error } = await supabase
         .from("letters")
         .select("*")
+        .eq("status", "sealed")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -176,28 +178,50 @@ export const useLetters = () => {
         sketchDataToStore = encryptedFields.sketchData;
       }
 
-      const { data, error } = await supabase
-        .from("letters")
-        .insert({
-          user_id: user.id,
-          title: titleToStore,
-          body: bodyToStore,
-          date: letter.date,
-          delivery_date: letter.deliveryDate,
-          signature: signatureToStore,
-          signature_font: letter.signatureFont,
-          recipient_email: letter.recipientEmail,
-          recipient_type: letter.recipientType,
-          photos: letter.photos,
-          sketch_data: sketchDataToStore,
-          is_typed: letter.isTyped,
-          type: letter.type,
-          paper_color: letter.paperColor,
-          ink_color: letter.inkColor,
-          is_lined: letter.isLined ?? true,
-        })
-        .select()
-        .single();
+      // If sealing from a draft, update the existing row; otherwise insert new
+      const dbRow = {
+        user_id: user.id,
+        title: titleToStore,
+        body: bodyToStore,
+        date: letter.date,
+        delivery_date: letter.deliveryDate,
+        signature: signatureToStore,
+        signature_font: letter.signatureFont,
+        recipient_email: letter.recipientEmail,
+        recipient_type: letter.recipientType,
+        photos: letter.photos,
+        sketch_data: sketchDataToStore,
+        is_typed: letter.isTyped,
+        type: letter.type,
+        status: "sealed",
+        paper_color: letter.paperColor,
+        ink_color: letter.inkColor,
+        is_lined: letter.isLined ?? true,
+      };
+
+      let data: any;
+      let error: any;
+
+      if (letter.draftId) {
+        // Seal an existing draft
+        const result = await supabase
+          .from("letters")
+          .update(dbRow)
+          .eq("id", letter.draftId)
+          .eq("user_id", user.id)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      } else {
+        const result = await supabase
+          .from("letters")
+          .insert(dbRow)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
       
@@ -224,6 +248,7 @@ export const useLetters = () => {
     },
     onSuccess: (savedLetter, originalInput) => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["drafts", user?.id] });
       toast.success("Letter sealed and saved!");
       
       // For self-sent same-day letters, trigger immediate notification

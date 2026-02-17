@@ -14,6 +14,7 @@ import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Auth from "./pages/Auth";
+import Drafts from "./pages/Drafts";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 
@@ -38,6 +39,18 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route
+                  path="/drafts"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <Drafts />
+                      </ProtectedRoute>
+                    ) : (
+                      <Drafts />
+                    )
+                  }
+                />
                 <Route
                   path="/vault"
                   element={
