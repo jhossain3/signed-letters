@@ -1,35 +1,60 @@
 
 
-## Auto-Save Draft on Every Change
+## Upload Photos to Cloud Storage on Seal
 
-Currently, letter drafts are only saved to localStorage when an unauthenticated user clicks "Seal." This change will make the draft auto-save continuously as the user types or makes any change, protecting against accidental tab closures or page refreshes.
+Photos will be kept as in-memory `File` objects (not base64) during editing, with local object URLs for preview. On seal, they are uploaded to a cloud storage bucket, and only the resulting public URLs are saved to the database. Photos are completely excluded from localStorage.
 
 ### What Will Change
 
-- Every change to the letter (title, body text, signature, delivery date, recipient info, sketch data, photos, settings) will be automatically saved to localStorage
-- On page load, any saved draft will be restored (existing behavior, but now drafts will always be present if the user was writing)
-- The draft will only be cleared after a successful seal, not on restore (so refreshing keeps the draft)
-- A subtle "Draft saved" indicator is not included to keep the UI clean, but can be added later if desired
+**For the user:**
+- Attaching photos works the same -- select files, see previews
+- On page refresh, photos are gone (user can re-add them)
+- On seal, a brief upload step occurs before saving
+- Sealed letters display photos from cloud URLs
 
 ### Technical Details
 
-**File: `src/pages/WriteLetter.tsx`**
+**1. Create storage bucket (SQL migration)**
 
-1. Add a new `useEffect` that watches all draft-relevant state values and calls `saveDraft()` on every change
-2. Skip saving until the initial draft has been loaded (using the existing `draftLoaded` flag) to avoid overwriting a saved draft with empty defaults
-3. On restore, do NOT clear the draft from localStorage immediately -- only clear it after successful seal (change existing restore logic to remove the `localStorage.removeItem` call and the toast on restore, replacing it with a silent restore)
-4. Keep the existing `clearDraft()` call in `completeSeal` for cleanup after successful save
+Create a public `letter-photos` bucket with RLS policies:
+- Authenticated users can upload
+- Anyone can read (public bucket for display)
+- Users can delete files in their own folder
 
-The effect will look like:
+**2. Update `src/pages/WriteLetter.tsx`**
 
-```typescript
-// Auto-save draft to localStorage on every change
-useEffect(() => {
-  if (!draftLoaded) return; // Don't save until initial restore is complete
-  saveDraft();
-}, [draftLoaded, saveDraft]);
+- Change `photos` state from `string[]` (base64) to `File[]` (raw File objects)
+- Create a separate `photoPreviewUrls` state (`string[]`) using `URL.createObjectURL()` for display during editing
+- Clean up object URLs on unmount or removal
+- Remove `photos` from the `LetterDraft` interface and `saveDraft()` -- photos never touch localStorage
+- Remove `setPhotos(draft.photos)` from draft restore
+- `handlePhotoUpload`: store the raw `File` objects instead of reading as base64
+- `removePhoto`: revoke the object URL when removing
+- In `completeSeal`, before calling `addLetter`:
+  1. Upload each `File` to `letter-photos/{userId}/{uuid}.{ext}`
+  2. Collect the public URLs
+  3. Pass URL array to `addLetter`
+
+The upload helper:
+
+```text
+uploadPhotosToStorage(files: File[], userId: string) -> string[]
+  for each file:
+    generate path: {userId}/{uuid}.{extension}
+    upload to "letter-photos" bucket
+    get public URL
+    collect URL
+  return all URLs
 ```
 
-Since `saveDraft` is already a `useCallback` with all the relevant state in its dependency array, it will be called whenever any field changes. The existing quota-exceeded retry logic is preserved.
+- Photo preview thumbnails in the editor will use `photoPreviewUrls` (object URLs) instead of base64 strings
 
-No other files need to change.
+**3. No changes needed elsewhere**
+
+- `useLetters.ts` already stores whatever strings are in the `photos` array -- URLs work as-is
+- `EnvelopeOpening.tsx` renders `<img src={...}>` which works for URLs
+- Existing sealed letters with base64 photos continue to display correctly
+
+### Files to modify
+- New SQL migration -- create `letter-photos` bucket and RLS policies
+- `src/pages/WriteLetter.tsx` -- switch to File objects, remove photos from draft, add upload-on-seal logic
