@@ -34,6 +34,7 @@ export type Database = {
           signature: string
           signature_font: string | null
           sketch_data: string | null
+          status: string
           title: string
           type: string
           updated_at: string
@@ -58,6 +59,7 @@ export type Database = {
           signature: string
           signature_font?: string | null
           sketch_data?: string | null
+          status?: string
           title: string
           type: string
           updated_at?: string
@@ -82,6 +84,7 @@ export type Database = {
           signature?: string
           signature_font?: string | null
           sketch_data?: string | null
+          status?: string
           title?: string
           type?: string
           updated_at?: string

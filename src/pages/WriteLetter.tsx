@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   Calendar,
@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   MessageCircle,
+  Save,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import SketchCanvas, { SketchCanvasRef } from "@/components/SketchCanvas";
@@ -28,6 +29,8 @@ import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { toast } from "sonner";
 import { serializeMultiPage } from "@/lib/sketchSerialization";
 import { supabase } from "@/integrations/supabase/client";
+import { useDrafts, Draft } from "@/hooks/useDrafts";
+import DraftsList from "@/components/DraftsList";
 
 // Signature font options
 const SIGNATURE_FONTS = [
@@ -90,8 +93,10 @@ const uploadPhotosToStorage = async (
 
 const WriteLetter = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { addLetter, isAddingLetter } = useLetters();
+  const { drafts, saveDraft: saveDraftToDb, isSavingDraft } = useDrafts();
   const {
     isReady: isEncryptionReady,
     isInitializing: isEncryptionInitializing,
@@ -115,38 +120,94 @@ const WriteLetter = () => {
   const [showLines, setShowLines] = useState(true);
   const [isSealing, setIsSealing] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [showDraftsModal, setShowDraftsModal] = useState(false);
+  const [draftBannerDismissed, setDraftBannerDismissed] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
   const letterScrollRef = useRef<HTMLDivElement>(null);
 
-  // Restore draft from localStorage on mount (silent restore, no clearing)
+  // Load draft from navigation state (when coming from drafts list)
+  const loadDraftFromNav = (location.state as { loadDraft?: Draft } | null)?.loadDraft;
+
+  // Helper to load a draft into the composer
+  const loadDraftIntoComposer = useCallback((draft: Draft) => {
+    setCurrentDraftId(draft.id);
+    setTitle(draft.title || "");
+    setRecipientType(draft.recipientType);
+    setRecipientEmail(draft.recipientEmail || "");
+    if (draft.deliveryDate) {
+      setDeliveryDate(new Date(draft.deliveryDate));
+    }
+    setSignature(draft.signature || "");
+    if (draft.signatureFont) {
+      const found = SIGNATURE_FONTS.find(f => f.class === draft.signatureFont);
+      if (found) setSignatureFont(found);
+    }
+    if (draft.paperColor) {
+      const found = PAPER_COLORS.find(c => c.value === draft.paperColor);
+      if (found) setPaperColor(found);
+    }
+    if (draft.inkColor) {
+      const found = INK_COLORS.find(c => c.value === draft.inkColor);
+      if (found) setInkColor(found);
+    }
+    setShowLines(draft.isLined ?? true);
+    setInputMode(draft.isTyped ? "type" : "sketch");
+
+    // Restore body pages
+    if (draft.body) {
+      const pages = draft.body.split("\n\n--- Page Break ---\n\n");
+      setTextPages(pages.length > 0 ? pages : [""]);
+    } else {
+      setTextPages([""]);
+    }
+
+    // Restore sketch data
+    if (draft.sketchData) {
+      setSketchPages([draft.sketchData]);
+    } else {
+      setSketchPages([""]);
+    }
+
+    // Clear localStorage draft since we're now working on a DB draft
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    // Clear navigation state
+    window.history.replaceState({}, document.title);
+  }, []);
+
+  // Restore draft from localStorage or navigation state on mount
   useEffect(() => {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (savedDraft) {
-      try {
-        const draft: LetterDraft = JSON.parse(savedDraft);
-        setRecipientType(draft.recipientType);
-        setRecipientEmail(draft.recipientEmail);
-        setTitle(draft.title);
-        if (draft.deliveryDate) {
-          setDeliveryDate(new Date(draft.deliveryDate));
+    if (loadDraftFromNav) {
+      loadDraftIntoComposer(loadDraftFromNav);
+    } else {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (savedDraft) {
+        try {
+          const draft: LetterDraft = JSON.parse(savedDraft);
+          setRecipientType(draft.recipientType);
+          setRecipientEmail(draft.recipientEmail);
+          setTitle(draft.title);
+          if (draft.deliveryDate) {
+            setDeliveryDate(new Date(draft.deliveryDate));
+          }
+          setSignature(draft.signature);
+          setSignatureFont(draft.signatureFont);
+          setInputMode(draft.inputMode);
+          setShowLines(draft.showLines);
+          setPaperColor(draft.paperColor);
+          setInkColor(draft.inkColor);
+          setSketchPages(draft.sketchPages?.length > 0 ? draft.sketchPages : [""]);
+          setTextPages(draft.textPages.length > 0 ? draft.textPages : [""]);
+        } catch (e) {
+          console.error("Failed to restore draft:", e);
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
         }
-        setSignature(draft.signature);
-        setSignatureFont(draft.signatureFont);
-        setInputMode(draft.inputMode);
-        setShowLines(draft.showLines);
-        setPaperColor(draft.paperColor);
-        setInkColor(draft.inkColor);
-        setSketchPages(draft.sketchPages?.length > 0 ? draft.sketchPages : [""]);
-        setTextPages(draft.textPages.length > 0 ? draft.textPages : [""]);
-      } catch (e) {
-        console.error("Failed to restore draft:", e);
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
       }
     }
     setDraftLoaded(true);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save draft to localStorage
   const saveDraft = useCallback(() => {
@@ -200,7 +261,65 @@ const WriteLetter = () => {
 
   const clearDraft = useCallback(() => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setCurrentDraftId(null);
   }, []);
+
+  // Build a draft input object from current state
+  const buildDraftInput = useCallback(() => ({
+    id: currentDraftId || undefined,
+    title: title || "Untitled Letter",
+    body: getCombinedBody(),
+    date: format(new Date(), "MMMM d, yyyy"),
+    deliveryDate: deliveryDate?.toISOString(),
+    signature,
+    signatureFont: signatureFont.class,
+    recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
+    recipientType,
+    photos: [] as string[], // Photos are File objects, can't save to draft without uploading
+    sketchData: getCombinedSketchData() || undefined,
+    isTyped: inputMode === "type",
+    paperColor: paperColor.value,
+    inkColor: inkColor.value,
+    isLined: showLines,
+  }), [currentDraftId, title, deliveryDate, signature, signatureFont, recipientType, recipientEmail, inputMode, paperColor, inkColor, showLines, textPages, sketchPages]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save draft to DB
+  const handleSaveDraftToDb = useCallback(async (silent = false) => {
+    if (!user) {
+      // Not signed in — redirect to auth
+      saveDraft(); // Save to localStorage first
+      navigate("/auth", { state: { from: { pathname: "/write" } } });
+      toast.info("Please sign in to save your draft");
+      return;
+    }
+
+    try {
+      const result = await saveDraftToDb(buildDraftInput());
+      setCurrentDraftId(result.id);
+      // Clear localStorage since it's now in DB
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      if (!silent) {
+        toast.success("Draft saved");
+      }
+    } catch (error: any) {
+      if (!silent) {
+        toast.error("Failed to save draft: " + error.message);
+      }
+    }
+  }, [user, saveDraftToDb, buildDraftInput, saveDraft, navigate]);
+
+  // Auto-save to DB every 60 seconds if signed in
+  useEffect(() => {
+    if (!user || !draftLoaded) return;
+    const interval = setInterval(() => {
+      // Only auto-save if there's content
+      const hasContent = title.trim() || textPages.some(p => p.trim()) || sketchPages.some(p => p && p !== "" && p !== "[]");
+      if (hasContent) {
+        handleSaveDraftToDb(true);
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [user, draftLoaded, handleSaveDraftToDb, title, textPages, sketchPages]);
 
   const handleLetterWheelCapture = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     const el = letterScrollRef.current;
@@ -460,6 +579,7 @@ const WriteLetter = () => {
         paperColor: paperColor.value,
         inkColor: inkColor.value,
         isLined: showLines,
+        draftId: currentDraftId || undefined,
       });
 
       // Clear any saved draft on success
@@ -618,6 +738,35 @@ const WriteLetter = () => {
             <h1 className="font-editorial text-3xl md:text-4xl text-foreground mb-2">Write now, open later</h1>
             <p className="text-muted-foreground font-body">Take your time. Make it meaningful.</p>
           </div>
+
+          {/* Draft Banner */}
+          {user && drafts.length > 0 && !draftBannerDismissed && !currentDraftId && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 p-4 bg-card/80 rounded-xl border border-border/50 flex items-center justify-between"
+            >
+              <div>
+                <p className="text-sm font-medium text-foreground font-body">
+                  You have {drafts.length} saved draft{drafts.length > 1 ? "s" : ""}
+                </p>
+                <button
+                  onClick={() => setShowDraftsModal(true)}
+                  className="text-sm text-primary hover:text-primary/80 font-body underline-offset-2 hover:underline"
+                >
+                  Continue writing →
+                </button>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDraftBannerDismissed(true)}
+                className="h-8 w-8 rounded-full text-muted-foreground"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </motion.div>
+          )}
 
           {/* Recipient Toggle */}
           <div className="flex justify-center gap-3 mb-8 relative">
@@ -989,15 +1138,27 @@ const WriteLetter = () => {
             )}
           </div>
 
-          {/* Seal Button */}
-          <Button
-            onClick={handleSealLetter}
-            disabled={recipientType === "myself" && isEncryptionInitializing}
-            size="lg"
-            className="w-full text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
-          >
-            {recipientType === "myself" && isEncryptionInitializing ? "Securing your entry..." : "Seal"}
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button
+              onClick={() => handleSaveDraftToDb(false)}
+              disabled={isSavingDraft}
+              variant="outline"
+              size="lg"
+              className="flex-1 text-lg py-6 rounded-full"
+            >
+              <Save className="w-5 h-5 mr-2" />
+              {isSavingDraft ? "Saving..." : "Save Draft"}
+            </Button>
+            <Button
+              onClick={handleSealLetter}
+              disabled={recipientType === "myself" && isEncryptionInitializing}
+              size="lg"
+              className="flex-[2] text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
+            >
+              {recipientType === "myself" && isEncryptionInitializing ? "Securing your entry..." : "Seal"}
+            </Button>
+          </div>
           {encryptionError && recipientType === "myself" && (
             <p className="text-center text-destructive text-sm mt-2 font-body">{encryptionError}</p>
           )}
@@ -1020,6 +1181,19 @@ const WriteLetter = () => {
       >
         <MessageCircle className="w-6 h-6" />
       </button>
+
+      {/* Drafts Modal */}
+      <AnimatePresence>
+        {showDraftsModal && (
+          <DraftsList
+            onLoadDraft={(draft) => {
+              loadDraftIntoComposer(draft);
+              setShowDraftsModal(false);
+            }}
+            onClose={() => setShowDraftsModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
