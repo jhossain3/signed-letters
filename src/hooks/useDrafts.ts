@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
 
 export interface Draft {
   id: string;
@@ -77,7 +78,35 @@ export const useDrafts = () => {
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      return data.map(mapDbToDraft);
+
+      // Decrypt each draft's sensitive fields
+      const drafts = data.map(mapDbToDraft);
+      const decrypted = await Promise.all(
+        drafts.map(async (draft) => {
+          try {
+            const decryptedFields = await decryptLetterFields(
+              {
+                title: draft.title,
+                body: draft.body,
+                signature: draft.signature,
+                sketchData: draft.sketchData,
+              },
+              user.id
+            );
+            return {
+              ...draft,
+              title: decryptedFields.title,
+              body: decryptedFields.body,
+              signature: decryptedFields.signature,
+              sketchData: decryptedFields.sketchData,
+            };
+          } catch {
+            // If decryption fails, return as-is (handles legacy unencrypted drafts)
+            return draft;
+          }
+        })
+      );
+      return decrypted;
     },
     enabled: !!user,
   });
@@ -86,18 +115,29 @@ export const useDrafts = () => {
     mutationFn: async (input: SaveDraftInput) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Encrypt sensitive fields before saving
+      const encrypted = await encryptLetterFields(
+        {
+          title: input.title || "Untitled Letter",
+          body: input.body,
+          signature: input.signature || "",
+          sketchData: input.sketchData,
+        },
+        user.id
+      );
+
       const row = {
         user_id: user.id,
-        title: input.title || "Untitled Letter",
-        body: input.body,
+        title: encrypted.title,
+        body: encrypted.body,
         date: input.date,
         delivery_date: input.deliveryDate || new Date().toISOString(),
-        signature: input.signature || "",
+        signature: encrypted.signature,
         signature_font: input.signatureFont,
         recipient_email: input.recipientEmail,
         recipient_type: input.recipientType,
         photos: input.photos,
-        sketch_data: input.sketchData,
+        sketch_data: encrypted.sketchData || null,
         is_typed: input.isTyped,
         type: "sent" as const,
         status: "draft",
