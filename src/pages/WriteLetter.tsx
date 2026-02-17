@@ -74,7 +74,7 @@ const uploadPhotosToStorage = async (
   files: File[],
   userId: string
 ): Promise<string[]> => {
-  const urls: string[] = [];
+  const paths: string[] = [];
   for (const file of files) {
     const ext = file.name.split(".").pop() || "jpg";
     const path = `${userId}/${crypto.randomUUID()}.${ext}`;
@@ -82,12 +82,10 @@ const uploadPhotosToStorage = async (
       .from("letter-photos")
       .upload(path, file, { contentType: file.type });
     if (error) throw error;
-    const { data } = supabase.storage
-      .from("letter-photos")
-      .getPublicUrl(path);
-    urls.push(data.publicUrl);
+    // Store the storage path, not a URL — signed URLs are generated on read
+    paths.push(path);
   }
-  return urls;
+  return paths;
 };
 
 const WriteLetter = () => {
