@@ -13,7 +13,7 @@ import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { format, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
 import { needsMigration, migrateLettersToRandomKey } from "@/lib/migrateLegacyEncryption";
-
+import { useReencryptForRecipients } from "@/hooks/useReencryptForRecipients";
 
 // Demo letters for when auth is disabled
 const DEMO_LETTERS: Letter[] = [
@@ -100,6 +100,9 @@ const Vault = () => {
   const location = useLocation();
   const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
   const { signOut, user } = useAuth();
+
+  // Re-encrypt "someone" letters for recipients who have signed up
+  useReencryptForRecipients();
 
   // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
   const newLetterId = (location.state as { newLetterId?: string } | null)?.newLetterId;

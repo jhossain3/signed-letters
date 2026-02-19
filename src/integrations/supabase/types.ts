@@ -29,6 +29,7 @@ export type Database = {
           paper_color: string | null
           photos: string[] | null
           recipient_email: string | null
+          recipient_encrypted: boolean | null
           recipient_type: string
           recipient_user_id: string | null
           signature: string
@@ -54,6 +55,7 @@ export type Database = {
           paper_color?: string | null
           photos?: string[] | null
           recipient_email?: string | null
+          recipient_encrypted?: boolean | null
           recipient_type: string
           recipient_user_id?: string | null
           signature: string
@@ -79,6 +81,7 @@ export type Database = {
           paper_color?: string | null
           photos?: string[] | null
           recipient_email?: string | null
+          recipient_encrypted?: boolean | null
           recipient_type?: string
           recipient_user_id?: string | null
           signature?: string
