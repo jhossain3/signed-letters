@@ -12,8 +12,10 @@ type AuthMode = "signin" | "signup" | "forgot" | "reset";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<AuthMode>("signin");
-  const [email, setEmail] = useState("");
+  const initialMode = (searchParams.get("mode") as AuthMode) || "signin";
+  const initialEmail = searchParams.get("email") || "";
+  const [mode, setMode] = useState<AuthMode>(initialMode === "signup" || initialMode === "reset" || initialMode === "forgot" ? initialMode : "signin");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
