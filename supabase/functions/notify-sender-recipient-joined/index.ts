@@ -35,24 +35,24 @@ const generateSenderNudgeHtml = (recipientEmail: string) => `
                 </svg>
               </div>
               <h1 style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 500; color: #2d2522; letter-spacing: -0.02em;">
-                Your Recipient Has Joined
+                Action needed — your letter is waiting
               </h1>
               <p style="margin: 0; font-size: 15px; color: #7a6f6a; line-height: 1.5;">
-                Great news — <strong>${recipientEmail}</strong> has created their account on signed
+                <strong>${recipientEmail}</strong> just signed up and is ready to read your letter
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding: 0 40px 24px; text-align: center;">
               <p style="margin: 0; font-size: 14px; color: #7a6f6a; line-height: 1.6;">
-                Open the app to complete the secure delivery of your letter. Once you sign in, your letter will be securely prepared for them to read.
+                Your letter can't be delivered until you sign in. Open the app now — it only takes a moment, and your recipient is waiting.
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding: 0 40px 40px; text-align: center;">
               <a href="${APP_URL}/vault" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
-                Open Your Vault
+                Complete Delivery Now
               </a>
             </td>
           </tr>
