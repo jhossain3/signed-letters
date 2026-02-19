@@ -102,6 +102,9 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string, re
               <p style="margin: 0; font-size: 14px; color: #7a6f6a; line-height: 1.6;">
                 Create a free account now so your letter will be waiting in your vault when it arrives.
               </p>
+              <p style="margin: 16px 0 0; font-size: 14px; color: #2d2522; line-height: 1.6; background: #f5ebe0; border-radius: 8px; padding: 12px 16px; border-left: 3px solid #8b4545;">
+                <strong>Important:</strong> please create your account using this email address — <strong>${recipientEmail}</strong> — to ensure your letter is delivered to you correctly.
+              </p>
             </td>
           </tr>
 
