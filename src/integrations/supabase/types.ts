@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           date: string
           delivery_date: string
+          display_title: string | null
           id: string
           initial_notification_sent: boolean | null
           ink_color: string | null
@@ -46,6 +47,7 @@ export type Database = {
           created_at?: string
           date: string
           delivery_date: string
+          display_title?: string | null
           id?: string
           initial_notification_sent?: boolean | null
           ink_color?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           created_at?: string
           date?: string
           delivery_date?: string
+          display_title?: string | null
           id?: string
           initial_notification_sent?: boolean | null
           ink_color?: string | null

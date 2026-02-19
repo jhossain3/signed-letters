@@ -43,6 +43,7 @@ export interface Letter {
   isLined?: boolean;
   recipientEncrypted?: boolean;
   userId?: string;
+  displayTitle?: string;
 }
 
 export interface CreateLetterInput {
@@ -108,6 +109,7 @@ const mapDbToLetter = (row: any): Letter => ({
   isLined: row.is_lined ?? true,
   recipientEncrypted: row.recipient_encrypted ?? false,
   userId: row.user_id,
+  displayTitle: row.display_title ?? undefined,
 });
 
 export const useLetters = () => {
@@ -160,11 +162,11 @@ export const useLetters = () => {
 
           if (isSentToSomeone && letter.recipientEncrypted) {
             // Content was re-encrypted for recipient — sender can no longer decrypt
-            // Return with placeholder content for the sender's view
+            // Use display_title for a readable reference, fallback to generic text
             return Promise.resolve({
               ...letter,
-              title: `Letter to ${letter.recipientEmail || "someone"}`,
-              body: "This letter has been securely delivered to your recipient.",
+              title: letter.displayTitle || "A letter",
+              body: "This letter has been securely transferred to your recipient.",
               signature: "✓ Delivered",
             });
           }
@@ -202,7 +204,7 @@ export const useLetters = () => {
       const sketchDataToStore = encryptedFields.sketchData;
 
       // If sealing from a draft, update the existing row; otherwise insert new
-      const dbRow = {
+      const dbRow: any = {
         user_id: user.id,
         title: titleToStore,
         body: bodyToStore,
@@ -221,6 +223,12 @@ export const useLetters = () => {
         ink_color: letter.inkColor,
         is_lined: letter.isLined ?? true,
       };
+
+      // For "someone" letters, save plaintext title so sender always has a readable reference
+      // even after re-encryption replaces the title field with recipient-encrypted content
+      if (letter.recipientType === "someone") {
+        dbRow.display_title = letter.title;
+      }
 
       let data: any;
       let error: any;
