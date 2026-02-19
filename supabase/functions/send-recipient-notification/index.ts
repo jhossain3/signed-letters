@@ -9,10 +9,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SIGNUP_URL = "https://signed-letters.lovable.app/auth";
+// Base URL - email will be appended as a query param
+const SIGNUP_BASE_URL = "https://signed-letters.lovable.app/auth";
 
 // Email template for initial notification to external recipients
-const generateInitialNotificationHtml = (title: string, deliveryDate: string) => `
+const generateInitialNotificationHtml = (title: string, deliveryDate: string, recipientEmail: string) => {
+  const signupUrl = `${SIGNUP_BASE_URL}?mode=signup&email=${encodeURIComponent(recipientEmail)}`;
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -105,7 +108,7 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string) =>
           <!-- CTA Button -->
           <tr>
             <td style="padding: 0 40px 40px; text-align: center;">
-              <a href="${SIGNUP_URL}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
+              <a href="${signupUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
                 Create Your Account
               </a>
             </td>
@@ -134,6 +137,7 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string) =>
 </body>
 </html>
 `;
+};
 
 // Detect if a title is encrypted (has 'enc:' prefix from client-side encryption)
 function getSafeDisplayTitle(title: string): string {
@@ -211,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
       from: "signed <team@notify.signedletter.com>",
       to: [letter.recipient_email],
       subject: `Someone is sending you a letter: "${displayTitle}"`,
-      html: generateInitialNotificationHtml(displayTitle, deliveryDate),
+      html: generateInitialNotificationHtml(displayTitle, deliveryDate, letter.recipient_email),
     });
 
     console.log(`Initial notification sent to ${letter.recipient_email} for letter ${letter.id}:`, emailResponse);
