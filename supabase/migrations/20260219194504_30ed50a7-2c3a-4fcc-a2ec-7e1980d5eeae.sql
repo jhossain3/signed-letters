@@ -1,0 +1,1 @@
+ALTER TABLE public.letters ADD COLUMN display_title text;

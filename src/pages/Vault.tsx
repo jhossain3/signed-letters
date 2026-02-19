@@ -269,13 +269,30 @@ const Vault = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    <EnvelopeCard
-                      id={letter.id}
-                      title={letter.title}
-                      date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
-                      isOpenable={isLetterOpenable(letter)}
-                      onClick={() => handleEnvelopeClick(letter)}
-                    />
+                    {activeTab === "sent" && letter.recipientEncrypted ? (
+                      <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-5 shadow-editorial text-center space-y-2">
+                        <p className="font-editorial text-foreground font-medium text-sm truncate">
+                          {letter.displayTitle || letter.title || "A letter"}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-body">
+                          To {letter.recipientEmail}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-body">
+                          {format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                        </p>
+                        <p className="text-[11px] text-primary/70 font-body italic mt-1">
+                          Securely transferred to your recipient
+                        </p>
+                      </div>
+                    ) : (
+                      <EnvelopeCard
+                        id={letter.id}
+                        title={letter.title}
+                        date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                        isOpenable={isLetterOpenable(letter)}
+                        onClick={() => handleEnvelopeClick(letter)}
+                      />
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -292,13 +309,30 @@ const Vault = () => {
                   >
                     <div className="absolute left-1/2 top-1/2 w-3 h-3 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
                     <div className={`w-5/12 ${index % 2 === 0 ? "mr-8" : "ml-8"}`}>
-                      <EnvelopeCard
-                        id={letter.id}
-                        title={letter.title}
-                        date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
-                        isOpenable={isLetterOpenable(letter)}
-                        onClick={() => handleEnvelopeClick(letter)}
-                      />
+                      {activeTab === "sent" && letter.recipientEncrypted ? (
+                        <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-5 text-center space-y-2">
+                          <p className="font-editorial text-foreground font-medium text-sm truncate">
+                            {letter.displayTitle || letter.title || "A letter"}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-body">
+                            To {letter.recipientEmail}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-body">
+                            {format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                          </p>
+                          <p className="text-[11px] text-primary/70 font-body italic mt-1">
+                            Securely transferred to your recipient
+                          </p>
+                        </div>
+                      ) : (
+                        <EnvelopeCard
+                          id={letter.id}
+                          title={letter.title}
+                          date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                          isOpenable={isLetterOpenable(letter)}
+                          onClick={() => handleEnvelopeClick(letter)}
+                        />
+                      )}
                     </div>
                   </motion.div>
                 ))}
