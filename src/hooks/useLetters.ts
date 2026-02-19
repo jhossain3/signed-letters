@@ -248,8 +248,26 @@ export const useLetters = () => {
 
       if (error) throw error;
       
-      // For letters to external recipients, send immediate notification
+      // For letters to external recipients, check if they already have an account
+      // The link_pending_letters trigger only fires on NEW signups, so we handle existing users here
       if (letter.recipientType === "someone" && letter.recipientEmail) {
+        try {
+          const { data: existingUserId } = await supabase.rpc('find_user_by_email', {
+            lookup_email: letter.recipientEmail,
+          });
+          if (existingUserId) {
+            console.log('[addLetter] Recipient already exists, linking letter:', existingUserId);
+            await supabase
+              .from("letters")
+              .update({ recipient_user_id: existingUserId })
+              .eq("id", data.id);
+            data.recipient_user_id = existingUserId;
+          }
+        } catch (lookupError) {
+          console.error('Error looking up existing recipient:', lookupError);
+        }
+
+        // Send initial notification to recipient
         try {
           const response = await supabase.functions.invoke('send-recipient-notification', {
             body: { letterId: data.id, plaintextTitle: letter.title }
@@ -261,7 +279,6 @@ export const useLetters = () => {
           }
         } catch (notifyError) {
           console.error('Error sending initial recipient notification:', notifyError);
-          // Don't throw - letter was saved successfully, notification is secondary
         }
       }
       
