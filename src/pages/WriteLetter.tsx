@@ -514,8 +514,8 @@ const WriteLetter = () => {
       return;
     }
 
-    // Check encryption readiness for self-sent letters
-    if (recipientType === "myself" && !isEncryptionReady) {
+    // Check encryption readiness for all letters (all are now encrypted)
+    if (!isEncryptionReady) {
       if (encryptionError) {
         toast.error(encryptionError);
       } else {

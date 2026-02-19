@@ -41,6 +41,8 @@ export interface Letter {
   paperColor?: string;
   inkColor?: string;
   isLined?: boolean;
+  recipientEncrypted?: boolean;
+  userId?: string;
 }
 
 export interface CreateLetterInput {
@@ -104,6 +106,8 @@ const mapDbToLetter = (row: any): Letter => ({
   paperColor: row.paper_color,
   inkColor: row.ink_color,
   isLined: row.is_lined ?? true,
+  recipientEncrypted: row.recipient_encrypted ?? false,
+  userId: row.user_id,
 });
 
 export const useLetters = () => {
@@ -135,9 +139,23 @@ export const useLetters = () => {
         return letter;
       });
       
-      // Decrypt all letters using user's stored encryption key
+      // Decrypt letters:
+      // - Own letters (sent): decrypt with own key
+      // - Received letters: only decrypt if recipient_encrypted is true (re-encrypted for us)
       const decryptedLetters = await Promise.all(
-        mappedLetters.map(letter => decryptLetterFields(letter, user.id))
+        mappedLetters.map(letter => {
+          const isReceived = letter.type === "received";
+          if (isReceived) {
+            // Only decrypt if the sender has re-encrypted for the recipient
+            if (letter.recipientEncrypted) {
+              return decryptLetterFields(letter, user.id);
+            }
+            // Not yet re-encrypted — return as-is (will show "not ready" message)
+            return Promise.resolve(letter);
+          }
+          // Own letter — always decrypt with own key
+          return decryptLetterFields(letter, user.id);
+        })
       );
       
       // Resolve storage paths to signed URLs for photos
@@ -157,26 +175,15 @@ export const useLetters = () => {
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Only encrypt for self-sent letters
-      // Letters to others remain unencrypted so recipients can read them
-      const isForSelf = letter.recipientType === "myself";
-      
-      let titleToStore = letter.title;
-      let bodyToStore = letter.body;
-      let signatureToStore = letter.signature;
-      let sketchDataToStore = letter.sketchData;
-
-      if (isForSelf) {
-        // Encrypt sensitive fields before saving using user's stored encryption key
-        const encryptedFields = await encryptLetterFields(
-          { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-          user.id
-        );
-        titleToStore = encryptedFields.title;
-        bodyToStore = encryptedFields.body;
-        signatureToStore = encryptedFields.signature;
-        sketchDataToStore = encryptedFields.sketchData;
-      }
+      // Encrypt ALL letters with sender's key (both self and someone-else)
+      const encryptedFields = await encryptLetterFields(
+        { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
+        user.id
+      );
+      const titleToStore = encryptedFields.title;
+      const bodyToStore = encryptedFields.body;
+      const signatureToStore = encryptedFields.signature;
+      const sketchDataToStore = encryptedFields.sketchData;
 
       // If sealing from a draft, update the existing row; otherwise insert new
       const dbRow = {
@@ -226,10 +233,10 @@ export const useLetters = () => {
       if (error) throw error;
       
       // For letters to external recipients, send immediate notification
-      if (!isForSelf && letter.recipientEmail) {
+      if (letter.recipientType === "someone" && letter.recipientEmail) {
         try {
           const response = await supabase.functions.invoke('send-recipient-notification', {
-            body: { letterId: data.id }
+            body: { letterId: data.id, plaintextTitle: letter.title }
           });
           if (response.error) {
             console.error('Failed to send initial recipient notification:', response.error);
@@ -242,9 +249,9 @@ export const useLetters = () => {
         }
       }
       
-      // For self-sent, decrypt before returning; for others, just map
+      // Decrypt the returned letter (always encrypted with sender key now)
       const mappedLetter = mapDbToLetter(data);
-      return isForSelf ? decryptLetterFields(mappedLetter, user.id) : mappedLetter;
+      return decryptLetterFields(mappedLetter, user.id);
     },
     onSuccess: (savedLetter, originalInput) => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
@@ -264,6 +271,12 @@ export const useLetters = () => {
         console.log('[addLetterMutation] Same-day self-sent letter detected, triggering immediate notification');
         // Pass the plaintext title from the original input (before encryption)
         triggerImmediateNotification(savedLetter.id, originalInput.title);
+      }
+      
+      // For "someone" letters, also pass plaintext title since content is now encrypted
+      if (savedLetter.recipientType === "someone" && !isSameDay) {
+        // The send-letter-notifications cron will handle delivery-date notifications
+        // but we already passed plaintext title during the initial notification above
       }
     },
     onError: (error) => {

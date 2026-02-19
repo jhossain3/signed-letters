@@ -147,6 +147,7 @@ function getSafeDisplayTitle(title: string): string {
 
 interface NotificationRequest {
   letterId: string;
+  plaintextTitle?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -167,7 +168,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Supabase credentials not configured");
     }
 
-    const { letterId }: NotificationRequest = await req.json();
+    const { letterId, plaintextTitle }: NotificationRequest = await req.json();
 
     if (!letterId) {
       throw new Error("Letter ID is required");
@@ -208,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
     const deliveryDate = format(new Date(letter.delivery_date), "MMMM d, yyyy");
 
     // Ensure title is safe to display (not encrypted ciphertext)
-    const displayTitle = getSafeDisplayTitle(letter.title);
+    const displayTitle = plaintextTitle || getSafeDisplayTitle(letter.title);
 
     // Send the initial notification email
     const emailResponse = await resend.emails.send({

@@ -117,69 +117,84 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div
-              className="min-h-[300px] p-6 rounded-xl border border-border relative overflow-hidden"
-              style={{ backgroundColor: letter.paperColor || "hsl(var(--paper))" }}
-            >
-              {/* Lined paper effect */}
-              {letter.isLined !== false && (
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(transparent, transparent 27px, hsl(var(--border) / 0.3) 27px, hsl(var(--border) / 0.3) 28px)",
-                    backgroundPositionY: "48px",
-                  }}
-                />
-              )}
-              <div className="relative z-10 overflow-hidden">
-                <h2 className="font-editorial text-2xl text-foreground mb-6 break-words" style={{ color: letter.inkColor }}>{letter.title}</h2>
-                {/* Show typed content if exists */}
-                {letter.isTyped && letter.body && letter.body.trim() && (
-                  <div
-                    className="text-foreground leading-relaxed font-body break-words overflow-hidden"
-                    style={{ color: letter.inkColor, wordBreak: "break-word", overflowWrap: "break-word" }}
-                  >
-                    {/* Render pages with visual separators instead of text */}
-                    {letter.body.split("\n\n--- Page Break ---\n\n").map((page, index, arr) => (
-                      <div key={index}>
-                        <p className="whitespace-pre-wrap">{page}</p>
-                        {index < arr.length - 1 && <div className="my-8 border-t border-dashed border-border/40" />}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {/* Show sketch content below typed content if both exist */}
-                {letter.sketchData && (
-                  <div className={letter.isTyped && letter.body?.trim() ? "mt-8" : ""}>
-                    <SketchRenderer
-                      sketchData={letter.sketchData}
-                      paperColor="transparent"
-                      inkColor={letter.inkColor}
-                      showLines={letter.isLined !== false}
-                    />
-                  </div>
-                )}
-                {letter.photos && letter.photos.length > 0 && (
-                  <div className="flex gap-3 mt-6 flex-wrap">
-                    {letter.photos.map((photo, index) => (
-                      <img
-                        key={index}
-                        src={photo}
-                        alt={`Attachment ${index + 1}`}
-                        className="w-24 h-24 object-cover rounded-lg border border-border shadow-editorial"
-                      />
-                    ))}
-                  </div>
-                )}
-                <p className={`text-xl mt-8 text-foreground break-words ${letter.signatureFont || "font-signature"}`} style={{ color: letter.inkColor }}>
-                  {letter.signature}
+            {/* Check if this is a received letter that hasn't been re-encrypted yet */}
+            {letter.type === "received" && !letter.recipientEncrypted ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
+                <h3 className="font-editorial text-xl text-foreground mb-3">Your letter is almost ready</h3>
+                <p className="text-muted-foreground font-body text-sm max-w-sm mx-auto leading-relaxed">
+                  It will appear here once the sender next opens the app. We'll notify you when it's available.
                 </p>
               </div>
-            </div>
-            <p className="text-center text-muted-foreground mt-6 font-editorial italic text-sm">
-              This moment was worth waiting for.
-            </p>
+            ) : (
+              <>
+                <div
+                  className="min-h-[300px] p-6 rounded-xl border border-border relative overflow-hidden"
+                  style={{ backgroundColor: letter.paperColor || "hsl(var(--paper))" }}
+                >
+                  {/* Lined paper effect */}
+                  {letter.isLined !== false && (
+                    <div
+                      className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(transparent, transparent 27px, hsl(var(--border) / 0.3) 27px, hsl(var(--border) / 0.3) 28px)",
+                        backgroundPositionY: "48px",
+                      }}
+                    />
+                  )}
+                  <div className="relative z-10 overflow-hidden">
+                    <h2 className="font-editorial text-2xl text-foreground mb-6 break-words" style={{ color: letter.inkColor }}>{letter.title}</h2>
+                    {letter.isTyped && letter.body && letter.body.trim() && (
+                      <div
+                        className="text-foreground leading-relaxed font-body break-words overflow-hidden"
+                        style={{ color: letter.inkColor, wordBreak: "break-word", overflowWrap: "break-word" }}
+                      >
+                        {letter.body.split("\n\n--- Page Break ---\n\n").map((page, index, arr) => (
+                          <div key={index}>
+                            <p className="whitespace-pre-wrap">{page}</p>
+                            {index < arr.length - 1 && <div className="my-8 border-t border-dashed border-border/40" />}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {letter.sketchData && (
+                      <div className={letter.isTyped && letter.body?.trim() ? "mt-8" : ""}>
+                        <SketchRenderer
+                          sketchData={letter.sketchData}
+                          paperColor="transparent"
+                          inkColor={letter.inkColor}
+                          showLines={letter.isLined !== false}
+                        />
+                      </div>
+                    )}
+                    {letter.photos && letter.photos.length > 0 && (
+                      <div className="flex gap-3 mt-6 flex-wrap">
+                        {letter.photos.map((photo, index) => (
+                          <img
+                            key={index}
+                            src={photo}
+                            alt={`Attachment ${index + 1}`}
+                            className="w-24 h-24 object-cover rounded-lg border border-border shadow-editorial"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <p className={`text-xl mt-8 text-foreground break-words ${letter.signatureFont || "font-signature"}`} style={{ color: letter.inkColor }}>
+                      {letter.signature}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-center text-muted-foreground mt-6 font-editorial italic text-sm">
+                  This moment was worth waiting for.
+                </p>
+              </>
+            )}
             <button
               onClick={onClose}
               className="mt-6 w-full py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-all shadow-editorial"
