@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { decryptValue, encryptValue } from "@/lib/encryption";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
- * Background hook that re-encrypts "someone" letters with the recipient's key
+ * Background hook that triggers server-side re-encryption of "someone" letters
  * after the recipient has signed up (recipient_user_id is set).
  * 
  * Runs silently on sender login. Finds letters where:
@@ -13,11 +13,12 @@ import { decryptValue, encryptValue } from "@/lib/encryption";
  * - recipient_user_id IS NOT NULL (recipient signed up)
  * - recipient_encrypted = false (not yet re-encrypted)
  * 
- * For each, decrypts with sender's key, re-encrypts with recipient's key,
- * and updates the DB row.
+ * Then calls the reencrypt-for-recipient edge function which has service-role
+ * access to both sender and recipient encryption keys.
  */
 export function useReencryptForRecipients() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function useReencryptForRecipients() {
         // Find letters needing re-encryption
         const { data: letters, error } = await supabase
           .from("letters")
-          .select("id, title, body, signature, sketch_data, recipient_user_id")
+          .select("id")
           .eq("user_id", user.id)
           .eq("recipient_type", "someone")
           .eq("recipient_encrypted", false)
@@ -39,46 +40,23 @@ export function useReencryptForRecipients() {
 
         console.log(`[ReEncrypt] Found ${letters.length} letters to re-encrypt for recipients`);
 
-        for (const letter of letters) {
-          try {
-            const recipientUserId = letter.recipient_user_id!;
+        const letterIds = letters.map((l) => l.id);
 
-            // Decrypt with sender's key
-            const [plainTitle, plainBody, plainSignature, plainSketch] = await Promise.all([
-              decryptValue(letter.title, user.id),
-              letter.body ? decryptValue(letter.body, user.id) : Promise.resolve(null),
-              decryptValue(letter.signature, user.id),
-              letter.sketch_data ? decryptValue(letter.sketch_data, user.id) : Promise.resolve(null),
-            ]);
+        // Call edge function to perform re-encryption server-side
+        const { data, error: fnError } = await supabase.functions.invoke("reencrypt-for-recipient", {
+          body: { letterIds },
+        });
 
-            // Re-encrypt with recipient's key
-            const [encTitle, encBody, encSignature, encSketch] = await Promise.all([
-              encryptValue(plainTitle, recipientUserId),
-              plainBody ? encryptValue(plainBody, recipientUserId) : Promise.resolve(null),
-              encryptValue(plainSignature, recipientUserId),
-              plainSketch ? encryptValue(plainSketch, recipientUserId) : Promise.resolve(null),
-            ]);
+        if (fnError) {
+          console.error("[ReEncrypt] Edge function error:", fnError);
+          return;
+        }
 
-            // Update the letter with recipient-encrypted content
-            const { error: updateError } = await supabase
-              .from("letters")
-              .update({
-                title: encTitle,
-                body: encBody,
-                signature: encSignature,
-                sketch_data: encSketch,
-                recipient_encrypted: true,
-              })
-              .eq("id", letter.id);
+        console.log("[ReEncrypt] Result:", data);
 
-            if (updateError) {
-              console.error(`[ReEncrypt] Failed to update letter ${letter.id}:`, updateError);
-            } else {
-              console.log(`[ReEncrypt] Successfully re-encrypted letter ${letter.id} for recipient`);
-            }
-          } catch (err) {
-            console.error(`[ReEncrypt] Error re-encrypting letter ${letter.id}:`, err);
-          }
+        if (data?.reencryptedCount > 0) {
+          // Invalidate letters query to refresh the UI
+          queryClient.invalidateQueries({ queryKey: ["letters", user.id] });
         }
       } catch (err) {
         console.error("[ReEncrypt] Error in re-encryption check:", err);
@@ -86,5 +64,5 @@ export function useReencryptForRecipients() {
     };
 
     reencrypt();
-  }, [user]);
+  }, [user, queryClient]);
 }

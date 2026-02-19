@@ -247,6 +247,7 @@ interface LetterToNotify {
   recipient_email: string | null;
   recipient_type: string;
   recipient_user_id: string | null;
+  recipient_encrypted: boolean | null;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -287,7 +288,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Build the query - either for a specific letter or all pending
     let query = supabase
       .from("letters")
-      .select("id, title, user_id, recipient_email, recipient_type, recipient_user_id")
+      .select("id, title, user_id, recipient_email, recipient_type, recipient_user_id, recipient_encrypted")
       .lte("delivery_date", endOfToday.toISOString())
       .eq("notification_sent", false);
 
@@ -334,6 +335,11 @@ const handler = async (req: Request): Promise<Response> => {
         let emailSubject: string;
 
         if (isForSomeoneElse) {
+          // For "someone" letters, only send delivery notification if letter has been re-encrypted for recipient
+          if (!letter.recipient_encrypted) {
+            console.log(`Skipping delivery notification for letter ${letter.id}: not yet re-encrypted for recipient`);
+            continue;
+          }
           // Letter is for an external recipient - delivery date has arrived
           targetEmail = letter.recipient_email!;
           emailHtml = generateRecipientDeliveryEmailHtml(displayTitle);

@@ -140,20 +140,36 @@ export const useLetters = () => {
       });
       
       // Decrypt letters:
-      // - Own letters (sent): decrypt with own key
-      // - Received letters: only decrypt if recipient_encrypted is true (re-encrypted for us)
+      // - Own sent letters (recipient_type=myself): decrypt with own key
+      // - Own sent letters (recipient_type=someone, recipient_encrypted=false): decrypt with own key (still encrypted with sender's key)
+      // - Own sent letters (recipient_type=someone, recipient_encrypted=true): already re-encrypted for recipient, sender can't decrypt — show placeholder
+      // - Received letters (recipient_encrypted=true): decrypt with own key
+      // - Received letters (recipient_encrypted=false): not yet re-encrypted, show "not ready"
       const decryptedLetters = await Promise.all(
         mappedLetters.map(letter => {
           const isReceived = letter.type === "received";
+          const isSentToSomeone = letter.recipientType === "someone" && !isReceived;
+
           if (isReceived) {
-            // Only decrypt if the sender has re-encrypted for the recipient
             if (letter.recipientEncrypted) {
               return decryptLetterFields(letter, user.id);
             }
             // Not yet re-encrypted — return as-is (will show "not ready" message)
             return Promise.resolve(letter);
           }
-          // Own letter — always decrypt with own key
+
+          if (isSentToSomeone && letter.recipientEncrypted) {
+            // Content was re-encrypted for recipient — sender can no longer decrypt
+            // Return with placeholder content for the sender's view
+            return Promise.resolve({
+              ...letter,
+              title: `Letter to ${letter.recipientEmail || "someone"}`,
+              body: "This letter has been securely delivered to your recipient.",
+              signature: "✓ Delivered",
+            });
+          }
+
+          // Own letter (self or someone pre-reencrypt) — decrypt with own key
           return decryptLetterFields(letter, user.id);
         })
       );
