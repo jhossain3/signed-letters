@@ -93,6 +93,34 @@ async function deriveWrappingKey(password: string, saltBytes: Uint8Array<ArrayBu
   );
 }
 
+/**
+ * Derive an AES-GCM key from a password + salt using PBKDF2.
+ * Used for wrapping RSA private keys (AES-KW can't wrap variable-length data).
+ * Exported so AuthContext can pass it to RSA key generation.
+ */
+export async function deriveGcmWrappingKey(password: string, saltBytes: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  const encoder = new TextEncoder();
+  const passwordKey = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: saltBytes,
+      iterations: KDF_ITERATIONS,
+      hash: 'SHA-256',
+    },
+    passwordKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
 // ─── V2 public functions ──────────────────────────────────────────────────────
 
 /**

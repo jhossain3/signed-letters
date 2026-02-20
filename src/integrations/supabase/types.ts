@@ -33,6 +33,8 @@ export type Database = {
           recipient_encrypted: boolean | null
           recipient_type: string
           recipient_user_id: string | null
+          recipient_wrapped_content_key: string | null
+          sender_wrapped_content_key: string | null
           signature: string
           signature_font: string | null
           sketch_data: string | null
@@ -60,6 +62,8 @@ export type Database = {
           recipient_encrypted?: boolean | null
           recipient_type: string
           recipient_user_id?: string | null
+          recipient_wrapped_content_key?: string | null
+          sender_wrapped_content_key?: string | null
           signature: string
           signature_font?: string | null
           sketch_data?: string | null
@@ -87,6 +91,8 @@ export type Database = {
           recipient_encrypted?: boolean | null
           recipient_type?: string
           recipient_user_id?: string | null
+          recipient_wrapped_content_key?: string | null
+          sender_wrapped_content_key?: string | null
           signature?: string
           signature_font?: string | null
           sketch_data?: string | null
@@ -103,34 +109,46 @@ export type Database = {
           created_at: string
           encrypted_key: string | null
           encryption_version: number | null
+          has_rsa_keys: boolean
           id: string
           key_version: number
+          rsa_private_key_iv: string | null
+          rsa_public_key: string | null
           salt: string | null
           updated_at: string
           user_id: string
           wrapped_key: string | null
+          wrapped_rsa_private_key: string | null
         }
         Insert: {
           created_at?: string
           encrypted_key?: string | null
           encryption_version?: number | null
+          has_rsa_keys?: boolean
           id?: string
           key_version?: number
+          rsa_private_key_iv?: string | null
+          rsa_public_key?: string | null
           salt?: string | null
           updated_at?: string
           user_id: string
           wrapped_key?: string | null
+          wrapped_rsa_private_key?: string | null
         }
         Update: {
           created_at?: string
           encrypted_key?: string | null
           encryption_version?: number | null
+          has_rsa_keys?: boolean
           id?: string
           key_version?: number
+          rsa_private_key_iv?: string | null
+          rsa_public_key?: string | null
           salt?: string | null
           updated_at?: string
           user_id?: string
           wrapped_key?: string | null
+          wrapped_rsa_private_key?: string | null
         }
         Relationships: []
       }
@@ -146,6 +164,13 @@ export type Database = {
           encryption_version: number
           salt: string
           wrapped_key: string
+        }[]
+      }
+      get_rsa_public_key_by_email: {
+        Args: { lookup_email: string }
+        Returns: {
+          has_rsa_keys: boolean
+          rsa_public_key: string
         }[]
       }
     }
