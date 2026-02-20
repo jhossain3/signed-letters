@@ -8,7 +8,13 @@ import {
   unwrapV2KeyOptimistic,
   cacheRawKey,
   migrateV1ToV2,
+  deriveGcmWrappingKey,
 } from "@/lib/encryption";
+import {
+  generateAndStoreRsaKeys,
+  loadAndCacheRsaKeys,
+  clearRsaKeyCache,
+} from "@/lib/rsaEncryption";
 
 interface AuthContextType {
   user: User | null;
@@ -89,6 +95,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (data.user && data.session) {
       try {
         await createAndStoreWrappedKey(data.user.id, password);
+
+        // Also generate RSA key pair for envelope encryption
+        // Fetch the salt we just stored to derive the GCM wrapping key
+        const { data: keyRow } = await supabase
+          .from('user_encryption_keys')
+          .select('salt')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (keyRow?.salt) {
+          const saltBytes = Uint8Array.from(atob(keyRow.salt), c => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
+          const gcmKey = await deriveGcmWrappingKey(password, saltBytes);
+          await generateAndStoreRsaKeys(data.user.id, gcmKey);
+        }
       } catch (keyError) {
         console.error('[Auth] Failed to store encryption key — rolling back account:', keyError);
         // Roll back the auth account using the user's own JWT
@@ -122,6 +142,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // while the password is still available in this closure.
     let preUnwrappedKey: CryptoKey | null = null;
     let encryptionVersion = 1;
+    let saltB64: string | null = null;
+    let hasRsaKeys = false;
+    let wrappedRsaPrivateKey: string | null = null;
+    let rsaPrivateKeyIv: string | null = null;
+    let rsaPublicKeyB64: string | null = null;
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,6 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (metaRows && metaRows.length > 0) {
         const meta = metaRows[0];
         encryptionVersion = meta.encryption_version ?? 1;
+        saltB64 = meta.salt;
 
         if (encryptionVersion === 2 && meta.wrapped_key && meta.salt) {
           // Optimistically unwrap the AES key — do NOT cache yet (no userId)
@@ -154,6 +180,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (encryptionVersion === 2 && preUnwrappedKey) {
       cacheRawKey(userId, preUnwrappedKey);
       console.log('[Auth] V2 key cached after sign-in');
+
+      // Step 4: Load or generate RSA keys (background, non-blocking)
+      if (saltB64) {
+        const saltBytes = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
+        const gcmKey = await deriveGcmWrappingKey(password, saltBytes);
+
+        // Fetch RSA key status
+        const { data: keyRow } = await supabase
+          .from('user_encryption_keys')
+          .select('has_rsa_keys, wrapped_rsa_private_key, rsa_private_key_iv, rsa_public_key')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (keyRow?.has_rsa_keys) {
+          // Load existing RSA keys into cache
+          loadAndCacheRsaKeys(userId, gcmKey).catch(err => {
+            console.warn('[Auth] RSA key load failed:', err);
+          });
+        } else {
+          // Silent background RSA upgrade for existing V2 users
+          console.log('[Auth] Generating RSA keys for existing V2 user (background)');
+          generateAndStoreRsaKeys(userId, gcmKey).catch(err => {
+            console.warn('[Auth] RSA key generation failed (non-fatal):', err);
+          });
+        }
+      }
     } else {
       // V1 user: fire-and-forget silent migration
       // The password is still in scope here and used immediately for PBKDF2.
@@ -167,7 +219,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    clearKeyCache(); // Clear encryption keys on logout
+    clearKeyCache(); // Clear AES encryption keys on logout
+    clearRsaKeyCache(); // Clear RSA keys on logout
     await supabase.auth.signOut();
   };
 
