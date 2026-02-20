@@ -6,9 +6,12 @@ import { initializeUserEncryptionKey } from "@/lib/encryption";
  * Hook that checks whether the encryption system is ready for the current user.
  * Returns { isReady, isInitializing, error } so the UI can disable submission
  * until encryption is confirmed available.
+ *
+ * For V2 users on a cold cache (page reload without re-login), the key cannot
+ * be recovered without the password, so we force a sign-out to prompt re-auth.
  */
 export function useEncryptionReady() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [isReady, setIsReady] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,18 +28,32 @@ export function useEncryptionReady() {
     setIsInitializing(true);
     setError(null);
 
-    initializeUserEncryptionKey(user.id).then((success) => {
-      if (cancelled) return;
-      setIsInitializing(false);
-      if (success) {
-        setIsReady(true);
-      } else {
-        setError("Unable to set up secure storage. Please try refreshing the page.");
-      }
-    });
+    initializeUserEncryptionKey(user.id)
+      .then((success) => {
+        if (cancelled) return;
+        setIsInitializing(false);
+        if (success) {
+          setIsReady(true);
+        } else {
+          setError("Unable to set up secure storage. Please try refreshing the page.");
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : String(err);
+        if (message === 'V2_KEY_REQUIRES_REAUTH') {
+          // V2 cold-cache: password is unavailable, must re-authenticate
+          console.log('[EncryptionReady] V2 cold cache — signing out for re-auth');
+          setIsInitializing(false);
+          signOut();
+        } else {
+          setIsInitializing(false);
+          setError("Unable to set up secure storage. Please try refreshing the page.");
+        }
+      });
 
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, signOut]);
 
   return { isReady, isInitializing, error };
 }

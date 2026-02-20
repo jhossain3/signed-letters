@@ -1,7 +1,14 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { clearKeyCache, initializeUserEncryptionKey } from "@/lib/encryption";
+import {
+  clearKeyCache,
+  initializeUserEncryptionKey,
+  createAndStoreWrappedKey,
+  unwrapV2KeyOptimistic,
+  cacheRawKey,
+  migrateV1ToV2,
+} from "@/lib/encryption";
 
 interface AuthContextType {
   user: User | null;
@@ -28,10 +35,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
-        
-        // Initialize encryption key for new sign-ins (fire and forget)
+
+        // For v1 users that didn't go through the new signIn flow
+        // (e.g. session restored from storage), initialize their key.
+        // V2 users will already have their key in cache from signIn.
         if (event === 'SIGNED_IN' && session?.user) {
-          initializeUserEncryptionKey(session.user.id).catch(console.error);
+          initializeUserEncryptionKey(session.user.id).catch((err) => {
+            // V2 cold-cache is handled by useEncryptionReady — ignore here
+            const message = err instanceof Error ? err.message : String(err);
+            if (message !== 'V2_KEY_REQUIRES_REAUTH') {
+              console.error('[Auth] Encryption key init failed:', err);
+            }
+          });
         }
       }
     );
@@ -47,37 +62,108 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, retryCount = 0): Promise<{ error: Error | null }> => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
       },
     });
-    
+
     // Check for rate limit errors and retry once after delay
     if (error && retryCount < 1) {
-      const isRateLimited = 
+      const isRateLimited =
         error.message.includes("Too many signup attempts") ||
         error.message.includes("rate limit") ||
         error.message.includes("too many requests");
-      
+
       if (isRateLimited) {
-        // Wait 5 seconds and retry once
         await new Promise(resolve => setTimeout(resolve, 5000));
         return signUp(email, password, retryCount + 1);
       }
     }
-    
-    return { error };
+
+    if (error) return { error };
+
+    // Signup succeeded — now create and store the v2 wrapped key in the browser
+    if (data.user && data.session) {
+      try {
+        await createAndStoreWrappedKey(data.user.id, password);
+      } catch (keyError) {
+        console.error('[Auth] Failed to store encryption key — rolling back account:', keyError);
+        // Roll back the auth account using the user's own JWT
+        try {
+          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+          await fetch(
+            `https://${projectId}.supabase.co/functions/v1/delete-own-account`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${data.session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+        } catch (rollbackError) {
+          console.error('[Auth] Account rollback also failed:', rollbackError);
+        }
+        await supabase.auth.signOut();
+        return {
+          error: new Error('Account setup failed. Please try signing up again.'),
+        };
+      }
+    }
+
+    return { error: null };
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+  const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
+    // Step 1: Pre-fetch KDF metadata before auth so we can unwrap the key
+    // while the password is still available in this closure.
+    let preUnwrappedKey: CryptoKey | null = null;
+    let encryptionVersion = 1;
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: metaRows } = await (supabase.rpc as any)(
+        'get_encryption_metadata_by_email',
+        { lookup_email: email }
+      ) as { data: Array<{ salt: string; wrapped_key: string; encryption_version: number }> | null };
+
+      if (metaRows && metaRows.length > 0) {
+        const meta = metaRows[0];
+        encryptionVersion = meta.encryption_version ?? 1;
+
+        if (encryptionVersion === 2 && meta.wrapped_key && meta.salt) {
+          // Optimistically unwrap the AES key — do NOT cache yet (no userId)
+          preUnwrappedKey = await unwrapV2KeyOptimistic(meta.wrapped_key, meta.salt, password);
+        }
+      }
+    } catch (metaError) {
+      // Non-fatal — fall back to v1 flow
+      console.warn('[Auth] Could not fetch encryption metadata:', metaError);
+    }
+
+    // Step 2: Authenticate
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error };
+
+    const userId = data.user.id;
+
+    // Step 3: Put the pre-unwrapped key into cache under the real userId
+    if (encryptionVersion === 2 && preUnwrappedKey) {
+      cacheRawKey(userId, preUnwrappedKey);
+      console.log('[Auth] V2 key cached after sign-in');
+    } else {
+      // V1 user: fire-and-forget silent migration
+      // The password is still in scope here and used immediately for PBKDF2.
+      // It is never stored in state, refs, localStorage, or any persistent variable.
+      migrateV1ToV2(userId, password).catch((err) => {
+        console.warn('[Auth] V1→V2 migration failed silently:', err);
+      });
+    }
+
+    return { error: null };
   };
 
   const signOut = async () => {

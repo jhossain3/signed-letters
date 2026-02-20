@@ -101,27 +101,36 @@ export type Database = {
       user_encryption_keys: {
         Row: {
           created_at: string
-          encrypted_key: string
+          encrypted_key: string | null
+          encryption_version: number | null
           id: string
           key_version: number
+          salt: string | null
           updated_at: string
           user_id: string
+          wrapped_key: string | null
         }
         Insert: {
           created_at?: string
-          encrypted_key: string
+          encrypted_key?: string | null
+          encryption_version?: number | null
           id?: string
           key_version?: number
+          salt?: string | null
           updated_at?: string
           user_id: string
+          wrapped_key?: string | null
         }
         Update: {
           created_at?: string
-          encrypted_key?: string
+          encrypted_key?: string | null
+          encryption_version?: number | null
           id?: string
           key_version?: number
+          salt?: string | null
           updated_at?: string
           user_id?: string
+          wrapped_key?: string | null
         }
         Relationships: []
       }
@@ -131,6 +140,14 @@ export type Database = {
     }
     Functions: {
       find_user_by_email: { Args: { lookup_email: string }; Returns: string }
+      get_encryption_metadata_by_email: {
+        Args: { lookup_email: string }
+        Returns: {
+          encryption_version: number
+          salt: string
+          wrapped_key: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
