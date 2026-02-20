@@ -194,10 +194,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .maybeSingle();
 
         if (keyRow?.has_rsa_keys) {
-          // Load existing RSA keys into cache
-          loadAndCacheRsaKeys(userId, gcmKey).catch(err => {
+          // Load existing RSA keys into cache — await so they're ready for re-encryption hook
+          try {
+            await loadAndCacheRsaKeys(userId, gcmKey);
+          } catch (err) {
             console.warn('[Auth] RSA key load failed:', err);
-          });
+          }
         } else {
           // Silent background RSA upgrade for existing V2 users
           console.log('[Auth] Generating RSA keys for existing V2 user (background)');

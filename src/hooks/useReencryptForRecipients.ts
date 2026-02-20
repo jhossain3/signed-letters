@@ -8,7 +8,6 @@ import {
   getCachedRsaPublicKey,
   fetchRecipientRsaPublicKey,
   envelopeEncryptLetter,
-  envelopeDecryptLetter,
 } from "@/lib/rsaEncryption";
 
 /**
@@ -30,16 +29,24 @@ export function useReencryptForRecipients() {
 
   useEffect(() => {
     if (!user || hasRun.current) return;
-    hasRun.current = true;
 
     const reencrypt = async () => {
+      // Wait for RSA keys to be cached (they load asynchronously after sign-in)
+      let senderRsaPrivateKey = getCachedRsaPrivateKey();
+      let senderRsaPublicKey = getCachedRsaPublicKey();
+
+      if (!senderRsaPrivateKey || !senderRsaPublicKey) {
+        // Retry up to 5 times with 1s delay for RSA keys to load
+        for (let i = 0; i < 5; i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          senderRsaPrivateKey = getCachedRsaPrivateKey();
+          senderRsaPublicKey = getCachedRsaPublicKey();
+          if (senderRsaPrivateKey && senderRsaPublicKey) break;
+        }
+        console.log(`[ReEncrypt] After waiting: RSA keys cached: private=${!!senderRsaPrivateKey}, public=${!!senderRsaPublicKey}`);
+      }
+
       try {
-        // Find letters needing re-encryption:
-        // - sent by current user
-        // - to someone else
-        // - recipient has signed up (recipient_user_id set)
-        // - not yet envelope-encrypted (no sender_wrapped_content_key)
-        // - not yet legacy re-encrypted (recipient_encrypted = false)
         const { data: letters, error } = await supabase
           .from("letters")
           .select("id, recipient_email, recipient_user_id, sender_wrapped_content_key, recipient_encrypted")
@@ -47,17 +54,20 @@ export function useReencryptForRecipients() {
           .eq("recipient_type", "someone")
           .not("recipient_user_id", "is", null);
 
-        if (error || !letters || letters.length === 0) return;
+        if (error || !letters || letters.length === 0) {
+          console.log("[ReEncrypt] No letters found or error:", error);
+          return;
+        }
+
+        console.log(`[ReEncrypt] Found ${letters.length} 'someone' letters with recipient_user_id set`);
 
         // Filter to letters that still need processing
         const pendingLetters = letters.filter(
           (l) => !l.sender_wrapped_content_key && !l.recipient_encrypted
         );
 
+        console.log(`[ReEncrypt] ${pendingLetters.length} letters need re-encryption`);
         if (pendingLetters.length === 0) return;
-
-        const senderRsaPrivateKey = getCachedRsaPrivateKey();
-        const senderRsaPublicKey = getCachedRsaPublicKey();
 
         // Split into RSA-capable and legacy
         const rsaLetterIds: string[] = [];
@@ -76,7 +86,6 @@ export function useReencryptForRecipients() {
               rsaLetterIds.push(letter.id);
             } else {
               // Recipient doesn't have RSA keys yet — skip for now
-              // Will retry next login
               console.log(`[ReEncrypt] Recipient for letter ${letter.id} doesn't have RSA keys yet, skipping`);
             }
           }
@@ -150,8 +159,6 @@ export function useReencryptForRecipients() {
         }
 
         // ── Legacy path: server-side re-encryption (V1 users only) ──
-        // Skip if sender has RSA keys — those letters will be handled client-side
-        // when the recipient generates their RSA keys
         if (legacyLetterIds.length > 0 && !senderRsaPublicKey) {
           console.log(`[ReEncrypt] Found ${legacyLetterIds.length} letters for legacy server-side re-encryption`);
 
@@ -175,6 +182,7 @@ export function useReencryptForRecipients() {
       }
     };
 
+    hasRun.current = true;
     reencrypt();
   }, [user, queryClient]);
 }
