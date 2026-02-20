@@ -186,7 +186,13 @@ export const useLetters = () => {
             if (letter.recipientEncrypted) {
               return decryptLetterFields(letter, user.id);
             }
-            return Promise.resolve(letter);
+            // Not yet re-encrypted — show placeholder with display_title
+            return Promise.resolve({
+              ...letter,
+              title: letter.displayTitle || "A letter for you",
+              body: null,
+              signature: "",
+            });
           }
 
           if (isSentToSomeone && letter.recipientEncrypted) {
