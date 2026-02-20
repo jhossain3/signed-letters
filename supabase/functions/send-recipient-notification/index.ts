@@ -111,7 +111,7 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string, re
           <!-- CTA Button -->
           <tr>
             <td style="padding: 0 40px 40px; text-align: center;">
-              <a href="${signupUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
+              <a href="${signupUrl}" style="display: inline-block; padding: 16px 40px; background-color: #8b4545; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
                 Create Your Account
               </a>
             </td>
@@ -144,7 +144,7 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string, re
 
 // Detect if a title is encrypted (has 'enc:' prefix from client-side encryption)
 function getSafeDisplayTitle(title: string): string {
-  if (title.startsWith('enc:')) return "A note is waiting for you";
+  if (title.startsWith("enc:")) return "A note is waiting for you";
   return title;
 }
 
