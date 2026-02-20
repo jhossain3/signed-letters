@@ -112,16 +112,17 @@ export async function createAndStoreWrappedKey(userId: string, password: string)
   const wrappedKeyB64 = uint8ArrayToBase64(new Uint8Array(wrappedKeyBuffer));
   const saltB64 = uint8ArrayToBase64(saltBytes);
 
-  // 4. Store in DB — encrypted_key is left null for v2 users
+  // 4. Upsert into DB — the trigger already created a placeholder row,
+  //    so we update it. If no row exists yet, this inserts one.
   const { error } = await supabase
     .from('user_encryption_keys')
-    .insert({
+    .upsert({
       user_id: userId,
       wrapped_key: wrappedKeyB64,
       salt: saltB64,
       encryption_version: 2,
       encrypted_key: null,
-    } as never);
+    } as never, { onConflict: 'user_id' });
 
   if (error) {
     console.error('[Encryption] Failed to store wrapped key:', error);
