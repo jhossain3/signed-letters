@@ -209,12 +209,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } else {
-      // V1 user: fire-and-forget silent migration
-      // The password is still in scope here and used immediately for PBKDF2.
-      // It is never stored in state, refs, localStorage, or any persistent variable.
-      migrateV1ToV2(userId, password).catch((err) => {
-        console.warn('[Auth] V1→V2 migration failed silently:', err);
-      });
+      // V1 user: migrate to V2, then generate RSA keys
+      (async () => {
+        try {
+          await migrateV1ToV2(userId, password);
+          // After migration, fetch the new salt and generate RSA keys
+          const { data: keyRow } = await supabase
+            .from('user_encryption_keys')
+            .select('salt')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (keyRow?.salt) {
+            const saltBytes = Uint8Array.from(atob(keyRow.salt), c => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
+            const gcmKey = await deriveGcmWrappingKey(password, saltBytes);
+            await generateAndStoreRsaKeys(userId, gcmKey);
+            await loadAndCacheRsaKeys(userId, gcmKey);
+            console.log('[Auth] RSA keys generated after V1→V2 migration');
+          }
+        } catch (err) {
+          console.warn('[Auth] V1→V2 migration or RSA generation failed:', err);
+        }
+      })();
     }
 
     return { error: null };
