@@ -1,185 +1,143 @@
 
-## V2 Password-Derived Key Wrapping — Implementation Plan
 
-### What is changing and why
+# Recovery Key System for V2 Zero-Knowledge Encryption
 
-The `user_encryption_keys` table currently stores each user's AES-GCM key as a raw base64 string (`encrypted_key`). Anyone with database access can read these keys and decrypt every letter.
+## Overview
 
-The fix wraps the AES key with a second key that is derived from the user's own password using PBKDF2 + AES-KW — all in the browser. The server only ever sees a wrapped blob and a salt. Without the user's password, the blob is cryptographically opaque.
+Add a recovery key mechanism so V2 users can regain access to their encrypted letters if they forget their password. The recovery key is a second wrapped copy of the same AES data key, wrapped with a PBKDF2-derived key from a random recovery code instead of the password.
 
-Existing users and their existing data are untouched until their next login, at which point they are silently migrated.
+## 1. Database Migration
 
----
+Add two nullable columns to `user_encryption_keys`:
 
-### 1. Database Migration
-
-One migration file adds three nullable columns and makes the necessary policy/function changes:
-
-**New columns on `user_encryption_keys`:**
-```sql
-ALTER TABLE user_encryption_keys
-  ADD COLUMN wrapped_key text,
-  ADD COLUMN salt text,
-  ADD COLUMN encryption_version integer DEFAULT 1;
-```
-Existing rows automatically get `encryption_version = 1` — no data is altered.
-
-**RLS policy change — allow UPDATE for own row:**
-The existing `"Encryption keys cannot be updated"` policy is a restrictive policy with `USING (false)`. This blocks all updates unconditionally, which prevents the migration write. The plan is to:
-- Drop the restrictive UPDATE policy
-- Add a permissive UPDATE policy: `USING (auth.uid() = user_id)`
-
-This still enforces ownership — users can only update their own row.
-
-**New `SECURITY DEFINER` function** to fetch KDF parameters before authentication (pre-auth, so RLS would otherwise block the read):
-```sql
-CREATE OR REPLACE FUNCTION public.get_encryption_metadata_by_email(lookup_email text)
-RETURNS TABLE(salt text, wrapped_key text, encryption_version integer)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  found_user_id uuid;
-BEGIN
-  SELECT id INTO found_user_id FROM auth.users WHERE email = lookup_email LIMIT 1;
-  IF found_user_id IS NULL THEN RETURN; END IF;
-  RETURN QUERY
-    SELECT uek.salt, uek.wrapped_key, uek.encryption_version
-    FROM user_encryption_keys uek
-    WHERE uek.user_id = found_user_id;
-END;
-$$;
+```text
+recovery_wrapped_key  TEXT  (AES data key wrapped with recovery-code-derived key, AES-GCM)
+recovery_key_salt     TEXT  (PBKDF2 salt used for the recovery wrapping key)
 ```
 
-This returns only non-secret KDF parameters (salt is not secret by PBKDF2 design). No raw keys or user IDs are exposed.
+Create a new RPC function `get_recovery_metadata_by_email` (SECURITY DEFINER, same pattern as `get_encryption_metadata_by_email`) that returns `recovery_wrapped_key`, `recovery_key_salt`, and `encryption_version` given an email address. This is needed so the client can attempt unwrapping before authenticating.
 
----
+## 2. Recovery Encryption Functions
 
-### 2. New Edge Function: `delete-own-account`
+New file: `src/lib/recoveryKey.ts`
 
-If signup succeeds but storing the wrapped key fails, the user account exists with no encryption key — a permanently broken state. This edge function allows the client to roll back the auth account using the user's own JWT (no service role key needed on the client):
+- `generateRecoveryCode(): string` -- generates 24 random alphanumeric characters, formatted as `XXXX-XXXX-XXXX-XXXX-XXXX-XXXX`
+- `wrapKeyWithRecoveryCode(aesKey: CryptoKey, recoveryCode: string): Promise<{ wrappedKeyB64: string, saltB64: string }>` -- derives AES-GCM wrapping key from recovery code via PBKDF2 (310k iterations, SHA-256, fresh 16-byte salt), encrypts the exported AES key with AES-GCM, returns wrapped key + salt
+- `unwrapKeyWithRecoveryCode(wrappedKeyB64: string, saltB64: string, recoveryCode: string): Promise<CryptoKey>` -- reverse of above; throws on invalid code
+- `storeRecoveryKey(userId: string, wrappedKeyB64: string, saltB64: string): Promise<void>` -- updates `recovery_wrapped_key` and `recovery_key_salt` in DB
 
-```
-supabase/functions/delete-own-account/index.ts
-```
+## 3. Signup Flow Changes
 
-- Accepts the user's Bearer token
-- Verifies the JWT and extracts the user ID
-- Calls `supabase.auth.admin.deleteUser(userId)` using the service role key (already available as `SUPABASE_SERVICE_ROLE_KEY` secret)
-- Returns 200 on success
+File: `src/contexts/AuthContext.tsx` (signUp function)
 
----
+After the existing `createAndStoreWrappedKey` and RSA key generation:
+1. Export the AES data key (it's still extractable at this point in the signup flow)
+2. Call `generateRecoveryCode()` to create a random code
+3. Call `wrapKeyWithRecoveryCode()` to wrap the AES key
+4. Call `storeRecoveryKey()` to persist `recovery_wrapped_key` and `recovery_key_salt`
+5. Set a state/flag that triggers the Recovery Code Modal to display
 
-### 3. `src/lib/encryption.ts` — New Functions
+New component: `src/components/RecoveryCodeModal.tsx`
+- Displays the recovery code in a large, readable, copyable format
+- "Copy to clipboard" button
+- Checkbox: "I have saved this recovery code"
+- "Continue" button (enabled after checkbox)
+- If dismissed without checking, show a confirmation dialog warning that the code will never be shown again
+- Never blocks signup completion -- just strongly warns
 
-**Private helpers (not exported):**
+The modal will be triggered from the Auth page after successful signup via a callback/state variable.
 
-- `deriveWrappingKey(password: string, saltBytes: Uint8Array): Promise<CryptoKey>`
-  - Encodes password as UTF-8
-  - Imports as PBKDF2 key material
-  - Calls `crypto.subtle.deriveKey` with `{ name: 'PBKDF2', salt: saltBytes, iterations: KDF_ITERATIONS, hash: 'SHA-256' }` → `{ name: 'AES-KW', length: 256 }`
-  - `KDF_ITERATIONS = 310_000` defined as a module-level constant
+## 4. Recovery Flow (Forgot Password Path)
 
-- `importAesKeyExtractable(keyString: string): Promise<CryptoKey>`
-  - Same as existing `importKey` but with `extractable: true` — needed so the existing v1 raw key can be fed into `wrapKey` during migration
+File: `src/pages/Auth.tsx`
 
-**New exported functions:**
+Add a new AuthMode: `"recovery"`. On the forgot-password screen, add a link: "Have a recovery key? Use it instead."
 
-- `createAndStoreWrappedKey(userId: string, password: string): Promise<void>`
-  - Generates 16-byte random salt (`crypto.getRandomValues`)
-  - Calls `deriveWrappingKey(password, salt)`
-  - Generates a fresh AES-GCM 256-bit key (extractable)
-  - Calls `crypto.subtle.wrapKey('raw', aesKey, wrappingKey, 'AES-KW')`
-  - Encodes both as base64
-  - Inserts into `user_encryption_keys`: `{ user_id, salt, wrapped_key, encryption_version: 2 }` — `encrypted_key` left null (the column is currently `NOT NULL DEFAULT ''` — need to check the migration handles making it nullable, or we insert an empty string placeholder that the v1 read path will never touch for v2 users)
-  - Re-imports AES key as non-extractable and caches it in `keyCache`
-  - Throws on DB failure so the caller can clean up
+The recovery mode UI has three steps:
 
-- `loadAndCacheV2Key(userId: string, wrappedKeyB64: string, saltB64: string, password: string): Promise<void>`
-  - Decodes salt and wrapped blob from base64
-  - Calls `deriveWrappingKey(password, saltBytes)`
-  - Calls `crypto.subtle.unwrapKey('raw', wrappedKeyBytes, wrappingKey, 'AES-KW', { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])`
-  - Caches the resulting non-extractable AES key in `keyCache`
+**Step 1 -- Enter credentials:**
+- Email input
+- Recovery code input (formatted with dashes)
+- "Recover Account" button
 
-- `migrateV1ToV2(userId: string, password: string): Promise<void>`
-  - Fetches `encrypted_key` from DB (user is authenticated, RLS passes)
-  - Calls `importAesKeyExtractable(encrypted_key)` to get extractable AES key
-  - Generates 16-byte random salt
-  - Calls `deriveWrappingKey(password, salt)`
-  - Calls `crypto.subtle.wrapKey('raw', aesKey, wrappingKey, 'AES-KW')`
-  - Updates the DB row: writes `wrapped_key`, `salt`
-  - Reads the row back to verify `wrapped_key` is present and non-null
-  - Only if verified: updates `encryption_version = 2` and sets `encrypted_key` to null in a second update
-  - Re-imports AES key as non-extractable and caches it
-  - Any failure is caught and logged — the user still has their v1 key intact, migration will retry next login
+**Step 2 -- Set new password (on success):**
+- New password input
+- Confirm password input
+- "Update Password & Generate New Recovery Key" button
 
-**Updated `getOrCreateUserKey`:**
+**Step 3 -- Show new recovery code:**
+- Same modal as signup (`RecoveryCodeModal`)
 
-- Now fetches `encryption_version`, `encrypted_key`, `wrapped_key`, `salt` from the row
-- If `encryption_version === 2` and cache is cold: throws a clear error `"V2_KEY_REQUIRES_REAUTH"` — this signals the hook to sign out
-- If `encryption_version === 1`: follows the existing path using `encrypted_key`
-- In practice, for v2 users the key is always pre-cached at sign-in before this is ever called, so the cold-cache error path only triggers on unexpected page reloads where the session restored but no password is available
+Under the hood:
+1. Fetch `recovery_wrapped_key` and `recovery_key_salt` via `get_recovery_metadata_by_email` RPC
+2. Attempt `unwrapKeyWithRecoveryCode()` -- if it fails, show "Invalid recovery code"
+3. On success, call `supabase.auth.resetPasswordForEmail()` -- but since we need to set the password programmatically, we use the admin password reset flow: the user enters their new password, then we call `supabase.auth.signInWithPassword` after an admin-level password reset. Actually, since Supabase doesn't allow setting a password without being authenticated, the flow will be:
+   - Use `supabase.auth.signInWithPassword` with a temporary mechanism -- but the user forgot their password.
+   - Instead: Use `supabase.auth.resetPasswordForEmail()` to send a reset link. When the user returns via the reset link (mode=reset), we detect if they came from recovery, re-prompt for the recovery code, unwrap the key, and then re-wrap with the new password.
 
-**Note on `encrypted_key` column nullability:**
-The column is currently `NOT NULL`. The migration must alter it to `NULLABLE`:
-```sql
-ALTER TABLE user_encryption_keys ALTER COLUMN encrypted_key DROP NOT NULL;
-```
+**Revised recovery flow (simpler, more secure):**
 
----
+Since Supabase requires email-based password reset, the recovery key flow enhances the existing reset flow:
 
-### 4. `src/contexts/AuthContext.tsx` — Updated `signUp` and `signIn`
+1. User clicks "Forgot password?" on sign-in page
+2. Existing flow sends reset email, user clicks link, arrives at `?mode=reset`
+3. On the reset password page, add: "Do you have a recovery key?" toggle
+4. If yes: user enters recovery code alongside new password
+5. After `updatePassword()` succeeds, the app:
+   - Fetches `recovery_wrapped_key` + `recovery_key_salt` via RPC
+   - Unwraps AES key with recovery code
+   - Re-wraps AES key with new password (update `wrapped_key`, `salt`)
+   - Generates new recovery code, re-wraps AES key, updates `recovery_wrapped_key` and `recovery_key_salt`
+   - Shows new recovery code modal
+   - Caches the AES key for the session
+   - Also re-wraps RSA private key with new password-derived GCM key
 
-**`signUp(email, password)`:**
+This approach leverages the existing Supabase password reset email flow and adds key recovery on top.
 
-1. Call `supabase.auth.signUp()` as before
-2. On success (`data.user` present, no error):
-   - Wrap in try/catch:
-     - Call `createAndStoreWrappedKey(data.user.id, password)`
-     - If it throws: call the `delete-own-account` edge function with the user's access token, then sign out, then return an error to the UI: `"Account setup failed. Please try signing up again."`
-3. On success: key is in cache, `initializeUserEncryptionKey` will find it immediately
+## 5. Settings Page
 
-**`signIn(email, password)`:**
+New file: `src/pages/Settings.tsx`
 
-1. Call `supabase.rpc('get_encryption_metadata_by_email', { lookup_email: email })`
-2. Parse result: `{ salt, wrapped_key, encryption_version }`
-   - If no row found (first-ever login edge case): treat as v1
-3. If `encryption_version === 2` and `wrapped_key` is present:
-   - Call `loadAndCacheV2Key(userId_placeholder, wrapped_key, salt, password)` — note: we don't have the userId yet, so we store temporarily keyed by email and re-key after auth, OR we call `loadAndCacheV2Key` after sign-in succeeds when we have the user ID. Since `signInWithPassword` will either succeed or fail — if password is wrong, both the unwrap and the auth call will fail. We can do the unwrap optimistically, then key the cache by user ID after auth succeeds.
-   - Actually the cleanest approach: call `loadAndCacheV2KeyOptimistic(wrappedKeyB64, saltB64, password)` which returns the raw `CryptoKey` without caching it. After `signInWithPassword` succeeds and we have `data.user.id`, we put it into cache with the correct key.
-4. Call `supabase.auth.signInWithPassword({ email, password })` as normal
-5. After sign-in succeeds:
-   - If v2: put the unwrapped AES key into cache under `data.user.id`
-   - If v1: fire-and-forget `migrateV1ToV2(data.user.id, password)` — the password is still in scope at this closure, used immediately for PBKDF2, then the function returns and the closure ends. The password is never stored in state, refs, localStorage, or any persistent variable.
+A simple account settings page with a "Recovery Key" section:
 
----
+- Shows status: "Recovery key is set" or "No recovery key configured"
+- "Regenerate Recovery Key" button (requires entering current password)
+- On regeneration:
+  1. Verify password by deriving wrapping key and attempting to unwrap `wrapped_key`
+  2. Export the AES data key
+  3. Generate new recovery code
+  4. Wrap AES key with new recovery code
+  5. Update `recovery_wrapped_key` and `recovery_key_salt` in DB
+  6. Show new recovery code in modal
+- "Set Up Recovery Key" button (for V2 users without one) -- same flow
 
-### 5. `src/hooks/useEncryptionReady.ts` — Handle V2 Cold-Cache
+Add route `/settings` to `App.tsx` as a protected route. Add "Settings" link to the navbar.
 
-When `initializeUserEncryptionKey` returns `false` for a v2 user (cold cache after page reload), the current hook sets an error string. The updated behavior:
-- Detect the `"V2_KEY_REQUIRES_REAUTH"` error signal
-- Call `signOut()` from `useAuth`
-- The sign-out will redirect the user to `/auth` where they can log in again and re-derive their key
+## 6. Backwards Compatibility
 
-This is correct security behavior — for a zero-knowledge system the key genuinely cannot be recovered without re-authentication.
+- V1 users: completely untouched. No recovery key UI shown.
+- V2 users without recovery key: all existing flows work. Settings page shows option to set one up. Recovery toggle on reset page simply isn't available (graceful fallback).
+- V2 users with recovery key: full recovery flow available on password reset.
+- No existing rows, columns, or tables are modified or deleted.
 
----
+## Files to Create/Modify
 
-### Files Changed
+| File | Action |
+|------|--------|
+| `supabase/migrations/...recovery_key.sql` | Add columns + RPC |
+| `src/lib/recoveryKey.ts` | New -- recovery code generation and wrapping |
+| `src/components/RecoveryCodeModal.tsx` | New -- one-time code display modal |
+| `src/contexts/AuthContext.tsx` | Modify -- generate recovery key at signup, re-wrap on password reset |
+| `src/pages/Auth.tsx` | Modify -- add recovery code input on reset mode |
+| `src/pages/Settings.tsx` | New -- account settings with recovery key management |
+| `src/App.tsx` | Modify -- add `/settings` route |
+| `src/components/Navbar.tsx` | Modify -- add Settings link |
 
-| File | Change |
-|---|---|
-| New DB migration | Add `wrapped_key`, `salt`, `encryption_version` columns; make `encrypted_key` nullable; drop restrictive UPDATE policy; add permissive UPDATE policy; add `get_encryption_metadata_by_email` function |
-| `supabase/functions/delete-own-account/index.ts` | New edge function for signup rollback |
-| `src/lib/encryption.ts` | Add `KDF_ITERATIONS`, `deriveWrappingKey`, `importAesKeyExtractable`, `createAndStoreWrappedKey`, `loadAndCacheV2Key`, `migrateV1ToV2`; update `getOrCreateUserKey` |
-| `src/contexts/AuthContext.tsx` | Update `signUp` (wrapped key creation + rollback); update `signIn` (metadata fetch, pre-prime cache, fire-and-forget migrate) |
-| `src/hooks/useEncryptionReady.ts` | Sign out on v2 cold-cache failure |
+## Technical Details
 
-### Files NOT Changed
+- Recovery code format: 24 alphanumeric chars from `crypto.getRandomValues`, grouped as `XXXX-XXXX-XXXX-XXXX-XXXX-XXXX` (~143 bits of entropy)
+- PBKDF2 parameters: 310,000 iterations, SHA-256, 16-byte random salt (matching existing)
+- Wrapping algorithm: AES-GCM (matching RSA private key wrapping pattern, not AES-KW)
+- The raw recovery code is never stored anywhere -- only the wrapped output and salt
+- The AES data key must be temporarily extractable during wrapping; it is re-imported as non-extractable for session use
 
-- `encryptValue`, `decryptValue`, `encryptLetterFields`, `decryptLetterFields` — unchanged
-- All letter hooks — unchanged
-- `migrateLegacyEncryption.ts` — unchanged
-- All letters RLS policies — unchanged
-- The `reencrypt-for-recipient` edge function — unchanged
