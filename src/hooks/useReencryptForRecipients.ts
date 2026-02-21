@@ -158,24 +158,12 @@ export function useReencryptForRecipients() {
           queryClient.invalidateQueries({ queryKey: ["letters", user.id] });
         }
 
-        // ── Legacy path: server-side re-encryption (V1 users only) ──
-        if (legacyLetterIds.length > 0 && !senderRsaPublicKey) {
-          console.log(`[ReEncrypt] Found ${legacyLetterIds.length} letters for legacy server-side re-encryption`);
-
-          const { data, error: fnError } = await supabase.functions.invoke("reencrypt-for-recipient", {
-            body: { letterIds: legacyLetterIds },
-          });
-
-          if (fnError) {
-            console.error("[ReEncrypt] Edge function error:", fnError);
-            return;
-          }
-
-          console.log("[ReEncrypt] Legacy result:", data);
-
-          if (data?.reencryptedCount > 0) {
-            queryClient.invalidateQueries({ queryKey: ["letters", user.id] });
-          }
+        // ── Legacy path: skipped for V2 users ──
+        // V2 users no longer have a raw encrypted_key in the DB, so the legacy
+        // edge function cannot decrypt. These letters will be re-encrypted on
+        // the next login once RSA keys are available.
+        if (legacyLetterIds.length > 0) {
+          console.log(`[ReEncrypt] ${legacyLetterIds.length} letters waiting for RSA keys — will retry on next login`);
         }
       } catch (err) {
         console.error("[ReEncrypt] Error in re-encryption check:", err);
