@@ -15,12 +15,17 @@ import {
   loadAndCacheRsaKeys,
   clearRsaKeyCache,
 } from "@/lib/rsaEncryption";
+import {
+  generateRecoveryCode,
+  wrapKeyWithRecoveryCode,
+  storeRecoveryKey,
+} from "@/lib/recoveryKey";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null; recoveryCode?: string }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -67,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, retryCount = 0): Promise<{ error: Error | null }> => {
+  const signUp = async (email: string, password: string, retryCount = 0): Promise<{ error: Error | null; recoveryCode?: string }> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -92,6 +97,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (error) return { error };
 
     // Signup succeeded — now create and store the v2 wrapped key in the browser
+    let generatedRecoveryCode: string | undefined;
+
     if (data.user && data.session) {
       try {
         await createAndStoreWrappedKey(data.user.id, password);
@@ -100,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Fetch the salt we just stored to derive the GCM wrapping key
         const { data: keyRow } = await supabase
           .from('user_encryption_keys')
-          .select('salt')
+          .select('salt, wrapped_key')
           .eq('user_id', data.user.id)
           .maybeSingle();
 
@@ -108,6 +115,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const saltBytes = Uint8Array.from(atob(keyRow.salt), c => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
           const gcmKey = await deriveGcmWrappingKey(password, saltBytes);
           await generateAndStoreRsaKeys(data.user.id, gcmKey);
+        }
+
+        // Generate recovery key — unwrap the data key (extractable) to re-wrap it
+        if (keyRow?.salt && (keyRow as never as { wrapped_key: string }).wrapped_key) {
+          try {
+            const saltBytes = Uint8Array.from(atob(keyRow.salt), c => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
+            // Derive AES-KW wrapping key from password
+            const encoder = new TextEncoder();
+            const passwordKey = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
+            const wrappingKey = await crypto.subtle.deriveKey(
+              { name: 'PBKDF2', salt: saltBytes, iterations: 310_000, hash: 'SHA-256' },
+              passwordKey,
+              { name: 'AES-KW', length: 256 },
+              false,
+              ['wrapKey', 'unwrapKey'],
+            );
+            const wrappedKeyBytes = Uint8Array.from(atob((keyRow as never as { wrapped_key: string }).wrapped_key), c => c.charCodeAt(0));
+            const aesKeyExtractable = await crypto.subtle.unwrapKey(
+              'raw', wrappedKeyBytes, wrappingKey, 'AES-KW',
+              { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'],
+            );
+
+            const code = generateRecoveryCode();
+            const { wrappedKeyB64, saltB64 } = await wrapKeyWithRecoveryCode(aesKeyExtractable, code);
+            await storeRecoveryKey(data.user.id, wrappedKeyB64, saltB64);
+            generatedRecoveryCode = code;
+            console.log('[Auth] Recovery key generated at signup');
+          } catch (recoveryErr) {
+            // Non-fatal — user can set it up later in settings
+            console.warn('[Auth] Recovery key generation failed (non-fatal):', recoveryErr);
+          }
         }
       } catch (keyError) {
         console.error('[Auth] Failed to store encryption key — rolling back account:', keyError);
@@ -134,7 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    return { error: null };
+    return { error: null, recoveryCode: generatedRecoveryCode };
   };
 
   const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {

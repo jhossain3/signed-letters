@@ -112,6 +112,8 @@ export type Database = {
           has_rsa_keys: boolean
           id: string
           key_version: number
+          recovery_key_salt: string | null
+          recovery_wrapped_key: string | null
           rsa_private_key_iv: string | null
           rsa_public_key: string | null
           salt: string | null
@@ -127,6 +129,8 @@ export type Database = {
           has_rsa_keys?: boolean
           id?: string
           key_version?: number
+          recovery_key_salt?: string | null
+          recovery_wrapped_key?: string | null
           rsa_private_key_iv?: string | null
           rsa_public_key?: string | null
           salt?: string | null
@@ -142,6 +146,8 @@ export type Database = {
           has_rsa_keys?: boolean
           id?: string
           key_version?: number
+          recovery_key_salt?: string | null
+          recovery_wrapped_key?: string | null
           rsa_private_key_iv?: string | null
           rsa_public_key?: string | null
           salt?: string | null
@@ -164,6 +170,14 @@ export type Database = {
           encryption_version: number
           salt: string
           wrapped_key: string
+        }[]
+      }
+      get_recovery_metadata_by_email: {
+        Args: { lookup_email: string }
+        Returns: {
+          encryption_version: number
+          recovery_key_salt: string
+          recovery_wrapped_key: string
         }[]
       }
       get_rsa_public_key_by_email: {

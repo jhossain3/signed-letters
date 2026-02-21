@@ -1,12 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import Logo from "@/components/Logo";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { deriveGcmWrappingKey, cacheRawKey } from "@/lib/encryption";
+import {
+  fetchRecoveryMetadata,
+  unwrapKeyWithRecoveryCode,
+  generateRecoveryCode,
+  wrapKeyWithRecoveryCode,
+  storeRecoveryKey,
+  normalizeRecoveryCode,
+} from "@/lib/recoveryKey";
+import {
+  loadAndCacheRsaKeys,
+  generateAndStoreRsaKeys,
+} from "@/lib/rsaEncryption";
+import RecoveryCodeModal from "@/components/RecoveryCodeModal";
 
 type AuthMode = "signin" | "signup" | "forgot" | "reset";
 
@@ -21,6 +35,12 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
+
+  // Recovery key state
+  const [useRecoveryKey, setUseRecoveryKey] = useState(false);
+  const [recoveryCodeInput, setRecoveryCodeInput] = useState("");
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
 
   const { signIn, signUp, resetPassword, updatePassword, session, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +69,128 @@ const Auth = () => {
       return () => clearTimeout(timer);
     }
   }, [rateLimitCountdown]);
+
+  const handleRecoveryReset = async (newPassword: string) => {
+    // 1. Update the password via Supabase (user is authenticated via reset link)
+    setIsLoading(true);
+    try {
+      const { error: pwError } = await updatePassword(newPassword);
+      if (pwError) {
+        toast.error(pwError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Fetch recovery metadata
+      const user = session?.user;
+      if (!user?.email) {
+        toast.error("Session error. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      const meta = await fetchRecoveryMetadata(user.email);
+      if (!meta?.recoveryWrappedKey || !meta?.recoveryKeySalt) {
+        toast.error("No recovery key found for this account.");
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Unwrap the AES data key with the recovery code
+      let aesKey: CryptoKey;
+      try {
+        aesKey = await unwrapKeyWithRecoveryCode(
+          meta.recoveryWrappedKey,
+          meta.recoveryKeySalt,
+          recoveryCodeInput,
+        );
+      } catch {
+        toast.error("Invalid recovery code. Your password was updated but encryption keys were not recovered.");
+        setIsLoading(false);
+        return;
+      }
+
+      // 4. Re-wrap the AES key with the new password (AES-KW, same as signup)
+      const newSaltBytes = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
+      const encoder = new TextEncoder();
+      const passwordKey = await crypto.subtle.importKey('raw', encoder.encode(newPassword), 'PBKDF2', false, ['deriveKey']);
+      const newWrappingKey = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: newSaltBytes, iterations: 310_000, hash: 'SHA-256' },
+        passwordKey,
+        { name: 'AES-KW', length: 256 },
+        false,
+        ['wrapKey', 'unwrapKey'],
+      );
+
+      const wrappedKeyBuffer = await crypto.subtle.wrapKey('raw', aesKey, newWrappingKey, 'AES-KW');
+      const wrappedKeyB64 = btoa(String.fromCharCode(...new Uint8Array(wrappedKeyBuffer)));
+      const newSaltB64 = btoa(String.fromCharCode(...newSaltBytes));
+
+      // 5. Update wrapped_key + salt in DB
+      const { error: updateError } = await supabase
+        .from('user_encryption_keys')
+        .update({
+          wrapped_key: wrappedKeyB64,
+          salt: newSaltB64,
+          encryption_version: 2,
+        } as never)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        toast.error("Failed to update encryption keys.");
+        setIsLoading(false);
+        return;
+      }
+
+      // 6. Generate new recovery code
+      const newCode = generateRecoveryCode();
+      const { wrappedKeyB64: newRecWrapped, saltB64: newRecSalt } = await wrapKeyWithRecoveryCode(aesKey, newCode);
+      await storeRecoveryKey(user.id, newRecWrapped, newRecSalt);
+
+      // 7. Re-wrap RSA private key with new password-derived GCM key
+      try {
+        const gcmKey = await deriveGcmWrappingKey(newPassword, newSaltBytes);
+        // Check if user has RSA keys
+        const { data: keyRow } = await supabase
+          .from('user_encryption_keys')
+          .select('has_rsa_keys')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if ((keyRow as never as { has_rsa_keys: boolean })?.has_rsa_keys) {
+          // Can't re-wrap without old GCM key — generate fresh RSA keys
+          await generateAndStoreRsaKeys(user.id, gcmKey);
+          await loadAndCacheRsaKeys(user.id, gcmKey);
+          console.log('[Auth] RSA keys regenerated after recovery');
+        } else {
+          await generateAndStoreRsaKeys(user.id, gcmKey);
+          await loadAndCacheRsaKeys(user.id, gcmKey);
+        }
+      } catch (rsaErr) {
+        console.warn('[Auth] RSA key regen after recovery failed (non-fatal):', rsaErr);
+      }
+
+      // 8. Cache the AES key (non-extractable) for this session
+      const sessionKey = await crypto.subtle.importKey(
+        'raw',
+        await crypto.subtle.exportKey('raw', aesKey),
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt'],
+      );
+      cacheRawKey(user.id, sessionKey);
+
+      // 9. Show new recovery code
+      setRecoveryCode(newCode);
+      setShowRecoveryModal(true);
+      toast.success("Password updated and encryption keys recovered!");
+    } catch (err) {
+      console.error('[Auth] Recovery reset failed:', err);
+      toast.error("Recovery failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +221,18 @@ const Auth = () => {
         toast.error("Passwords do not match");
         return;
       }
+
+      // If using recovery key, run the full recovery flow
+      if (useRecoveryKey) {
+        if (!recoveryCodeInput.trim()) {
+          toast.error("Please enter your recovery code");
+          return;
+        }
+        await handleRecoveryReset(password);
+        return;
+      }
+
+      // Standard reset (no key recovery)
       setIsLoading(true);
       const { error } = await updatePassword(password);
       setIsLoading(false);
@@ -105,9 +259,8 @@ const Auth = () => {
 
     try {
       if (mode === "signup") {
-        const { error } = await signUp(email, password);
+        const { error, recoveryCode: code } = await signUp(email, password);
         if (error) {
-          // Handle rate limit errors specifically
           const isRateLimited =
             error.message.includes("Too many signup attempts") ||
             error.message.includes("rate limit") ||
@@ -126,7 +279,13 @@ const Auth = () => {
           }
         } else {
           toast.success("Account created successfully!");
-          navigate(from, { replace: true });
+          // Show recovery code modal if we generated one
+          if (code) {
+            setRecoveryCode(code);
+            setShowRecoveryModal(true);
+          } else {
+            navigate(from, { replace: true });
+          }
         }
       } else {
         const { error } = await signIn(email, password);
@@ -164,7 +323,9 @@ const Auth = () => {
       case "forgot":
         return "Enter your email to receive a reset link";
       case "reset":
-        return "Enter your new password";
+        return useRecoveryKey
+          ? "Enter your recovery code and new password to restore access to your letters"
+          : "Enter your new password";
       default:
         return "Sign in to access your entries";
     }
@@ -177,7 +338,7 @@ const Auth = () => {
       case "forgot":
         return "Send Reset Link";
       case "reset":
-        return "Update Password";
+        return useRecoveryKey ? "Recover & Update Password" : "Update Password";
       default:
         return "Sign In";
     }
@@ -222,6 +383,36 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-12 rounded-xl border-border/50 bg-card/50"
+                  />
+                </div>
+              )}
+
+              {/* Recovery key toggle — shown on reset mode */}
+              {mode === "reset" && (
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border/50 bg-card/50">
+                  <input
+                    type="checkbox"
+                    checked={useRecoveryKey}
+                    onChange={(e) => setUseRecoveryKey(e.target.checked)}
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+                  />
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-body text-foreground">I have a recovery key</span>
+                  </div>
+                </label>
+              )}
+
+              {/* Recovery code input — shown when toggle is on */}
+              {mode === "reset" && useRecoveryKey && (
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+                    value={recoveryCodeInput}
+                    onChange={(e) => setRecoveryCodeInput(e.target.value)}
+                    className="pl-10 h-12 rounded-xl border-border/50 bg-card/50 font-mono tracking-wider uppercase"
                   />
                 </div>
               )}
@@ -275,6 +466,13 @@ const Auth = () => {
               </div>
             )}
 
+            {/* Recovery key hint on reset mode */}
+            {mode === "reset" && !useRecoveryKey && (
+              <p className="text-xs text-muted-foreground font-body text-center">
+                ⚠️ Without a recovery key, resetting your password will make your existing encrypted letters unreadable.
+              </p>
+            )}
+
             <Button
               type="submit"
               className="w-full h-12 rounded-xl font-body text-base"
@@ -323,6 +521,22 @@ const Auth = () => {
           )}
         </motion.div>
       </main>
+
+      {/* Recovery Code Modal */}
+      <RecoveryCodeModal
+        open={showRecoveryModal}
+        recoveryCode={recoveryCode}
+        onClose={() => {
+          setShowRecoveryModal(false);
+          setRecoveryCode("");
+          // Navigate after modal closes
+          if (mode === "signup") {
+            navigate(from, { replace: true });
+          } else if (mode === "reset") {
+            navigate("/vault", { replace: true });
+          }
+        }}
+      />
     </div>
   );
 };
