@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Drafts from "./pages/Drafts";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,16 @@ const App = () => (
                     )
                   }
                 />
+                {FEATURE_FLAGS.AUTH_ENABLED && (
+                  <Route
+                    path="/settings"
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    }
+                  />
+                )}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
