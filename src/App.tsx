@@ -15,6 +15,7 @@ import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Auth from "./pages/Auth";
 import Drafts from "./pages/Drafts";
+import CreateFont from "./pages/CreateFont";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 
@@ -60,6 +61,18 @@ const App = () => (
                       </ProtectedRoute>
                     ) : (
                       <Vault />
+                    )
+                  }
+                />
+                <Route
+                  path="/create-font"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <CreateFont />
+                      </ProtectedRoute>
+                    ) : (
+                      <CreateFont />
                     )
                   }
                 />
