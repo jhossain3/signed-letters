@@ -31,6 +31,9 @@ import { serializeMultiPage, deserializeMultiPage } from "@/lib/sketchSerializat
 import { supabase } from "@/integrations/supabase/client";
 import { useDrafts, Draft } from "@/hooks/useDrafts";
 import DraftsList from "@/components/DraftsList";
+import { useCustomFont } from "@/hooks/useCustomFont";
+import HandwritingRenderer from "@/components/HandwritingRenderer";
+import { PenLine } from "lucide-react";
 
 // Signature font options
 const SIGNATURE_FONTS = [
@@ -123,6 +126,9 @@ const WriteLetter = () => {
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [showDraftsModal, setShowDraftsModal] = useState(false);
   const [draftBannerDismissed, setDraftBannerDismissed] = useState(false);
+  const [useHandwriting, setUseHandwriting] = useState(false);
+
+  const { glyphMap, hasCustomFont } = useCustomFont();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchCanvasRefs = useRef<Map<number, SketchCanvasRef>>(new Map());
@@ -879,6 +885,35 @@ const WriteLetter = () => {
                 {showLines && <Check className="w-4 h-4" />}
               </button>
             </div>
+
+            {/* My Handwriting Toggle */}
+            {inputMode === "type" && (
+              <div className="flex items-center gap-2">
+                {hasCustomFont ? (
+                  <>
+                    <span className="text-sm text-muted-foreground">My Handwriting:</span>
+                    <button
+                      onClick={() => setUseHandwriting(!useHandwriting)}
+                      className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                        useHandwriting ? "bg-primary border-primary text-primary-foreground" : "border-border bg-card"
+                      }`}
+                    >
+                      {useHandwriting && <Check className="w-4 h-4" />}
+                    </button>
+                  </>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground hover:text-foreground rounded-full"
+                    onClick={() => navigate("/create-font")}
+                  >
+                    <PenLine className="w-3 h-3 mr-1" />
+                    Create Font
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Letter Writing Area - Continuous Scroll */}
@@ -923,15 +958,34 @@ const WriteLetter = () => {
                           </div>
                         )}
 
-                        <Textarea
-                          placeholder={pageIndex === 0 ? "Start writing..." : "Continue writing..."}
-                          value={pageContent}
-                          onChange={(e) => updateTextPage(pageIndex, e.target.value)}
-                          className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
-                            showLines ? "lined-paper" : ""
-                          }`}
-                          style={{ color: inkColor.value }}
-                        />
+                        {useHandwriting && hasCustomFont ? (
+                          <div className="min-h-[400px]">
+                            <Textarea
+                              placeholder={pageIndex === 0 ? "Start writing..." : "Continue writing..."}
+                              value={pageContent}
+                              onChange={(e) => updateTextPage(pageIndex, e.target.value)}
+                              className="min-h-[100px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 mb-4"
+                              style={{ color: inkColor.value }}
+                            />
+                            <div className={`min-h-[280px] ${showLines ? "lined-paper" : ""}`}>
+                              <HandwritingRenderer
+                                text={pageContent}
+                                glyphMap={glyphMap}
+                                inkColor={inkColor.value}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <Textarea
+                            placeholder={pageIndex === 0 ? "Start writing..." : "Continue writing..."}
+                            value={pageContent}
+                            onChange={(e) => updateTextPage(pageIndex, e.target.value)}
+                            className={`min-h-[400px] resize-none border-0 px-0 focus-visible:ring-0 bg-transparent font-body text-lg placeholder:text-muted-foreground/50 ${
+                              showLines ? "lined-paper" : ""
+                            }`}
+                            style={{ color: inkColor.value }}
+                          />
+                        )}
 
                         {/* Page divider */}
                         {pageIndex < textPages.length - 1 && (

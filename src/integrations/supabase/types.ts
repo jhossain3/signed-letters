@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_font_glyphs: {
+        Row: {
+          character: string
+          created_at: string
+          id: string
+          stroke_data: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          character: string
+          created_at?: string
+          id?: string
+          stroke_data: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          character?: string
+          created_at?: string
+          id?: string
+          stroke_data?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       letters: {
         Row: {
           body: string | null
