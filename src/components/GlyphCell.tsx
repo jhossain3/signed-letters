@@ -38,7 +38,7 @@ const GlyphCell = memo(({ character, label, initialStrokes, onStrokesChange }: G
         <FreehandCanvas
           ref={canvasRef}
           inkColor="hsl(15, 20%, 18%)"
-          strokeSize={2.5}
+          strokeSize={4}
           eraserSize={12}
           width="80px"
           height="100px"
