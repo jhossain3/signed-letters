@@ -8,6 +8,3 @@ verify_jwt = false
 
 [functions.reencrypt-for-recipient]
 verify_jwt = false
-
-[functions.delete-own-account]
-verify_jwt = false

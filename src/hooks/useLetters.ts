@@ -3,13 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
-import {
-  getCachedRsaPrivateKey,
-  getCachedRsaPublicKey,
-  fetchRecipientRsaPublicKey,
-  envelopeEncryptLetter,
-  envelopeDecryptLetter,
-} from "@/lib/rsaEncryption";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 
 // Trigger immediate notification for same-day self-sent letters
@@ -51,8 +44,6 @@ export interface Letter {
   recipientEncrypted?: boolean;
   userId?: string;
   displayTitle?: string;
-  senderWrappedContentKey?: string;
-  recipientWrappedContentKey?: string;
 }
 
 export interface CreateLetterInput {
@@ -71,7 +62,7 @@ export interface CreateLetterInput {
   paperColor?: string;
   inkColor?: string;
   isLined?: boolean;
-  draftId?: string;
+  draftId?: string; // If sealing from a draft, update instead of insert
 }
 
 // Resolve photo paths to signed URLs
@@ -82,7 +73,9 @@ const resolvePhotoUrls = async (photos: string[]): Promise<string[]> => {
   
   const resolved = await Promise.all(
     photos.map(async (photo) => {
+      // Skip base64 data URLs and full URLs (legacy data)
       if (photo.startsWith("data:") || photo.startsWith("http")) return photo;
+      // It's a storage path — create a signed URL (1 hour expiry)
       const { data, error } = await supabase.storage
         .from("letter-photos")
         .createSignedUrl(photo, 3600);
@@ -117,8 +110,6 @@ const mapDbToLetter = (row: any): Letter => ({
   recipientEncrypted: row.recipient_encrypted ?? false,
   userId: row.user_id,
   displayTitle: row.display_title ?? undefined,
-  senderWrappedContentKey: row.sender_wrapped_content_key ?? undefined,
-  recipientWrappedContentKey: row.recipient_wrapped_content_key ?? undefined,
 });
 
 export const useLetters = () => {
@@ -130,6 +121,8 @@ export const useLetters = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      // Fetch letters authored by user OR received by user
+      // RLS policy handles this, but we need to get all accessible letters
       const { data, error } = await supabase
         .from("letters")
         .select("*")
@@ -138,64 +131,38 @@ export const useLetters = () => {
 
       if (error) throw error;
       
+      // Map and mark letters as sent or received based on ownership
       const mappedLetters = data.map((row: any) => {
         const letter = mapDbToLetter(row);
+        // If user is the recipient (not the author), mark as received
         if (row.recipient_user_id === user.id && row.user_id !== user.id) {
           return { ...letter, type: "received" as const };
         }
         return letter;
       });
       
-      const rsaPrivateKey = getCachedRsaPrivateKey();
-
+      // Decrypt letters:
+      // - Own sent letters (recipient_type=myself): decrypt with own key
+      // - Own sent letters (recipient_type=someone, recipient_encrypted=false): decrypt with own key (still encrypted with sender's key)
+      // - Own sent letters (recipient_type=someone, recipient_encrypted=true): already re-encrypted for recipient, sender can't decrypt — show placeholder
+      // - Received letters (recipient_encrypted=true): decrypt with own key
+      // - Received letters (recipient_encrypted=false): not yet re-encrypted, show "not ready"
       const decryptedLetters = await Promise.all(
-        mappedLetters.map(async (letter) => {
+        mappedLetters.map(letter => {
           const isReceived = letter.type === "received";
           const isSentToSomeone = letter.recipientType === "someone" && !isReceived;
 
-          // ── New envelope-encrypted letters (RSA flow) ──
-          if (letter.senderWrappedContentKey && letter.recipientWrappedContentKey) {
-            if (!rsaPrivateKey) {
-              // RSA keys not in cache — show placeholder
-              return {
-                ...letter,
-                title: letter.displayTitle || "Encrypted letter",
-                body: "Sign out and sign back in to read this letter.",
-                signature: "🔒",
-              };
-            }
-
-            try {
-              const wrappedKey = isReceived
-                ? letter.recipientWrappedContentKey
-                : letter.senderWrappedContentKey;
-              return await envelopeDecryptLetter(letter, wrappedKey, rsaPrivateKey);
-            } catch (err) {
-              console.error("[Letters] Envelope decryption failed:", err);
-              return {
-                ...letter,
-                title: letter.displayTitle || "Encrypted letter",
-                body: "[Unable to decrypt]",
-                signature: "🔒",
-              };
-            }
-          }
-
-          // ── Legacy flow (AES master key) ──
           if (isReceived) {
             if (letter.recipientEncrypted) {
               return decryptLetterFields(letter, user.id);
             }
-            // Not yet re-encrypted — show placeholder with display_title
-            return Promise.resolve({
-              ...letter,
-              title: letter.displayTitle || "A letter for you",
-              body: null,
-              signature: "",
-            });
+            // Not yet re-encrypted — return as-is (will show "not ready" message)
+            return Promise.resolve(letter);
           }
 
           if (isSentToSomeone && letter.recipientEncrypted) {
+            // Content was re-encrypted for recipient — sender can no longer decrypt
+            // Use display_title for a readable reference, fallback to generic text
             return Promise.resolve({
               ...letter,
               title: letter.displayTitle || "A letter",
@@ -204,10 +171,12 @@ export const useLetters = () => {
             });
           }
 
+          // Own letter (self or someone pre-reencrypt) — decrypt with own key
           return decryptLetterFields(letter, user.id);
         })
       );
       
+      // Resolve storage paths to signed URLs for photos
       const withResolvedPhotos = await Promise.all(
         decryptedLetters.map(async (letter) => ({
           ...letter,
@@ -224,64 +193,17 @@ export const useLetters = () => {
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
 
-      let titleToStore: string;
-      let bodyToStore: string | null;
-      let signatureToStore: string;
-      let sketchDataToStore: string | undefined;
-      let senderWrappedContentKey: string | undefined;
-      let recipientWrappedContentKey: string | undefined;
+      // Encrypt ALL letters with sender's key (both self and someone-else)
+      const encryptedFields = await encryptLetterFields(
+        { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
+        user.id
+      );
+      const titleToStore = encryptedFields.title;
+      const bodyToStore = encryptedFields.body;
+      const signatureToStore = encryptedFields.signature;
+      const sketchDataToStore = encryptedFields.sketchData;
 
-      const isSendingToSomeone = letter.recipientType === "someone" && letter.recipientEmail;
-
-      if (isSendingToSomeone) {
-        // Try envelope encryption (RSA flow)
-        const senderRsaPub = getCachedRsaPublicKey();
-        const recipientRsaPub = letter.recipientEmail
-          ? await fetchRecipientRsaPublicKey(letter.recipientEmail)
-          : null;
-
-        if (senderRsaPub && recipientRsaPub) {
-          // Both parties have RSA keys — use envelope encryption
-          const envelope = await envelopeEncryptLetter(
-            { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-            senderRsaPub,
-            recipientRsaPub
-          );
-          titleToStore = envelope.title;
-          bodyToStore = envelope.body;
-          signatureToStore = envelope.signature;
-          sketchDataToStore = envelope.sketchData;
-          senderWrappedContentKey = envelope.senderWrappedContentKey;
-          recipientWrappedContentKey = envelope.recipientWrappedContentKey;
-        } else {
-          // Fallback: encrypt with sender's AES key (pending re-encryption)
-          // Recipient doesn't have RSA keys yet — letter will be re-encrypted
-          // client-side when sender logs in and recipient has keys
-          const encryptedFields = await encryptLetterFields(
-            { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-            user.id
-          );
-          titleToStore = encryptedFields.title;
-          bodyToStore = encryptedFields.body;
-          signatureToStore = encryptedFields.signature;
-          sketchDataToStore = encryptedFields.sketchData;
-
-          if (!recipientRsaPub && senderRsaPub) {
-            toast.info("Your recipient hasn't enabled encrypted receiving yet. The letter will be securely delivered once they log in.");
-          }
-        }
-      } else {
-        // Self-sent: use existing AES master key encryption
-        const encryptedFields = await encryptLetterFields(
-          { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-          user.id
-        );
-        titleToStore = encryptedFields.title;
-        bodyToStore = encryptedFields.body;
-        signatureToStore = encryptedFields.signature;
-        sketchDataToStore = encryptedFields.sketchData;
-      }
-
+      // If sealing from a draft, update the existing row; otherwise insert new
       const dbRow: any = {
         user_id: user.id,
         title: titleToStore,
@@ -302,22 +224,17 @@ export const useLetters = () => {
         is_lined: letter.isLined ?? true,
       };
 
+      // For "someone" letters, save plaintext title so sender always has a readable reference
+      // even after re-encryption replaces the title field with recipient-encrypted content
       if (letter.recipientType === "someone") {
         dbRow.display_title = letter.title;
       }
 
-      // Add envelope encryption keys if present
-      if (senderWrappedContentKey) {
-        dbRow.sender_wrapped_content_key = senderWrappedContentKey;
-        dbRow.recipient_wrapped_content_key = recipientWrappedContentKey;
-        // Mark as recipient_encrypted since both parties can decrypt immediately
-        dbRow.recipient_encrypted = true;
-      }
-
       let data: any;
-      let dbError: any;
+      let error: any;
 
       if (letter.draftId) {
+        // Seal an existing draft
         const result = await supabase
           .from("letters")
           .update(dbRow)
@@ -326,7 +243,7 @@ export const useLetters = () => {
           .select()
           .single();
         data = result.data;
-        dbError = result.error;
+        error = result.error;
       } else {
         const result = await supabase
           .from("letters")
@@ -334,12 +251,13 @@ export const useLetters = () => {
           .select()
           .single();
         data = result.data;
-        dbError = result.error;
+        error = result.error;
       }
 
-      if (dbError) throw dbError;
+      if (error) throw error;
       
       // For letters to external recipients, check if they already have an account
+      // The link_pending_letters trigger only fires on NEW signups, so we handle existing users here
       if (letter.recipientType === "someone" && letter.recipientEmail) {
         try {
           const { data: existingUserId } = await supabase.rpc('find_user_by_email', {
@@ -372,17 +290,8 @@ export const useLetters = () => {
         }
       }
       
-      // Return decrypted letter for UI
+      // Decrypt the returned letter (always encrypted with sender key now)
       const mappedLetter = mapDbToLetter(data);
-
-      // If envelope-encrypted, decrypt with sender's RSA key
-      if (senderWrappedContentKey) {
-        const rsaPrivateKey = getCachedRsaPrivateKey();
-        if (rsaPrivateKey) {
-          return envelopeDecryptLetter(mappedLetter, senderWrappedContentKey, rsaPrivateKey);
-        }
-      }
-
       return decryptLetterFields(mappedLetter, user.id);
     },
     onSuccess: (savedLetter, originalInput) => {
@@ -390,6 +299,7 @@ export const useLetters = () => {
       queryClient.invalidateQueries({ queryKey: ["drafts", user?.id] });
       toast.success("Letter sealed and saved!");
       
+      // For self-sent same-day letters, trigger immediate notification
       const deliveryDate = new Date(savedLetter.deliveryDate);
       const today = new Date();
       deliveryDate.setHours(0, 0, 0, 0);
@@ -400,7 +310,14 @@ export const useLetters = () => {
       
       if (isSameDay && isSelfSent) {
         console.log('[addLetterMutation] Same-day self-sent letter detected, triggering immediate notification');
+        // Pass the plaintext title from the original input (before encryption)
         triggerImmediateNotification(savedLetter.id, originalInput.title);
+      }
+      
+      // For "someone" letters, also pass plaintext title since content is now encrypted
+      if (savedLetter.recipientType === "someone" && !isSameDay) {
+        // The send-letter-notifications cron will handle delivery-date notifications
+        // but we already passed plaintext title during the initial notification above
       }
     },
     onError: (error) => {
@@ -409,7 +326,11 @@ export const useLetters = () => {
   });
 
   const isLetterOpenable = (letter: Letter) => {
+    // Always check delivery date - letters can only be opened on or after their delivery date
+    // The BYPASS_DELIVERY_DATE flag only controls whether users can SELECT today's date when sealing,
+    // not whether letters can be opened early
     const deliveryDate = new Date(letter.deliveryDate);
+    // Allow opening on the same day (compare dates only, not time)
     deliveryDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);

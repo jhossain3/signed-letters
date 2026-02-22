@@ -118,7 +118,7 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
             transition={{ duration: 0.5 }}
           >
             {/* Check if this is a received letter that hasn't been re-encrypted yet */}
-            {letter.type === "received" && !letter.recipientEncrypted && !letter.recipientWrappedContentKey ? (
+            {letter.type === "received" && !letter.recipientEncrypted ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
