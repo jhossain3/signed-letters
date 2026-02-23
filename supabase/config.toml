@@ -1,10 +1,1 @@
-project_id = "waumaljmlmgyznlkkvia"
-
-[functions.send-letter-notifications]
-verify_jwt = false
-
-[functions.notify-sender-recipient-joined]
-verify_jwt = false
-
-[functions.reencrypt-for-recipient]
-verify_jwt = false
+project_id = "csyaldzceaphofycxkjy"
