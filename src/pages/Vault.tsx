@@ -12,8 +12,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { format, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
-import { needsMigration, migrateLettersToRandomKey } from "@/lib/migrateLegacyEncryption";
-import { useReencryptForRecipients } from "@/hooks/useReencryptForRecipients";
 
 // Demo letters for when auth is disabled
 const DEMO_LETTERS: Letter[] = [
@@ -94,15 +92,11 @@ const Vault = () => {
   const [activeTab, setActiveTab] = useState<"received" | "sent">("sent");
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
-  const [isMigrating, setIsMigrating] = useState(false);
   const [isWaitingForLetter, setIsWaitingForLetter] = useState(false);
 
   const location = useLocation();
   const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
   const { signOut, user } = useAuth();
-
-  // Re-encrypt "someone" letters for recipients who have signed up
-  useReencryptForRecipients();
 
   // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
   const newLetterId = (location.state as { newLetterId?: string } | null)?.newLetterId;
@@ -123,37 +117,6 @@ const Vault = () => {
       setIsWaitingForLetter(false);
     }
   }, [newLetterId, dbLetters, isLoading]);
-
-  // Auto-migrate legacy encrypted letters
-  useEffect(() => {
-    const runMigration = async () => {
-      if (!user?.id || !user?.email || isMigrating) return;
-
-      try {
-        const needsMig = await needsMigration(user.id);
-        if (needsMig) {
-          setIsMigrating(true);
-          toast.info("Migrating to new encryption...");
-
-          const result = await migrateLettersToRandomKey(user.id, user.email);
-
-          if (result.success && result.migratedCount > 0) {
-            toast.success(`Migrated ${result.migratedCount} successfully!`);
-            // Refresh the page to reload letters with new keys
-            window.location.reload();
-          } else if (!result.success) {
-            toast.error("Migration failed: " + result.error);
-          }
-          setIsMigrating(false);
-        }
-      } catch (error) {
-        console.error("Migration check failed:", error);
-        setIsMigrating(false);
-      }
-    };
-
-    runMigration();
-  }, [user?.id, user?.email]);
 
   // Use demo letters when auth is disabled, otherwise use real letters
   const letters = FEATURE_FLAGS.AUTH_ENABLED ? dbLetters : DEMO_LETTERS;
@@ -178,17 +141,15 @@ const Vault = () => {
     await signOut();
   };
 
-  if (isLoading || isMigrating || isWaitingForLetter) {
+  if (isLoading || isWaitingForLetter) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-editorial">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground font-body">
-            {isMigrating
-              ? "Migrating your entries..."
-              : isWaitingForLetter
-                ? "Sealing your words..."
-                : "Loading your entries..."}
+            {isWaitingForLetter
+              ? "Sealing your words..."
+              : "Loading your entries..."}
           </p>
         </div>
       </div>
