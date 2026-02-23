@@ -67,7 +67,7 @@ async function getOrCreateUserKey(userId: string): Promise<CryptoKey> {
 
   let key: CryptoKey;
 
-  if (existingKey) {
+  if (existingKey && existingKey.encrypted_key) {
     // Import existing key
     key = await importKey(existingKey.encrypted_key);
   } else {
