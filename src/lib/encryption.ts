@@ -75,16 +75,16 @@ async function getOrCreateUserKey(userId: string): Promise<CryptoKey> {
     key = await generateEncryptionKey();
     const exportedKey = await exportKey(key);
 
-    // Store the key in database (encrypted at rest by Supabase)
-    const { error: insertError } = await supabase
+    // Store the key in database (upsert to handle trigger-created placeholder rows)
+    const { error: upsertError } = await supabase
       .from('user_encryption_keys')
-      .insert({
+      .upsert({
         user_id: userId,
         encrypted_key: exportedKey,
-      });
+      }, { onConflict: 'user_id' });
 
-    if (insertError) {
-      console.error('Error storing encryption key:', insertError);
+    if (upsertError) {
+      console.error('Error storing encryption key:', upsertError);
       throw new Error('Failed to store encryption key');
     }
     
