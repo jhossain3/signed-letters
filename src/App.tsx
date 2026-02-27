@@ -18,6 +18,7 @@ import Drafts from "./pages/Drafts";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import InstallPrompt from "./components/InstallPrompt";
+import IOSInstallBanner from "./components/IOSInstallBanner";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
+            <IOSInstallBanner />
             <InstallPrompt />
           </BrowserRouter>
         </TooltipProvider>
