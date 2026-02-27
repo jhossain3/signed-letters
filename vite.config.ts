@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
       },
       manifest: {
-        name: "Signed",
-        short_name: "Signed",
+        name: "signed",
+        short_name: "signed",
         description: "Write and send meaningful letters to your future self and the people you love.",
         theme_color: "#F2EDE6",
         background_color: "#F2EDE6",
