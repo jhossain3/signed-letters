@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Drafts from "./pages/Drafts";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
+import InstallPrompt from "./components/InstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
+            <InstallPrompt />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
