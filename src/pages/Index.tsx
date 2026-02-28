@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { PenLine, Clock, Mail, Lock, MessageCircle } from "lucide-react";
+import { PenLine, Clock, Mail, Lock, MessageCircle, Archive } from "lucide-react";
 import Logo from "@/components/Logo";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-editorial.jpg";
 
 import Footer from "@/components/Footer";
 
 const Index = () => {
+  const { user } = useAuth();
   const steps = [
     {
       icon: PenLine,
@@ -48,7 +50,7 @@ const Index = () => {
               </div>
 
               {/* Main headline */}
-              <h1 className="font-editorial text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.05] tracking-tight">
+              <h1 className="font-editorial text-6xl md:text-7xl lg:text-8xl text-foreground leading-[1.05] tracking-tight">
                 <em className="italic">sign</em> it off
               </h1>
 
@@ -83,8 +85,15 @@ const Index = () => {
                   asChild
                   className="h-12 px-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 >
-                  <Link to="/auth">
-                    Sign Up / Sign In
+                  <Link to={user ? "/vault" : "/auth"} className="flex items-center gap-2">
+                    {user ? (
+                      <>
+                        <Archive className="w-4 h-4" />
+                        My Vault
+                      </>
+                    ) : (
+                      "Sign Up / Sign In"
+                    )}
                   </Link>
                 </Button>
               </motion.div>
