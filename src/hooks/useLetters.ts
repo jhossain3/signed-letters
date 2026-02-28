@@ -32,6 +32,7 @@ export interface Letter {
   signature: string;
   signatureFont?: string;
   recipientEmail?: string;
+  recipientName?: string;
   recipientType: "myself" | "someone";
   photos: string[];
   sketchData?: string;
@@ -54,6 +55,7 @@ export interface CreateLetterInput {
   signature: string;
   signatureFont?: string;
   recipientEmail?: string;
+  recipientName?: string;
   recipientType: "myself" | "someone";
   photos: string[];
   sketchData?: string;
@@ -98,6 +100,7 @@ const mapDbToLetter = (row: any): Letter => ({
   signature: row.signature,
   signatureFont: row.signature_font,
   recipientEmail: row.recipient_email,
+  recipientName: row.recipient_name,
   recipientType: row.recipient_type,
   photos: row.photos || [],
   sketchData: row.sketch_data,
@@ -153,25 +156,16 @@ export const useLetters = () => {
           const isSentToSomeone = letter.recipientType === "someone" && !isReceived;
 
           if (isReceived) {
-            if (letter.recipientEncrypted) {
-              return decryptLetterFields(letter, user.id);
-            }
-            // Not yet re-encrypted — return as-is (will show "not ready" message)
+            // "someone" letters are stored as plaintext — no decryption needed
             return Promise.resolve(letter);
           }
 
-          if (isSentToSomeone && letter.recipientEncrypted) {
-            // Content was re-encrypted for recipient — sender can no longer decrypt
-            // Use display_title for a readable reference, fallback to generic text
-            return Promise.resolve({
-              ...letter,
-              title: letter.displayTitle || "A letter",
-              body: "This letter has been securely transferred to your recipient.",
-              signature: "✓ Delivered",
-            });
+          if (isSentToSomeone) {
+            // "someone" letters are stored as plaintext — no decryption needed
+            return Promise.resolve(letter);
           }
 
-          // Own letter (self or someone pre-reencrypt) — decrypt with own key
+          // Own letter (self) — decrypt with own key
           return decryptLetterFields(letter, user.id);
         })
       );
@@ -193,15 +187,32 @@ export const useLetters = () => {
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Encrypt ALL letters with sender's key (both self and someone-else)
-      const encryptedFields = await encryptLetterFields(
-        { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-        user.id
-      );
-      const titleToStore = encryptedFields.title;
-      const bodyToStore = encryptedFields.body;
-      const signatureToStore = encryptedFields.signature;
-      const sketchDataToStore = encryptedFields.sketchData;
+      // For "someone" letters, store plaintext (no encryption)
+      // For "myself" letters, encrypt with sender's key
+      const isSomeoneElse = letter.recipientType === "someone";
+      
+      let titleToStore: string;
+      let bodyToStore: string | null;
+      let signatureToStore: string;
+      let sketchDataToStore: string | undefined;
+
+      if (isSomeoneElse) {
+        // Store plaintext for "someone" letters
+        titleToStore = letter.title;
+        bodyToStore = letter.body;
+        signatureToStore = letter.signature;
+        sketchDataToStore = letter.sketchData;
+      } else {
+        // Encrypt for "myself" letters
+        const encryptedFields = await encryptLetterFields(
+          { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
+          user.id
+        );
+        titleToStore = encryptedFields.title;
+        bodyToStore = encryptedFields.body;
+        signatureToStore = encryptedFields.signature;
+        sketchDataToStore = encryptedFields.sketchData;
+      }
 
       // If sealing from a draft, update the existing row; otherwise insert new
       const dbRow: any = {
@@ -213,6 +224,7 @@ export const useLetters = () => {
         signature: signatureToStore,
         signature_font: letter.signatureFont,
         recipient_email: letter.recipientEmail,
+        recipient_name: letter.recipientName,
         recipient_type: letter.recipientType,
         photos: letter.photos,
         sketch_data: sketchDataToStore,
@@ -224,9 +236,8 @@ export const useLetters = () => {
         is_lined: letter.isLined ?? true,
       };
 
-      // For "someone" letters, save plaintext title so sender always has a readable reference
-      // even after re-encryption replaces the title field with recipient-encrypted content
-      if (letter.recipientType === "someone") {
+      // For "someone" letters, save plaintext title for display
+      if (isSomeoneElse) {
         dbRow.display_title = letter.title;
       }
 
@@ -290,8 +301,12 @@ export const useLetters = () => {
         }
       }
       
-      // Decrypt the returned letter (always encrypted with sender key now)
+      // For "someone" letters, content is plaintext — no decryption needed
+      // For "myself" letters, decrypt with sender key
       const mappedLetter = mapDbToLetter(data);
+      if (letter.recipientType === "someone") {
+        return mappedLetter;
+      }
       return decryptLetterFields(mappedLetter, user.id);
     },
     onSuccess: (savedLetter, originalInput) => {

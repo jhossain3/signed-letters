@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, MessageCircle } from "lucide-react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, MessageCircle, User } from "lucide-react";
 import Footer from "@/components/Footer";
 
 import EnvelopeCard from "@/components/EnvelopeCard";
@@ -89,12 +89,14 @@ const DEMO_LETTERS: Letter[] = [
 
 const Vault = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"received" | "sent">("sent");
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "received" ? "received" : "sent";
+  const [activeTab, setActiveTab] = useState<"received" | "sent">(initialTab);
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [isWaitingForLetter, setIsWaitingForLetter] = useState(false);
 
-  const location = useLocation();
   const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
   const { signOut, user } = useAuth();
 
@@ -230,20 +232,29 @@ const Vault = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    {activeTab === "sent" && letter.recipientEncrypted ? (
+                    {activeTab === "sent" && letter.recipientType === "someone" ? (
                       <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-5 shadow-editorial text-center space-y-2">
                         <p className="font-editorial text-foreground font-medium text-sm truncate">
                           {letter.displayTitle || letter.title || "A letter"}
                         </p>
-                        <p className="text-xs text-muted-foreground font-body">
-                          To {letter.recipientEmail}
-                        </p>
+                        <div className="flex items-center justify-center gap-1 text-xs text-primary font-body">
+                          <User className="w-3 h-3" />
+                          <span>Sent to {letter.recipientName || letter.recipientEmail}</span>
+                        </div>
                         <p className="text-xs text-muted-foreground font-body">
                           {format(new Date(letter.deliveryDate), "MMM d, yyyy")}
                         </p>
-                        <p className="text-[11px] text-primary/70 font-body italic mt-1">
-                          Securely transferred to your recipient
-                        </p>
+                      </div>
+                    ) : activeTab === "sent" && letter.recipientType === "myself" ? (
+                      <div>
+                        <EnvelopeCard
+                          id={letter.id}
+                          title={letter.title}
+                          date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                          isOpenable={isLetterOpenable(letter)}
+                          onClick={() => handleEnvelopeClick(letter)}
+                        />
+                        <p className="text-center text-[11px] text-muted-foreground font-body mt-1">To Myself</p>
                       </div>
                     ) : (
                       <EnvelopeCard
@@ -270,20 +281,29 @@ const Vault = () => {
                   >
                     <div className="absolute left-1/2 top-1/2 w-3 h-3 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
                     <div className={`w-5/12 ${index % 2 === 0 ? "mr-8" : "ml-8"}`}>
-                      {activeTab === "sent" && letter.recipientEncrypted ? (
+                      {activeTab === "sent" && letter.recipientType === "someone" ? (
                         <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-5 text-center space-y-2">
                           <p className="font-editorial text-foreground font-medium text-sm truncate">
                             {letter.displayTitle || letter.title || "A letter"}
                           </p>
-                          <p className="text-xs text-muted-foreground font-body">
-                            To {letter.recipientEmail}
-                          </p>
+                          <div className="flex items-center justify-center gap-1 text-xs text-primary font-body">
+                            <User className="w-3 h-3" />
+                            <span>Sent to {letter.recipientName || letter.recipientEmail}</span>
+                          </div>
                           <p className="text-xs text-muted-foreground font-body">
                             {format(new Date(letter.deliveryDate), "MMM d, yyyy")}
                           </p>
-                          <p className="text-[11px] text-primary/70 font-body italic mt-1">
-                            Securely transferred to your recipient
-                          </p>
+                        </div>
+                      ) : activeTab === "sent" && letter.recipientType === "myself" ? (
+                        <div>
+                          <EnvelopeCard
+                            id={letter.id}
+                            title={letter.title}
+                            date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
+                            isOpenable={isLetterOpenable(letter)}
+                            onClick={() => handleEnvelopeClick(letter)}
+                          />
+                          <p className="text-center text-[11px] text-muted-foreground font-body mt-1">To Myself</p>
                         </div>
                       ) : (
                         <EnvelopeCard

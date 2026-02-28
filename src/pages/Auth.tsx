@@ -28,6 +28,10 @@ const Auth = () => {
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/vault";
 
+  // Check if coming from a recipient notification email (has tab param)
+  const redirectTab = searchParams.get("tab");
+  const effectiveFrom = redirectTab ? `/vault?tab=${redirectTab}` : from;
+
   // Redirect already-authenticated users to /write (unless resetting password)
   useEffect(() => {
     const urlMode = searchParams.get("mode");
@@ -126,7 +130,7 @@ const Auth = () => {
           }
         } else {
           toast.success("Account created successfully!");
-          navigate(from, { replace: true });
+          navigate(effectiveFrom, { replace: true });
         }
       } else {
         const { error } = await signIn(email, password);
@@ -134,7 +138,7 @@ const Auth = () => {
           toast.error(error.message);
         } else {
           toast.success("Welcome back!");
-          navigate(from, { replace: true });
+          navigate(effectiveFrom, { replace: true });
         }
       }
     } catch (error) {

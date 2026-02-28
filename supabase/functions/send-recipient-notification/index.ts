@@ -14,7 +14,7 @@ const SIGNUP_BASE_URL = "https://signed-letters.lovable.app/auth";
 
 // Email template for initial notification to external recipients
 const generateInitialNotificationHtml = (title: string, deliveryDate: string, recipientEmail: string) => {
-  const signupUrl = `${SIGNUP_BASE_URL}?mode=signup&email=${encodeURIComponent(recipientEmail)}`;
+  const signupUrl = `${SIGNUP_BASE_URL}?mode=signup&email=${encodeURIComponent(recipientEmail)}&tab=received`;
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -100,10 +100,10 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string, re
           <tr>
             <td style="padding: 0 40px 24px; text-align: center;">
               <p style="margin: 0; font-size: 14px; color: #7a6f6a; line-height: 1.6;">
-                Create a free account now so your letter will be waiting in your vault when it arrives.
+                Create your account or sign in so your letter will be waiting in your vault when it arrives.
               </p>
               <p style="margin: 16px 0 0; font-size: 14px; color: #2d2522; line-height: 1.6; background: #f5ebe0; border-radius: 8px; padding: 12px 16px; border-left: 3px solid #8b4545;">
-                <strong>Important:</strong> please create your account using this email address — <strong>${recipientEmail}</strong> — to ensure your letter is delivered to you correctly.
+                <strong>Important:</strong> you must sign up or sign in using this exact email address — <strong>${recipientEmail}</strong> — to ensure your letter is delivered to you correctly.
               </p>
             </td>
           </tr>
@@ -112,7 +112,7 @@ const generateInitialNotificationHtml = (title: string, deliveryDate: string, re
           <tr>
             <td style="padding: 0 40px 40px; text-align: center;">
               <a href="${signupUrl}" style="display: inline-block; padding: 16px 40px; background-color: #8b4545; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
-                Create Your Account
+                Create Your Account or Sign In
               </a>
             </td>
           </tr>

@@ -117,21 +117,9 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Check if this is a received letter that hasn't been re-encrypted yet */}
-            {letter.type === "received" && !letter.recipientEncrypted ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                </div>
-                <h3 className="font-editorial text-xl text-foreground mb-3">Your letter is almost ready</h3>
-                <p className="text-muted-foreground font-body text-sm max-w-sm mx-auto leading-relaxed">
-                  It will appear here once the sender next opens the app. We'll notify you when it's available.
-                </p>
-              </div>
-            ) : (
+            {(() => {
+              // Render the letter content directly
+              return (
               <>
                 <div
                   className="min-h-[300px] p-6 rounded-xl border border-border relative overflow-hidden"
@@ -194,7 +182,8 @@ const EnvelopeOpening = ({ letter, onClose }: EnvelopeOpeningProps) => {
                   This moment was worth waiting for.
                 </p>
               </>
-            )}
+              );
+            })()}
             <button
               onClick={onClose}
               className="mt-6 w-full py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-all shadow-editorial"

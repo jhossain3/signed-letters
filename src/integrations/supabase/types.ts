@@ -31,6 +31,7 @@ export type Database = {
           photos: string[] | null
           recipient_email: string | null
           recipient_encrypted: boolean | null
+          recipient_name: string | null
           recipient_type: string
           recipient_user_id: string | null
           recipient_wrapped_content_key: string | null
@@ -60,6 +61,7 @@ export type Database = {
           photos?: string[] | null
           recipient_email?: string | null
           recipient_encrypted?: boolean | null
+          recipient_name?: string | null
           recipient_type: string
           recipient_user_id?: string | null
           recipient_wrapped_content_key?: string | null
@@ -89,6 +91,7 @@ export type Database = {
           photos?: string[] | null
           recipient_email?: string | null
           recipient_encrypted?: boolean | null
+          recipient_name?: string | null
           recipient_type?: string
           recipient_user_id?: string | null
           recipient_wrapped_content_key?: string | null
