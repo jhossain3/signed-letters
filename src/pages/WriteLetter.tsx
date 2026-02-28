@@ -61,6 +61,7 @@ const DRAFT_STORAGE_KEY = "letter-draft";
 interface LetterDraft {
   recipientType: "myself" | "someone";
   recipientEmail: string;
+  recipientName: string;
   title: string;
   deliveryDate: string | null;
   signature: string;
@@ -111,6 +112,7 @@ const WriteLetter = () => {
   const [sketchPages, setSketchPages] = useState<string[]>([""]);
   const [deliveryDate, setDeliveryDate] = useState<Date>();
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const [signature, setSignature] = useState("");
   const [signatureFont, setSignatureFont] = useState(SIGNATURE_FONTS[0]);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -137,6 +139,7 @@ const WriteLetter = () => {
     setTitle(draft.title || "");
     setRecipientType(draft.recipientType);
     setRecipientEmail(draft.recipientEmail || "");
+    setRecipientName((draft as any).recipientName || "");
     if (draft.deliveryDate) {
       setDeliveryDate(new Date(draft.deliveryDate));
     }
@@ -220,6 +223,7 @@ const WriteLetter = () => {
     const draft: LetterDraft = {
       recipientType,
       recipientEmail,
+      recipientName,
       title,
       deliveryDate: deliveryDate?.toISOString() || null,
       signature,
@@ -247,6 +251,7 @@ const WriteLetter = () => {
   }, [
     recipientType,
     recipientEmail,
+    recipientName,
     title,
     deliveryDate,
     signature,
@@ -514,8 +519,8 @@ const WriteLetter = () => {
       return;
     }
 
-    // Check encryption readiness for all letters (all are now encrypted)
-    if (!isEncryptionReady) {
+    // Check encryption readiness only for "myself" letters
+    if (recipientType === "myself" && !isEncryptionReady) {
       if (encryptionError) {
         toast.error(encryptionError);
       } else {
@@ -542,6 +547,11 @@ const WriteLetter = () => {
 
     if (recipientType === "someone" && !recipientEmail.trim()) {
       toast.error("Please enter the recipient's email");
+      return;
+    }
+
+    if (recipientType === "someone" && !recipientName.trim()) {
+      toast.error("Please enter the recipient's name");
       return;
     }
 
@@ -577,6 +587,7 @@ const WriteLetter = () => {
         signature,
         signatureFont: signatureFont.class,
         recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
+        recipientName: recipientType === "someone" ? recipientName : undefined,
         recipientType,
         photos: photoUrls,
         sketchData: hasSketchContent ? finalSketchData : undefined,
@@ -1099,15 +1110,27 @@ const WriteLetter = () => {
 
           {/* Recipient Email */}
           {recipientType === "someone" && (
-            <div className="mb-8">
-              <label className="text-sm font-medium text-foreground mb-2 block font-body">Recipient Email</label>
-              <Input
-                type="email"
-                placeholder="their.email@example.com"
-                value={recipientEmail}
-                onChange={(e) => setRecipientEmail(e.target.value)}
-                className="bg-card/50 rounded-xl"
-              />
+            <div className="mb-8 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block font-body">Recipient Name</label>
+                <Input
+                  type="text"
+                  placeholder="Their name"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  className="bg-card/50 rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block font-body">Recipient Email</label>
+                <Input
+                  type="email"
+                  placeholder="their.email@example.com"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  className="bg-card/50 rounded-xl"
+                />
+              </div>
             </div>
           )}
 

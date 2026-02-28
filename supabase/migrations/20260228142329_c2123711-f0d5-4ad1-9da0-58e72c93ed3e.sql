@@ -1,0 +1,1 @@
+ALTER TABLE public.letters ADD COLUMN recipient_name text;
