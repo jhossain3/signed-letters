@@ -519,8 +519,8 @@ const WriteLetter = () => {
       return;
     }
 
-    // Check encryption readiness only for "myself" letters
-    if (recipientType === "myself" && !isEncryptionReady) {
+    // Check encryption readiness for all letter types (sender's key is always used)
+    if (!isEncryptionReady) {
       if (encryptionError) {
         toast.error(encryptionError);
       } else {

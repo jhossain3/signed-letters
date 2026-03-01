@@ -225,98 +225,84 @@ const Vault = () => {
           {filteredLetters.length > 0 ? (
             viewMode === "grid" ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                {filteredLetters.map((letter, index) => (
-                  <motion.div
-                    key={letter.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    {activeTab === "sent" && letter.recipientType === "someone" ? (
-                      <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-5 shadow-editorial text-center space-y-2">
-                        <p className="font-editorial text-foreground font-medium text-sm truncate">
-                          {letter.displayTitle || letter.title || "A letter"}
-                        </p>
-                        <div className="flex items-center justify-center gap-1 text-xs text-primary font-body">
-                          <User className="w-3 h-3" />
-                          <span>Sent to {letter.recipientName || letter.recipientEmail}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground font-body">
-                          {format(new Date(letter.deliveryDate), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                    ) : activeTab === "sent" && letter.recipientType === "myself" ? (
-                      <div>
-                        <EnvelopeCard
-                          id={letter.id}
-                          title={letter.title}
-                          date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
-                          isOpenable={isLetterOpenable(letter)}
-                          onClick={() => handleEnvelopeClick(letter)}
-                        />
-                        <p className="text-center text-[11px] text-muted-foreground font-body mt-1">To Myself</p>
-                      </div>
-                    ) : (
+                {filteredLetters.map((letter, index) => {
+                  const displayTitle = activeTab === "sent" && letter.recipientType === "someone"
+                    ? (letter.displayTitle || letter.title || "A letter")
+                    : letter.title;
+                  const sublabel = activeTab === "sent" && letter.recipientType === "someone"
+                    ? `To ${letter.recipientName || letter.recipientEmail}`
+                    : activeTab === "sent" && letter.recipientType === "myself"
+                    ? "To Myself"
+                    : undefined;
+
+                  return (
+                    <motion.div
+                      key={letter.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
                       <EnvelopeCard
                         id={letter.id}
-                        title={letter.title}
+                        title={displayTitle}
                         date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
                         isOpenable={isLetterOpenable(letter)}
                         onClick={() => handleEnvelopeClick(letter)}
                       />
-                    )}
-                  </motion.div>
-                ))}
+                      {sublabel && (
+                        <div className="text-center mt-1 flex items-center justify-center gap-1">
+                          {activeTab === "sent" && letter.recipientType === "someone" && (
+                            <User className="w-3 h-3 text-primary" />
+                          )}
+                          <p className="text-[11px] text-muted-foreground font-body">{sublabel}</p>
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
               </div>
             ) : (
               <div className="relative max-w-2xl mx-auto">
                 <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border -translate-x-1/2" />
-                {filteredLetters.map((letter, index) => (
-                  <motion.div
-                    key={letter.id}
-                    className={`relative flex ${index % 2 === 0 ? "justify-start pr-1/2" : "justify-end pl-1/2"} mb-8`}
-                    initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    <div className="absolute left-1/2 top-1/2 w-3 h-3 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
-                    <div className={`w-5/12 ${index % 2 === 0 ? "mr-8" : "ml-8"}`}>
-                      {activeTab === "sent" && letter.recipientType === "someone" ? (
-                        <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-5 text-center space-y-2">
-                          <p className="font-editorial text-foreground font-medium text-sm truncate">
-                            {letter.displayTitle || letter.title || "A letter"}
-                          </p>
-                          <div className="flex items-center justify-center gap-1 text-xs text-primary font-body">
-                            <User className="w-3 h-3" />
-                            <span>Sent to {letter.recipientName || letter.recipientEmail}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground font-body">
-                            {format(new Date(letter.deliveryDate), "MMM d, yyyy")}
-                          </p>
-                        </div>
-                      ) : activeTab === "sent" && letter.recipientType === "myself" ? (
-                        <div>
-                          <EnvelopeCard
-                            id={letter.id}
-                            title={letter.title}
-                            date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
-                            isOpenable={isLetterOpenable(letter)}
-                            onClick={() => handleEnvelopeClick(letter)}
-                          />
-                          <p className="text-center text-[11px] text-muted-foreground font-body mt-1">To Myself</p>
-                        </div>
-                      ) : (
+                {filteredLetters.map((letter, index) => {
+                  const displayTitle = activeTab === "sent" && letter.recipientType === "someone"
+                    ? (letter.displayTitle || letter.title || "A letter")
+                    : letter.title;
+                  const sublabel = activeTab === "sent" && letter.recipientType === "someone"
+                    ? `To ${letter.recipientName || letter.recipientEmail}`
+                    : activeTab === "sent" && letter.recipientType === "myself"
+                    ? "To Myself"
+                    : undefined;
+
+                  return (
+                    <motion.div
+                      key={letter.id}
+                      className={`relative flex ${index % 2 === 0 ? "justify-start pr-1/2" : "justify-end pl-1/2"} mb-8`}
+                      initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <div className="absolute left-1/2 top-1/2 w-3 h-3 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
+                      <div className={`w-5/12 ${index % 2 === 0 ? "mr-8" : "ml-8"}`}>
                         <EnvelopeCard
                           id={letter.id}
-                          title={letter.title}
+                          title={displayTitle}
                           date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
                           isOpenable={isLetterOpenable(letter)}
                           onClick={() => handleEnvelopeClick(letter)}
                         />
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                        {sublabel && (
+                          <div className="text-center mt-1 flex items-center justify-center gap-1">
+                            {activeTab === "sent" && letter.recipientType === "someone" && (
+                              <User className="w-3 h-3 text-primary" />
+                            )}
+                            <p className="text-[11px] text-muted-foreground font-body">{sublabel}</p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             )
           ) : (

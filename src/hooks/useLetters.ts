@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
+import { encryptLetterFieldsForRecipient, decryptLetterFieldsForRecipient } from "@/lib/emailDerivedEncryption";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 
 // Trigger immediate notification for same-day self-sent letters
@@ -42,7 +43,6 @@ export interface Letter {
   paperColor?: string;
   inkColor?: string;
   isLined?: boolean;
-  recipientEncrypted?: boolean;
   userId?: string;
   displayTitle?: string;
 }
@@ -64,7 +64,7 @@ export interface CreateLetterInput {
   paperColor?: string;
   inkColor?: string;
   isLined?: boolean;
-  draftId?: string; // If sealing from a draft, update instead of insert
+  draftId?: string;
 }
 
 // Resolve photo paths to signed URLs
@@ -75,9 +75,7 @@ const resolvePhotoUrls = async (photos: string[]): Promise<string[]> => {
   
   const resolved = await Promise.all(
     photos.map(async (photo) => {
-      // Skip base64 data URLs and full URLs (legacy data)
       if (photo.startsWith("data:") || photo.startsWith("http")) return photo;
-      // It's a storage path — create a signed URL (1 hour expiry)
       const { data, error } = await supabase.storage
         .from("letter-photos")
         .createSignedUrl(photo, 3600);
@@ -110,7 +108,33 @@ const mapDbToLetter = (row: any): Letter => ({
   paperColor: row.paper_color,
   inkColor: row.ink_color,
   isLined: row.is_lined ?? true,
-  recipientEncrypted: row.recipient_encrypted ?? false,
+  userId: row.user_id,
+  displayTitle: row.display_title ?? undefined,
+});
+
+/**
+ * Map a received letter from the recipient_* columns to the standard Letter interface.
+ * Recipient columns hold email-derived encrypted content.
+ */
+const mapDbToReceivedLetter = (row: any): Letter => ({
+  id: row.id,
+  title: row.recipient_title || row.title,
+  body: row.recipient_body ?? row.body,
+  date: row.date,
+  deliveryDate: row.delivery_date,
+  signature: row.recipient_signature || row.signature,
+  signatureFont: row.signature_font,
+  recipientEmail: row.recipient_email,
+  recipientName: row.recipient_name,
+  recipientType: row.recipient_type,
+  photos: row.photos || [],
+  sketchData: row.recipient_sketch_data ?? row.sketch_data,
+  isTyped: row.is_typed,
+  createdAt: row.created_at,
+  type: "received",
+  paperColor: row.paper_color,
+  inkColor: row.ink_color,
+  isLined: row.is_lined ?? true,
   userId: row.user_id,
   displayTitle: row.display_title ?? undefined,
 });
@@ -124,8 +148,6 @@ export const useLetters = () => {
     queryFn: async () => {
       if (!user) return [];
       
-      // Fetch letters authored by user OR received by user
-      // RLS policy handles this, but we need to get all accessible letters
       const { data, error } = await supabase
         .from("letters")
         .select("*")
@@ -136,36 +158,35 @@ export const useLetters = () => {
       
       // Map and mark letters as sent or received based on ownership
       const mappedLetters = data.map((row: any) => {
-        const letter = mapDbToLetter(row);
-        // If user is the recipient (not the author), mark as received
-        if (row.recipient_user_id === user.id && row.user_id !== user.id) {
-          return { ...letter, type: "received" as const };
+        const isReceived = row.recipient_user_id === user.id && row.user_id !== user.id;
+        if (isReceived) {
+          return mapDbToReceivedLetter(row);
         }
-        return letter;
+        return mapDbToLetter(row);
       });
       
-      // Decrypt letters:
-      // - Own sent letters (recipient_type=myself): decrypt with own key
-      // - Own sent letters (recipient_type=someone, recipient_encrypted=false): decrypt with own key (still encrypted with sender's key)
-      // - Own sent letters (recipient_type=someone, recipient_encrypted=true): already re-encrypted for recipient, sender can't decrypt — show placeholder
-      // - Received letters (recipient_encrypted=true): decrypt with own key
-      // - Received letters (recipient_encrypted=false): not yet re-encrypted, show "not ready"
+      // Decrypt letters based on type:
+      // - Own sent "myself" letters: decrypt with own AES key
+      // - Own sent "someone" letters: decrypt with own AES key (sender's copy)
+      // - Received letters: decrypt with email-derived key
       const decryptedLetters = await Promise.all(
-        mappedLetters.map(letter => {
+        mappedLetters.map(async (letter) => {
           const isReceived = letter.type === "received";
-          const isSentToSomeone = letter.recipientType === "someone" && !isReceived;
 
           if (isReceived) {
-            // "someone" letters are stored as plaintext — no decryption needed
-            return Promise.resolve(letter);
+            // Decrypt recipient_* columns with email-derived key
+            if (user.email) {
+              try {
+                return await decryptLetterFieldsForRecipient(letter, user.email);
+              } catch (e) {
+                console.error('Failed to decrypt received letter:', e);
+                return letter;
+              }
+            }
+            return letter;
           }
 
-          if (isSentToSomeone) {
-            // "someone" letters are stored as plaintext — no decryption needed
-            return Promise.resolve(letter);
-          }
-
-          // Own letter (self) — decrypt with own key
+          // Sent letters — always decrypt with sender's AES key
           return decryptLetterFields(letter, user.id);
         })
       );
@@ -187,47 +208,27 @@ export const useLetters = () => {
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
 
-      // For "someone" letters, store plaintext (no encryption)
-      // For "myself" letters, encrypt with sender's key
       const isSomeoneElse = letter.recipientType === "someone";
       
-      let titleToStore: string;
-      let bodyToStore: string | null;
-      let signatureToStore: string;
-      let sketchDataToStore: string | undefined;
+      // Always encrypt with sender's key for the main columns
+      const encryptedFields = await encryptLetterFields(
+        { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
+        user.id
+      );
 
-      if (isSomeoneElse) {
-        // Store plaintext for "someone" letters
-        titleToStore = letter.title;
-        bodyToStore = letter.body;
-        signatureToStore = letter.signature;
-        sketchDataToStore = letter.sketchData;
-      } else {
-        // Encrypt for "myself" letters
-        const encryptedFields = await encryptLetterFields(
-          { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
-          user.id
-        );
-        titleToStore = encryptedFields.title;
-        bodyToStore = encryptedFields.body;
-        signatureToStore = encryptedFields.signature;
-        sketchDataToStore = encryptedFields.sketchData;
-      }
-
-      // If sealing from a draft, update the existing row; otherwise insert new
       const dbRow: any = {
         user_id: user.id,
-        title: titleToStore,
-        body: bodyToStore,
+        title: encryptedFields.title,
+        body: encryptedFields.body,
         date: letter.date,
         delivery_date: letter.deliveryDate,
-        signature: signatureToStore,
+        signature: encryptedFields.signature,
         signature_font: letter.signatureFont,
         recipient_email: letter.recipientEmail,
         recipient_name: letter.recipientName,
         recipient_type: letter.recipientType,
         photos: letter.photos,
-        sketch_data: sketchDataToStore,
+        sketch_data: encryptedFields.sketchData,
         is_typed: letter.isTyped,
         type: letter.type,
         status: "sealed",
@@ -236,16 +237,24 @@ export const useLetters = () => {
         is_lined: letter.isLined ?? true,
       };
 
-      // For "someone" letters, save plaintext title for display
-      if (isSomeoneElse) {
-        dbRow.display_title = letter.title;
+      // For "someone" letters, also encrypt with recipient's email-derived key
+      if (isSomeoneElse && letter.recipientEmail) {
+        dbRow.display_title = letter.title; // plaintext for sender's sent tab
+
+        const recipientEncrypted = await encryptLetterFieldsForRecipient(
+          { title: letter.title, body: letter.body, signature: letter.signature, sketchData: letter.sketchData },
+          letter.recipientEmail
+        );
+        dbRow.recipient_title = recipientEncrypted.title;
+        dbRow.recipient_body = recipientEncrypted.body;
+        dbRow.recipient_signature = recipientEncrypted.signature;
+        dbRow.recipient_sketch_data = recipientEncrypted.sketchData;
       }
 
       let data: any;
       let error: any;
 
       if (letter.draftId) {
-        // Seal an existing draft
         const result = await supabase
           .from("letters")
           .update(dbRow)
@@ -268,8 +277,7 @@ export const useLetters = () => {
       if (error) throw error;
       
       // For letters to external recipients, check if they already have an account
-      // The link_pending_letters trigger only fires on NEW signups, so we handle existing users here
-      if (letter.recipientType === "someone" && letter.recipientEmail) {
+      if (isSomeoneElse && letter.recipientEmail) {
         try {
           const { data: existingUserId } = await supabase.rpc('find_user_by_email', {
             lookup_email: letter.recipientEmail,
@@ -301,12 +309,8 @@ export const useLetters = () => {
         }
       }
       
-      // For "someone" letters, content is plaintext — no decryption needed
-      // For "myself" letters, decrypt with sender key
+      // Return the mapped letter decrypted with sender's key
       const mappedLetter = mapDbToLetter(data);
-      if (letter.recipientType === "someone") {
-        return mappedLetter;
-      }
       return decryptLetterFields(mappedLetter, user.id);
     },
     onSuccess: (savedLetter, originalInput) => {
@@ -325,14 +329,7 @@ export const useLetters = () => {
       
       if (isSameDay && isSelfSent) {
         console.log('[addLetterMutation] Same-day self-sent letter detected, triggering immediate notification');
-        // Pass the plaintext title from the original input (before encryption)
         triggerImmediateNotification(savedLetter.id, originalInput.title);
-      }
-      
-      // For "someone" letters, also pass plaintext title since content is now encrypted
-      if (savedLetter.recipientType === "someone" && !isSameDay) {
-        // The send-letter-notifications cron will handle delivery-date notifications
-        // but we already passed plaintext title during the initial notification above
       }
     },
     onError: (error) => {
@@ -341,11 +338,7 @@ export const useLetters = () => {
   });
 
   const isLetterOpenable = (letter: Letter) => {
-    // Always check delivery date - letters can only be opened on or after their delivery date
-    // The BYPASS_DELIVERY_DATE flag only controls whether users can SELECT today's date when sealing,
-    // not whether letters can be opened early
     const deliveryDate = new Date(letter.deliveryDate);
-    // Allow opening on the same day (compare dates only, not time)
     deliveryDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
