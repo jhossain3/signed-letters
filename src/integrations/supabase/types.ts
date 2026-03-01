@@ -29,9 +29,13 @@ export type Database = {
           notification_sent: boolean | null
           paper_color: string | null
           photos: string[] | null
+          recipient_body: string | null
           recipient_email: string | null
           recipient_encrypted: boolean | null
           recipient_name: string | null
+          recipient_signature: string | null
+          recipient_sketch_data: string | null
+          recipient_title: string | null
           recipient_type: string
           recipient_user_id: string | null
           recipient_wrapped_content_key: string | null
@@ -59,9 +63,13 @@ export type Database = {
           notification_sent?: boolean | null
           paper_color?: string | null
           photos?: string[] | null
+          recipient_body?: string | null
           recipient_email?: string | null
           recipient_encrypted?: boolean | null
           recipient_name?: string | null
+          recipient_signature?: string | null
+          recipient_sketch_data?: string | null
+          recipient_title?: string | null
           recipient_type: string
           recipient_user_id?: string | null
           recipient_wrapped_content_key?: string | null
@@ -89,9 +97,13 @@ export type Database = {
           notification_sent?: boolean | null
           paper_color?: string | null
           photos?: string[] | null
+          recipient_body?: string | null
           recipient_email?: string | null
           recipient_encrypted?: boolean | null
           recipient_name?: string | null
+          recipient_signature?: string | null
+          recipient_sketch_data?: string | null
+          recipient_title?: string | null
           recipient_type?: string
           recipient_user_id?: string | null
           recipient_wrapped_content_key?: string | null

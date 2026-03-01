@@ -32,17 +32,22 @@ const Auth = () => {
   const redirectTab = searchParams.get("tab");
   const effectiveFrom = redirectTab ? `/vault?tab=${redirectTab}` : from;
 
-  // Redirect already-authenticated users to /write (unless resetting password)
+  // Redirect already-authenticated users (unless resetting password)
   useEffect(() => {
     const urlMode = searchParams.get("mode");
     if (session && !authLoading && urlMode !== "reset") {
-      navigate("/write", { replace: true });
+      // If arriving via recipient notification email (has tab param), go to vault
+      if (redirectTab) {
+        navigate(effectiveFrom, { replace: true });
+      } else {
+        navigate("/write", { replace: true });
+      }
       return;
     }
     if (urlMode === "reset" && session) {
       setMode("reset");
     }
-  }, [searchParams, session, authLoading, navigate]);
+  }, [searchParams, session, authLoading, navigate, redirectTab, effectiveFrom]);
 
   // Handle countdown timer
   useEffect(() => {
