@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { X } from "lucide-react";
 
 interface EnvelopeCardProps {
   id: string;
@@ -7,9 +8,11 @@ interface EnvelopeCardProps {
   date: string;
   isOpenable: boolean;
   onClick: () => void;
+  onDelete?: () => void;
+  canDelete?: boolean;
 }
 
-const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) => {
+const EnvelopeCard = ({ title, date, isOpenable, onClick, onDelete, canDelete }: EnvelopeCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -21,6 +24,19 @@ const EnvelopeCard = ({ title, date, isOpenable, onClick }: EnvelopeCardProps) =
       whileHover={{ scale: 1.02, y: -5 }}
       whileTap={{ scale: 0.98 }}
     >
+      {/* Delete button */}
+      {canDelete && onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-card border border-border/50 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+          title="Delete letter"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
       <div className="relative w-44 h-32 mx-auto">
         <svg viewBox="0 0 120 90" className="w-full h-full drop-shadow-lg">
           {/* Envelope back */}

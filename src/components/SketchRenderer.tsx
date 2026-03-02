@@ -79,11 +79,7 @@ const SketchRenderer = ({
   }, [sketchData]);
 
   if (pages.length === 0) {
-    return (
-      <div className="w-full h-64 flex items-center justify-center text-muted-foreground rounded-lg border border-border bg-paper">
-        <p>No handwriting to display</p>
-      </div>
-    );
+    return null;
   }
 
   // Generate line pattern matching SketchCanvas exactly

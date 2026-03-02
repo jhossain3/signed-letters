@@ -345,12 +345,33 @@ export const useLetters = () => {
     return today >= deliveryDate;
   };
 
+  const deleteLetterMutation = useMutation({
+    mutationFn: async (letterId: string) => {
+      if (!user) throw new Error("User not authenticated");
+      const { error } = await supabase
+        .from("letters")
+        .delete()
+        .eq("id", letterId)
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
+      toast.success("Letter deleted");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete letter: " + error.message);
+    },
+  });
+
   return {
     letters,
     isLoading,
     error,
     addLetter: addLetterMutation.mutateAsync,
     isAddingLetter: addLetterMutation.isPending,
+    deleteLetter: deleteLetterMutation.mutateAsync,
+    isDeletingLetter: deleteLetterMutation.isPending,
     isLetterOpenable,
   };
 };

@@ -7,6 +7,16 @@ import Footer from "@/components/Footer";
 import EnvelopeCard from "@/components/EnvelopeCard";
 import EnvelopeOpening from "@/components/EnvelopeOpening";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLetters, Letter } from "@/hooks/useLetters";
 import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
@@ -96,8 +106,9 @@ const Vault = () => {
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [isWaitingForLetter, setIsWaitingForLetter] = useState(false);
+  const [letterToDelete, setLetterToDelete] = useState<Letter | null>(null);
 
-  const { letters: dbLetters, isLoading, isLetterOpenable } = useLetters();
+  const { letters: dbLetters, isLoading, isLetterOpenable, deleteLetter } = useLetters();
   const { signOut, user } = useAuth();
 
   // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
@@ -248,6 +259,8 @@ const Vault = () => {
                         date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
                         isOpenable={isLetterOpenable(letter)}
                         onClick={() => handleEnvelopeClick(letter)}
+                        canDelete={activeTab === "sent" && letter.userId === user?.id}
+                        onDelete={() => setLetterToDelete(letter)}
                       />
                       {sublabel && (
                         <div className="text-center mt-1 flex items-center justify-center gap-1">
@@ -290,6 +303,8 @@ const Vault = () => {
                           date={format(new Date(letter.deliveryDate), "MMM d, yyyy")}
                           isOpenable={isLetterOpenable(letter)}
                           onClick={() => handleEnvelopeClick(letter)}
+                          canDelete={activeTab === "sent" && letter.userId === user?.id}
+                          onDelete={() => setLetterToDelete(letter)}
                         />
                         {sublabel && (
                           <div className="text-center mt-1 flex items-center justify-center gap-1">
@@ -336,6 +351,32 @@ const Vault = () => {
       <AnimatePresence>
         {selectedLetter && <EnvelopeOpening letter={selectedLetter} onClose={() => setSelectedLetter(null)} />}
       </AnimatePresence>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!letterToDelete} onOpenChange={(open) => !open && setLetterToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-editorial">Delete this letter?</AlertDialogTitle>
+            <AlertDialogDescription className="font-body">
+              Are you sure you want to delete this letter? Letters are meant for reflection and this cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (letterToDelete) {
+                  await deleteLetter(letterToDelete.id);
+                  setLetterToDelete(null);
+                }
+              }}
+            >
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
