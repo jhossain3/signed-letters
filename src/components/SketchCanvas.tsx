@@ -1,5 +1,8 @@
 import { useRef, useImperativeHandle, forwardRef, useState, useCallback, useEffect } from "react";
 import { FreehandCanvas, FreehandCanvasRef, Stroke, SketchToolbar } from "./sketch";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Hand, Pencil } from "lucide-react";
+import { Button } from "./ui/button";
 
 interface SketchCanvasProps {
   onChange?: (dataUrl: string) => void;
@@ -61,6 +64,8 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
     const [canUndo, setCanUndo] = useState(false);
     const [initialStrokes, setInitialStrokes] = useState<Stroke[] | undefined>();
     const hasLoadedInitialData = useRef(false);
+    const isMobile = useIsMobile();
+    const [scrollMode, setScrollMode] = useState(false);
 
     // Load initial data once
     useEffect(() => {
@@ -135,17 +140,37 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
     return (
       <div className="space-y-3">
         {/* Toolbar */}
-        <SketchToolbar
-          isEraser={isEraser}
-          canUndo={canUndo}
-          onPenClick={handlePen}
-          onEraserClick={handleEraser}
-          onUndoClick={handleUndo}
-          onClearClick={handleClear}
-        />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <SketchToolbar
+              isEraser={isEraser}
+              canUndo={canUndo}
+              onPenClick={handlePen}
+              onEraserClick={handleEraser}
+              onUndoClick={handleUndo}
+              onClearClick={handleClear}
+            />
+          </div>
+          {isMobile && (
+            <Button
+              type="button"
+              variant={scrollMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setScrollMode(!scrollMode)}
+              className="rounded-full shrink-0"
+              title={scrollMode ? "Switch to Draw" : "Switch to Scroll"}
+            >
+              {scrollMode ? <Pencil className="w-4 h-4 mr-1" /> : <Hand className="w-4 h-4 mr-1" />}
+              {scrollMode ? "Draw" : "Scroll"}
+            </Button>
+          )}
+        </div>
 
         {/* Canvas */}
-        <div onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+        <div
+          onTouchStart={(e) => { if (!scrollMode) e.stopPropagation(); }}
+          onTouchMove={(e) => { if (!scrollMode) e.stopPropagation(); }}
+        >
           <FreehandCanvas
             ref={canvasRef}
             inkColor={inkColor}
@@ -157,6 +182,7 @@ const SketchCanvas = forwardRef<SketchCanvasRef, SketchCanvasProps>(
             initialStrokes={initialStrokes}
             onChange={handleChange}
             canvasId={canvasId}
+            readOnly={scrollMode}
           />
         </div>
       </div>
