@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle, FileText } from "lucide-react";
+import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle, FileText, CalendarDays } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -85,6 +85,14 @@ const Navbar = () => {
                   My Vault
                 </Link>
               </DropdownMenuItem>
+              {FEATURE_FLAGS.AUTH_ENABLED && user && (
+                <DropdownMenuItem asChild>
+                  <Link to="/my-events" className="flex items-center gap-2 cursor-pointer">
+                    <CalendarDays className="h-4 w-4" />
+                    Events
+                  </Link>
+                </DropdownMenuItem>
+              )}
               {FEATURE_FLAGS.AUTH_ENABLED && user && (
                 <>
                   <DropdownMenuSeparator />
