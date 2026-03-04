@@ -16,6 +16,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Auth from "./pages/Auth";
 import Drafts from "./pages/Drafts";
 import EventFlow from "./pages/EventFlow";
+import MyEvents from "./pages/MyEvents";
+import AdminEvents from "./pages/AdminEvents";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import InstallPrompt from "./components/InstallPrompt";
@@ -40,6 +42,30 @@ const App = () => (
                 )}
                 <Route path="/write" element={<WriteLetter />} />
                 <Route path="/event/:slug" element={<EventFlow />} />
+                <Route
+                  path="/my-events"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <MyEvents />
+                      </ProtectedRoute>
+                    ) : (
+                      <MyEvents />
+                    )
+                  }
+                />
+                <Route
+                  path="/admin/events"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <AdminEvents />
+                      </ProtectedRoute>
+                    ) : (
+                      <AdminEvents />
+                    )
+                  }
+                />
                 <Route path="/about" element={<About />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
