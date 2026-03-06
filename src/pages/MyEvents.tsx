@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, MapPin, Pencil, X, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarDays, CalendarIcon, MapPin, Pencil, X, Check } from "lucide-react";
 import { format, addDays, isWeekend, differenceInHours } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const UK_BANK_HOLIDAYS_2026 = [
@@ -53,6 +56,7 @@ const MyEvents = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editAddress, setEditAddress] = useState("");
+  const [editPostingDate, setEditPostingDate] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -105,7 +109,10 @@ const MyEvents = () => {
     setEditingId(sub.id);
     setEditName(sub.recipient_name);
     setEditAddress(sub.recipient_address);
+    setEditPostingDate(sub.posting_date);
   };
+
+  const minPostingDate = addDays(new Date(), 1);
 
   const cancelEditing = () => {
     setEditingId(null);
@@ -115,16 +122,16 @@ const MyEvents = () => {
     setSaving(true);
     const { error } = await supabase
       .from("event_submissions")
-      .update({ recipient_name: editName, recipient_address: editAddress })
+      .update({ recipient_name: editName, recipient_address: editAddress, posting_date: editPostingDate })
       .eq("id", id);
     if (error) {
       toast({ title: "Error", description: "Failed to update. Please try again.", variant: "destructive" });
     } else {
       setSubmissions((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, recipient_name: editName, recipient_address: editAddress } : s))
+        prev.map((s) => (s.id === id ? { ...s, recipient_name: editName, recipient_address: editAddress, posting_date: editPostingDate } : s))
       );
       setEditingId(null);
-      toast({ title: "Updated", description: "Recipient details have been updated." });
+      toast({ title: "Updated", description: "Submission details have been updated." });
     }
     setSaving(false);
   };
@@ -152,11 +159,12 @@ const MyEvents = () => {
         ) : (
           <div className="space-y-4">
             {submissions.map((sub) => {
-              const postingD = new Date(sub.posting_date + "T00:00:00");
+              const isEditing = editingId === sub.id;
+              const displayPostingDate = isEditing ? editPostingDate : sub.posting_date;
+              const postingD = new Date(displayPostingDate + "T00:00:00");
               const arrivalEarly = addWorkingDays(postingD, 3);
               const arrivalLate = addWorkingDays(postingD, 5);
               const editable = canEdit(sub.posting_date);
-              const isEditing = editingId === sub.id;
 
               return (
                 <Card key={sub.id} className="overflow-hidden">
@@ -183,10 +191,38 @@ const MyEvents = () => {
                         <span className="text-muted-foreground">Letter date</span>
                         <p className="font-medium">{format(new Date(sub.letter_date + "T00:00:00"), "d MMM yyyy")}</p>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Posting date</span>
-                        <p className="font-medium">{format(postingD, "d MMM yyyy")}</p>
-                      </div>
+                      {isEditing ? (
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Posting date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn("w-full justify-start text-left font-normal mt-1", !editPostingDate && "text-muted-foreground")}
+                                size="sm"
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {editPostingDate ? format(new Date(editPostingDate + "T00:00:00"), "d MMM yyyy") : "Pick a date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={new Date(editPostingDate + "T00:00:00")}
+                                onSelect={(date) => date && setEditPostingDate(format(date, "yyyy-MM-dd"))}
+                                disabled={(date) => date < minPostingDate}
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-muted-foreground">Posting date</span>
+                          <p className="font-medium">{format(postingD, "d MMM yyyy")}</p>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <span className="text-muted-foreground">Estimated arrival</span>
@@ -207,7 +243,7 @@ const MyEvents = () => {
                             <Textarea value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className="mt-1" rows={3} />
                           </div>
                           <div className="flex gap-2 pt-1">
-                            <Button size="sm" onClick={() => saveEdit(sub.id)} disabled={saving || !editName.trim() || !editAddress.trim()}>
+                            <Button size="sm" onClick={() => saveEdit(sub.id)} disabled={saving || !editName.trim() || !editAddress.trim() || !editPostingDate}>
                               <Check className="h-4 w-4 mr-1" /> Save
                             </Button>
                             <Button size="sm" variant="ghost" onClick={cancelEditing}>
