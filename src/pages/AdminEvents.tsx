@@ -9,7 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Download, Plus, CalendarDays, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Download, Plus, CalendarDays, MapPin, Users, Mail } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { format, addDays, isWeekend } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -69,6 +70,7 @@ const AdminEvents = () => {
   const [selectedEvent, setSelectedEvent] = useState<EventWithCount | null>(null);
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [subsLoading, setSubsLoading] = useState(false);
+  const [filterPostToday, setFilterPostToday] = useState(false);
 
   // New event form
   const [showNewEvent, setShowNewEvent] = useState(false);
@@ -117,9 +119,16 @@ const AdminEvents = () => {
     setLoading(false);
   };
 
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const postTodayCount = submissions.filter((s) => s.posting_date === todayStr).length;
+  const displayedSubmissions = filterPostToday
+    ? submissions.filter((s) => s.posting_date === todayStr)
+    : submissions;
+
   const loadSubmissions = async (event: EventWithCount) => {
     setSelectedEvent(event);
     setSubsLoading(true);
+    setFilterPostToday(false);
     try {
       const data = await invokeAdmin("GET", { action: "list-submissions", event_id: event.id });
       setSubmissions(data);
@@ -224,9 +233,21 @@ const AdminEvents = () => {
                 {selectedEvent.location && ` · ${selectedEvent.location}`}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={exportCSV} className="ml-auto" disabled={submissions.length === 0}>
-              <Download className="h-4 w-4 mr-1" /> Export CSV
-            </Button>
+            <div className="flex items-center gap-2 ml-auto">
+              {postTodayCount > 0 && (
+                <Button
+                  variant={filterPostToday ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterPostToday(!filterPostToday)}
+                >
+                  <Mail className="h-4 w-4 mr-1" />
+                  Post Today ({postTodayCount})
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={exportCSV} disabled={submissions.length === 0}>
+                <Download className="h-4 w-4 mr-1" /> Export CSV
+              </Button>
+            </div>
           </div>
 
           {subsLoading ? (
@@ -252,17 +273,21 @@ const AdminEvents = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {submissions.map((s) => {
+                  {displayedSubmissions.map((s) => {
                     const postingD = new Date(s.posting_date + "T00:00:00");
                     const early = addWorkingDays(postingD, 3);
                     const late = addWorkingDays(postingD, 5);
+                    const isPostToday = s.posting_date === todayStr;
                     return (
-                      <TableRow key={s.id}>
+                      <TableRow key={s.id} className={cn(isPostToday && "bg-primary/5 border-l-2 border-l-primary")}>
                         <TableCell className="whitespace-nowrap">{format(new Date(s.created_at), "d MMM yyyy")}</TableCell>
                         <TableCell>{s.name}</TableCell>
                         <TableCell className="text-xs">{s.user_email}</TableCell>
                         <TableCell className="whitespace-nowrap">{format(new Date(s.letter_date + "T00:00:00"), "d MMM yyyy")}</TableCell>
-                        <TableCell className="whitespace-nowrap">{format(postingD, "d MMM yyyy")}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {format(postingD, "d MMM yyyy")}
+                          {isPostToday && <Badge variant="default" className="ml-2 text-[10px] px-1.5 py-0">Today</Badge>}
+                        </TableCell>
                         <TableCell className="whitespace-nowrap">{format(early, "d MMM")} – {format(late, "d MMM")}</TableCell>
                         <TableCell>{s.recipient_name}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{s.recipient_address}</TableCell>
