@@ -46,8 +46,10 @@ function Calendar({ className, classNames, showOutsideDays = true, showDateInput
         } else {
           setDateError("");
           setDisplayMonth(parsed);
-          if (props.onSelect && props.mode === "single") {
-            (props.onSelect as (date: Date | undefined) => void)(parsed);
+          // Call onSelect via a type-safe approach
+          const onSelectFn = (props as any).onSelect;
+          if (typeof onSelectFn === "function") {
+            onSelectFn(parsed);
           }
         }
       } else {
