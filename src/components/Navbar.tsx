@@ -1,10 +1,15 @@
 import { Link } from "react-router-dom";
-import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle, FileText, CalendarDays } from "lucide-react";
+import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle, FileText, CalendarDays, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
+
+const AVATAR_EMOJIS: Record<string, string> = {
+  cat: "🐱", dog: "🐶", fox: "🦊", owl: "🦉", bear: "🐻",
+  butterfly: "🦋", flower: "🌸", star: "⭐", heart: "💜", moon: "🌙", sun: "☀️",
+};
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +24,19 @@ const Navbar = () => {
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const avatarId = user?.user_metadata?.avatar || "initials";
+  const userInitials = (user?.email || "").split("@")[0].slice(0, 2).toUpperCase();
+
+  const renderNavAvatar = () => {
+    if (avatarId !== "initials" && AVATAR_EMOJIS[avatarId]) {
+      return <span className="text-lg leading-none">{AVATAR_EMOJIS[avatarId]}</span>;
+    }
+    if (user) {
+      return <span className="text-xs font-semibold font-serif">{userInitials}</span>;
+    }
+    return <UserCircle className="h-5 w-5" />;
   };
 
   return (
@@ -50,7 +68,7 @@ const Navbar = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
-                <UserCircle className="h-5 w-5" />
+                {renderNavAvatar()}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -96,6 +114,12 @@ const Navbar = () => {
               {FEATURE_FLAGS.AUTH_ENABLED && user && (
                 <>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <Settings className="h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer">
                     <LogOut className="h-4 w-4" />
                     Sign out

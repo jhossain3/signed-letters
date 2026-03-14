@@ -18,6 +18,7 @@ import Drafts from "./pages/Drafts";
 import EventFlow from "./pages/EventFlow";
 import MyEvents from "./pages/MyEvents";
 import AdminEvents from "./pages/AdminEvents";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import InstallPrompt from "./components/InstallPrompt";
@@ -78,6 +79,18 @@ const App = () => (
                       </ProtectedRoute>
                     ) : (
                       <Drafts />
+                    )
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    ) : (
+                      <Profile />
                     )
                   }
                 />
