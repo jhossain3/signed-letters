@@ -493,6 +493,9 @@ const WriteLetter = () => {
       case "today":
         setDeliveryDate(now);
         break;
+      case "endofyear":
+        setDeliveryDate(new Date(now.getFullYear(), 11, 31));
+        break;
       case "1month":
         setDeliveryDate(addMonths(now, 1));
         break;
@@ -1057,6 +1060,7 @@ const WriteLetter = () => {
               {[
                 // Only show "Today" option when bypass is enabled (for testing)
                 ...(FEATURE_FLAGS.BYPASS_DELIVERY_DATE ? [{ label: "Today", value: "today" }] : []),
+                { label: "End of Year", value: "endofyear" },
                 { label: "1 month", value: "1month" },
                 { label: "1 year", value: "1year" },
                 { label: "5 years", value: "5years" },
@@ -1086,6 +1090,8 @@ const WriteLetter = () => {
                   mode="single"
                   selected={deliveryDate}
                   onSelect={setDeliveryDate}
+                  showDateInput
+                  dateInputLabel="Or type a date"
                   disabled={(date) => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);

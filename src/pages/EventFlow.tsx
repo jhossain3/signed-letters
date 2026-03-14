@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TouchTooltip } from "@/components/ui/touch-tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, Info, Check, Mail, Eye, EyeOff } from "lucide-react";
 import { format, addDays, addBusinessDays, isWeekend } from "date-fns";
@@ -330,6 +330,8 @@ const EventFlow = () => {
                           mode="single"
                           selected={dob}
                           onSelect={setDob}
+                          showDateInput
+                          dateInputLabel="Type date"
                           disabled={(d) => d > new Date() || d < new Date("1900-01-01")}
                           className="pointer-events-auto"
                         />
@@ -403,14 +405,9 @@ const EventFlow = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5">
                       <Label className="font-body">Requested posting date *</Label>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-xs">
-                          We'll post your letter on the date you select via Royal Mail 2nd class. Delivery typically takes 3–5 working days but cannot be guaranteed. Plan your posting date accordingly.
-                        </TooltipContent>
-                      </Tooltip>
+                      <TouchTooltip content="We'll post your letter on the date you select via Royal Mail 2nd class. Delivery typically takes 3–5 working days but cannot be guaranteed. Plan your posting date accordingly.">
+                        <span><Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" /></span>
+                      </TouchTooltip>
                     </div>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -424,6 +421,8 @@ const EventFlow = () => {
                           mode="single"
                           selected={postingDate}
                           onSelect={setPostingDate}
+                          showDateInput
+                          dateInputLabel="Type date"
                           disabled={(d) => d < minPostingDate}
                           className="pointer-events-auto"
                         />
@@ -447,14 +446,9 @@ const EventFlow = () => {
                 <CardHeader>
                   <div className="flex items-center gap-1.5">
                     <CardTitle className="text-xl font-editorial">Recipient details</CardTitle>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs text-xs">
-                        Need to update the recipient name or address? You can edit these up to 48 hours before your posting date. After this point changes can no longer be made.
-                      </TooltipContent>
-                    </Tooltip>
+                    <TouchTooltip content="Need to update the recipient name or address? You can edit these up to 48 hours before your posting date. After this point changes can no longer be made.">
+                      <span><Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" /></span>
+                    </TouchTooltip>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
