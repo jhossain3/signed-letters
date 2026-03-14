@@ -1,25 +1,86 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
-import { addYears, subYears, addMonths, subMonths } from "date-fns";
+import { addYears, subYears, addMonths, subMonths, format, parse, isValid } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
+  showDateInput?: boolean;
+  dateInputLabel?: string;
+};
 
-function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
+function Calendar({ className, classNames, showOutsideDays = true, showDateInput = false, dateInputLabel, ...props }: CalendarProps) {
   const [displayMonth, setDisplayMonth] = React.useState<Date>(
     props.selected instanceof Date ? props.selected : new Date()
   );
+  const [dateText, setDateText] = React.useState("");
+  const [dateError, setDateError] = React.useState("");
+
+  // Sync text input when selected date changes externally
+  React.useEffect(() => {
+    if (props.selected instanceof Date && isValid(props.selected)) {
+      setDateText(format(props.selected, "dd/MM/yyyy"));
+      setDateError("");
+    }
+  }, [props.selected]);
+
+  const handleDateTextChange = (value: string) => {
+    // Allow only digits and slashes, auto-insert slashes
+    const digits = value.replace(/[^\d]/g, "");
+    let formatted = digits;
+    if (digits.length > 2) formatted = digits.slice(0, 2) + "/" + digits.slice(2);
+    if (digits.length > 4) formatted = digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4, 8);
+    
+    setDateText(formatted);
+
+    if (formatted.length === 10) {
+      const parsed = parse(formatted, "dd/MM/yyyy", new Date());
+      if (isValid(parsed) && format(parsed, "dd/MM/yyyy") === formatted) {
+        // Check against disabled dates if provided
+        const isDisabled = props.disabled instanceof Function ? props.disabled(parsed) : false;
+        if (isDisabled) {
+          setDateError("This date is not available");
+        } else {
+          setDateError("");
+          setDisplayMonth(parsed);
+          if (props.onSelect && props.mode === "single") {
+            (props.onSelect as (date: Date | undefined) => void)(parsed);
+          }
+        }
+      } else {
+        setDateError("Please enter a valid date in DD/MM/YYYY format");
+      }
+    } else if (formatted.length > 0) {
+      setDateError("");
+    }
+  };
 
   const handleYearBack = () => setDisplayMonth((prev) => subYears(prev, 1));
   const handleYearForward = () => setDisplayMonth((prev) => addYears(prev, 1));
-  const handleMonthBack = () => setDisplayMonth((prev) => subMonths(prev, 1));
-  const handleMonthForward = () => setDisplayMonth((prev) => addMonths(prev, 1));
 
   return (
     <div className={cn("relative", className)}>
+      {showDateInput && (
+        <div className="px-3 pt-3 pb-1">
+          {dateInputLabel && (
+            <label className="text-xs text-muted-foreground font-body mb-1 block">{dateInputLabel}</label>
+          )}
+          <Input
+            type="text"
+            placeholder="DD/MM/YYYY"
+            value={dateText}
+            onChange={(e) => handleDateTextChange(e.target.value)}
+            maxLength={10}
+            className="text-sm h-8"
+          />
+          {dateError && (
+            <p className="text-xs text-destructive mt-1 font-body">{dateError}</p>
+          )}
+        </div>
+      )}
       <DayPicker
         showOutsideDays={showOutsideDays}
         month={displayMonth}
@@ -60,13 +121,14 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         }}
         {...props}
       />
-      {/* Year navigation buttons — aligned with month nav row */}
+      {/* Year navigation buttons */}
       <button
         type="button"
         onClick={handleYearBack}
         className={cn(
           buttonVariants({ variant: "outline" }),
-          "absolute top-[13px] left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          showDateInput ? "absolute top-[68px] left-1" : "absolute top-[13px] left-1",
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         )}
         aria-label="Go back one year"
         data-testid="calendar-year-back"
@@ -78,7 +140,8 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         onClick={handleYearForward}
         className={cn(
           buttonVariants({ variant: "outline" }),
-          "absolute top-[13px] right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          showDateInput ? "absolute top-[68px] right-1" : "absolute top-[13px] right-1",
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         )}
         aria-label="Go forward one year"
         data-testid="calendar-year-forward"

@@ -1060,6 +1060,7 @@ const WriteLetter = () => {
               {[
                 // Only show "Today" option when bypass is enabled (for testing)
                 ...(FEATURE_FLAGS.BYPASS_DELIVERY_DATE ? [{ label: "Today", value: "today" }] : []),
+                { label: "End of Year", value: "endofyear" },
                 { label: "1 month", value: "1month" },
                 { label: "1 year", value: "1year" },
                 { label: "5 years", value: "5years" },
