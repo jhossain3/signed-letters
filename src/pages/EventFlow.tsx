@@ -330,6 +330,8 @@ const EventFlow = () => {
                           mode="single"
                           selected={dob}
                           onSelect={setDob}
+                          showDateInput
+                          dateInputLabel="Type date"
                           disabled={(d) => d > new Date() || d < new Date("1900-01-01")}
                           className="pointer-events-auto"
                         />
