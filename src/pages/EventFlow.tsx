@@ -421,6 +421,8 @@ const EventFlow = () => {
                           mode="single"
                           selected={postingDate}
                           onSelect={setPostingDate}
+                          showDateInput
+                          dateInputLabel="Type date"
                           disabled={(d) => d < minPostingDate}
                           className="pointer-events-auto"
                         />
