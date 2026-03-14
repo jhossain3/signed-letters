@@ -447,7 +447,7 @@ const EventFlow = () => {
                   <div className="flex items-center gap-1.5">
                     <CardTitle className="text-xl font-editorial">Recipient details</CardTitle>
                     <TouchTooltip content="Need to update the recipient name or address? You can edit these up to 48 hours before your posting date. After this point changes can no longer be made.">
-                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      <span><Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" /></span>
                     </TouchTooltip>
                   </div>
                 </CardHeader>
