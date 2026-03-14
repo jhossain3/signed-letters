@@ -114,6 +114,12 @@ const Navbar = () => {
               {FEATURE_FLAGS.AUTH_ENABLED && user && (
                 <>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <Settings className="h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer">
                     <LogOut className="h-4 w-4" />
                     Sign out

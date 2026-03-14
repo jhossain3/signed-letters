@@ -83,6 +83,18 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/profile"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    ) : (
+                      <Profile />
+                    )
+                  }
+                />
+                <Route
                   path="/vault"
                   element={
                     FEATURE_FLAGS.AUTH_ENABLED ? (
