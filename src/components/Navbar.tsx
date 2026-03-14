@@ -67,7 +67,7 @@ const Navbar = () => {
           {/* Account dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
+              <Button variant="ghost" size="icon" className="rounded-full border border-border bg-muted/40" aria-label="Account">
                 {renderNavAvatar()}
               </Button>
             </DropdownMenuTrigger>
