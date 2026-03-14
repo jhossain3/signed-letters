@@ -493,6 +493,9 @@ const WriteLetter = () => {
       case "today":
         setDeliveryDate(now);
         break;
+      case "endofyear":
+        setDeliveryDate(new Date(now.getFullYear(), 11, 31));
+        break;
       case "1month":
         setDeliveryDate(addMonths(now, 1));
         break;
