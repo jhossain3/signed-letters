@@ -1090,6 +1090,8 @@ const WriteLetter = () => {
                   mode="single"
                   selected={deliveryDate}
                   onSelect={setDeliveryDate}
+                  showDateInput
+                  dateInputLabel="Or type a date"
                   disabled={(date) => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
