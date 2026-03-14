@@ -54,7 +54,7 @@ const Navbar = () => {
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-full"
+            className="rounded-full border border-border bg-muted/40"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? (
