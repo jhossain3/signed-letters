@@ -1,10 +1,15 @@
 import { Link } from "react-router-dom";
-import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle, FileText, CalendarDays } from "lucide-react";
+import { Moon, Sun, Archive, PenLine, LogOut, LogIn, UserCircle, FileText, CalendarDays, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
+
+const AVATAR_EMOJIS: Record<string, string> = {
+  cat: "🐱", dog: "🐶", fox: "🦊", owl: "🦉", bear: "🐻",
+  butterfly: "🦋", flower: "🌸", star: "⭐", heart: "💜", moon: "🌙", sun: "☀️",
+};
 import {
   DropdownMenu,
   DropdownMenuContent,
