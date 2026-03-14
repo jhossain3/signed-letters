@@ -406,7 +406,7 @@ const EventFlow = () => {
                     <div className="flex items-center gap-1.5">
                       <Label className="font-body">Requested posting date *</Label>
                       <TouchTooltip content="We'll post your letter on the date you select via Royal Mail 2nd class. Delivery typically takes 3–5 working days but cannot be guaranteed. Plan your posting date accordingly.">
-                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        <span><Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" /></span>
                       </TouchTooltip>
                     </div>
                     <Popover>
