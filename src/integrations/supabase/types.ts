@@ -208,6 +208,110 @@ export type Database = {
         }
         Relationships: []
       }
+      physical_letters: {
+        Row: {
+          admin_notes: string | null
+          amount_cents: number | null
+          created_at: string
+          currency: string | null
+          delivery_date: string
+          fulfillment_status: string
+          id: string
+          letter_id: string | null
+          paddle_price_id: string | null
+          paddle_transaction_id: string | null
+          payment_status: string
+          plaintext_body: string
+          plaintext_signature: string
+          plaintext_title: string
+          posted_at: string | null
+          posting_date: string
+          recipient_address: string
+          recipient_name: string
+          sender_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          delivery_date: string
+          fulfillment_status?: string
+          id?: string
+          letter_id?: string | null
+          paddle_price_id?: string | null
+          paddle_transaction_id?: string | null
+          payment_status?: string
+          plaintext_body: string
+          plaintext_signature: string
+          plaintext_title: string
+          posted_at?: string | null
+          posting_date: string
+          recipient_address: string
+          recipient_name: string
+          sender_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          delivery_date?: string
+          fulfillment_status?: string
+          id?: string
+          letter_id?: string | null
+          paddle_price_id?: string | null
+          paddle_transaction_id?: string | null
+          payment_status?: string
+          plaintext_body?: string
+          plaintext_signature?: string
+          plaintext_title?: string
+          posted_at?: string | null
+          posting_date?: string
+          recipient_address?: string
+          recipient_name?: string
+          sender_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "physical_letters_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_encryption_keys: {
         Row: {
           created_at: string
