@@ -792,23 +792,28 @@ const WriteLetter = () => {
           )}
 
           {/* Recipient Toggle */}
-          <div className="flex justify-center gap-3 mb-8 relative">
+          <div className="flex flex-wrap justify-center gap-3 mb-8 relative">
             <Button
-              variant={recipientType === "myself" ? "default" : "outline"}
-              onClick={() => setRecipientType("myself")}
+              variant={!isPhysical && recipientType === "myself" ? "default" : "outline"}
+              onClick={() => { setIsPhysical(false); setRecipientType("myself"); }}
               className="rounded-full px-6"
             >
               To Myself
             </Button>
-            <div className="relative">
-              <Button
-                variant={recipientType === "someone" ? "default" : "outline"}
-                onClick={() => setRecipientType("someone")}
-                className="rounded-full px-6"
-              >
-                To Someone Else
-              </Button>
-            </div>
+            <Button
+              variant={!isPhysical && recipientType === "someone" ? "default" : "outline"}
+              onClick={() => { setIsPhysical(false); setRecipientType("someone"); }}
+              className="rounded-full px-6"
+            >
+              To Someone Else
+            </Button>
+            <Button
+              variant={isPhysical ? "default" : "outline"}
+              onClick={() => { setIsPhysical(true); setRecipientType("someone"); }}
+              className="rounded-full px-6"
+            >
+              Send Physical Letter
+            </Button>
           </div>
 
           {/* Input Mode Toggle */}
