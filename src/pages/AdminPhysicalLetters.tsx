@@ -29,7 +29,7 @@ interface PhysicalLetterRow {
 }
 
 const AdminPhysicalLetters = () => {
-  const { user, loading } = useAuth();
+  const { user, isLoading: loading } = useAuth();
   const [rows, setRows] = useState<PhysicalLetterRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"queued" | "posted" | "all">("queued");
