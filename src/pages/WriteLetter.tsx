@@ -1254,7 +1254,11 @@ const WriteLetter = () => {
               size="lg"
               className="flex-[2] text-lg py-6 rounded-full shadow-dreamy bg-primary hover:bg-primary/90"
             >
-              {recipientType === "myself" && isEncryptionInitializing ? "Securing your entry..." : "Seal"}
+              {recipientType === "myself" && isEncryptionInitializing
+                ? "Securing your entry..."
+                : isPhysical
+                  ? "Continue to payment"
+                  : "Seal"}
             </Button>
           </div>
           {encryptionError && recipientType === "myself" && (
