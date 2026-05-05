@@ -1296,6 +1296,17 @@ const WriteLetter = () => {
           />
         )}
       </AnimatePresence>
+
+      <SendPhysicalDialog
+        open={showPhysicalDialog}
+        onOpenChange={setShowPhysicalDialog}
+        title={title}
+        body={getCombinedBody()}
+        signature={signature}
+        deliveryDate={deliveryDate}
+        recipientName={recipientName}
+        onPaymentComplete={() => handlePhysicalPaid()}
+      />
     </div>
   );
 };
