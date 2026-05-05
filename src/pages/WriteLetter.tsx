@@ -551,7 +551,7 @@ const WriteLetter = () => {
       return;
     }
 
-    if (recipientType === "someone" && !recipientEmail.trim()) {
+    if (recipientType === "someone" && !isPhysical && !recipientEmail.trim()) {
       toast.error("Please enter the recipient's email");
       return;
     }
@@ -566,9 +566,62 @@ const WriteLetter = () => {
       return;
     }
 
+    if (isPhysical) {
+      // For physical letters, sketch mode isn't supported (we print plaintext only)
+      if (inputMode === "sketch") {
+        toast.error("Physical letters must be typed, not sketched.");
+        return;
+      }
+      setShowPhysicalDialog(true);
+      return;
+    }
+
     // Start sealing animation
     setIsSealing(true);
   };
+
+  // After Paddle payment completes, also seal a digital copy for the sender
+  // (and recipient if email provided), so the writer has a record in their Vault.
+  const handlePhysicalPaid = async () => {
+    try {
+      // Seal a digital "sent" copy for the sender's vault, scoped to the delivery date.
+      // We treat it as a "myself" letter unless the writer also entered the recipient's email.
+      const finalSketchData = getCombinedSketchData();
+      const hasSketchContent = finalSketchData && finalSketchData !== "[]" && finalSketchData.length > 0;
+      const textBody = getCombinedBody();
+      let photoUrls: string[] = [];
+      if (photos.length > 0 && user) {
+        photoUrls = await uploadPhotosToStorage(photos, user.id);
+      }
+      const useRecipient = recipientEmail.trim().length > 0;
+      const savedLetter = await addLetter({
+        title,
+        body: textBody,
+        date: format(new Date(), "MMMM d, yyyy"),
+        deliveryDate: deliveryDate!.toISOString(),
+        signature,
+        signatureFont: signatureFont.class,
+        recipientEmail: useRecipient ? recipientEmail : undefined,
+        recipientName: recipientName || undefined,
+        recipientType: useRecipient ? "someone" : "myself",
+        photos: photoUrls,
+        sketchData: hasSketchContent ? finalSketchData : undefined,
+        isTyped: true,
+        type: "sent" as const,
+        paperColor: paperColor.value,
+        inkColor: inkColor.value,
+        isLined: showLines,
+        draftId: currentDraftId || undefined,
+      });
+      clearDraft();
+      navigate("/vault", { state: { newLetterId: savedLetter.id } });
+    } catch (e) {
+      console.error("Failed to seal digital copy after physical payment:", e);
+      // Payment already succeeded — don't block. Just navigate.
+      navigate("/vault");
+    }
+  };
+
 
   const completeSeal = async () => {
     // Get sketch data from state (works regardless of current mode)
