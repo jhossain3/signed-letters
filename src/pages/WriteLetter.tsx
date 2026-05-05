@@ -31,6 +31,7 @@ import { serializeMultiPage, deserializeMultiPage } from "@/lib/sketchSerializat
 import { supabase } from "@/integrations/supabase/client";
 import { useDrafts, Draft } from "@/hooks/useDrafts";
 import DraftsList from "@/components/DraftsList";
+import SendPhysicalDialog from "@/components/SendPhysicalDialog";
 
 // Signature font options
 const SIGNATURE_FONTS = [
