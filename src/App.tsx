@@ -19,6 +19,7 @@ import EventFlow from "./pages/EventFlow";
 import MyEvents from "./pages/MyEvents";
 import AdminEvents from "./pages/AdminEvents";
 import Profile from "./pages/Profile";
+import AdminPhysicalLetters from "./pages/AdminPhysicalLetters";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import InstallPrompt from "./components/InstallPrompt";
@@ -64,6 +65,18 @@ const App = () => (
                       </ProtectedRoute>
                     ) : (
                       <AdminEvents />
+                    )
+                  }
+                />
+                <Route
+                  path="/admin/physical-letters"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <AdminPhysicalLetters />
+                      </ProtectedRoute>
+                    ) : (
+                      <AdminPhysicalLetters />
                     )
                   }
                 />
