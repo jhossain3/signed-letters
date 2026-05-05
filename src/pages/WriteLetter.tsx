@@ -106,6 +106,8 @@ const WriteLetter = () => {
   } = useEncryptionReady();
 
   const [recipientType, setRecipientType] = useState<"myself" | "someone">("myself");
+  const [isPhysical, setIsPhysical] = useState(false);
+  const [showPhysicalDialog, setShowPhysicalDialog] = useState(false);
   const [inputMode, setInputMode] = useState<"type" | "sketch">("type");
   const [title, setTitle] = useState("");
   // Separate page lists for text and sketch modes
