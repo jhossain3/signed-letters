@@ -1189,7 +1189,9 @@ const WriteLetter = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block font-body">Recipient Email</label>
+                <label className="text-sm font-medium text-foreground mb-2 block font-body">
+                  Recipient Email {isPhysical && <span className="text-muted-foreground font-normal">(optional — for the digital copy)</span>}
+                </label>
                 <Input
                   type="email"
                   placeholder="their.email@example.com"
