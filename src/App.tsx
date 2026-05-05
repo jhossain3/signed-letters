@@ -68,6 +68,18 @@ const App = () => (
                     )
                   }
                 />
+                <Route
+                  path="/admin/physical-letters"
+                  element={
+                    FEATURE_FLAGS.AUTH_ENABLED ? (
+                      <ProtectedRoute>
+                        <AdminPhysicalLetters />
+                      </ProtectedRoute>
+                    ) : (
+                      <AdminPhysicalLetters />
+                    )
+                  }
+                />
                 <Route path="/about" element={<About />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
