@@ -1072,8 +1072,8 @@ const WriteLetter = () => {
             </div>
           </div>
 
-          {/* Photo Attachments */}
-          <div className="mb-8">
+          {/* Photo Attachments — hidden for physical letters */}
+          <div className={`mb-8 ${isPhysical ? "hidden" : ""}`}>
             <label className="text-sm font-medium text-foreground mb-3 block font-body">
               Photo Attachments (max 3)
             </label>
