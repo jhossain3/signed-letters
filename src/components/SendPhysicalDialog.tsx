@@ -10,6 +10,7 @@ import { usePhysicalLetter } from "@/hooks/usePhysicalLetter";
 import { PHYSICAL_LETTER_CONFIG, calculatePostingDate, earliestPhysicalDeliveryDate } from "@/config/physicalLetter";
 import { format } from "date-fns";
 import { Loader2, Lock, AlertCircle } from "lucide-react";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { toast } from "sonner";
 
 interface Props {
@@ -54,7 +55,7 @@ const SendPhysicalDialog = ({
   }, [open, profile?.display_name, recipientName]);
 
   const earliest = earliestPhysicalDeliveryDate();
-  const deliveryValid = !!deliveryDate && deliveryDate >= earliest;
+  const deliveryValid = !!deliveryDate && (FEATURE_FLAGS.BYPASS_DELIVERY_DATE || deliveryDate >= earliest);
   const postingDate = deliveryDate ? calculatePostingDate(deliveryDate) : null;
 
   const canPay =
