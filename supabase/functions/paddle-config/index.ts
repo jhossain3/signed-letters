@@ -13,10 +13,10 @@ Deno.serve((req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const clientToken = Deno.env.get("PADDLE_CLIENT_TOKEN");
-  const sellerId = Deno.env.get("PADDLE_SELLER_ID");
-  const priceId = Deno.env.get("PADDLE_PRICE_ID");
-  const environment = (Deno.env.get("PADDLE_ENVIRONMENT") ?? "sandbox") as "sandbox" | "production";
+  const clientToken = Deno.env.get("PADDLE_CLIENT_TOKEN")?.trim();
+  const sellerId = Deno.env.get("PADDLE_SELLER_ID")?.trim();
+  const priceId = Deno.env.get("PADDLE_PRICE_ID")?.trim();
+  const environment = ((Deno.env.get("PADDLE_ENVIRONMENT") ?? "sandbox").trim()) as "sandbox" | "production";
 
   if (!clientToken || !sellerId || !priceId) {
     return new Response(
