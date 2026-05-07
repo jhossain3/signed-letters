@@ -55,7 +55,7 @@ const SendPhysicalDialog = ({
   }, [open, profile?.display_name, recipientName]);
 
   const earliest = earliestPhysicalDeliveryDate();
-  const deliveryValid = !!deliveryDate && deliveryDate >= earliest;
+  const deliveryValid = !!deliveryDate && (FEATURE_FLAGS.BYPASS_DELIVERY_DATE || deliveryDate >= earliest);
   const postingDate = deliveryDate ? calculatePostingDate(deliveryDate) : null;
 
   const canPay =
