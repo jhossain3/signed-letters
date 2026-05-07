@@ -10,6 +10,7 @@ import { usePhysicalLetter } from "@/hooks/usePhysicalLetter";
 import { PHYSICAL_LETTER_CONFIG, calculatePostingDate, earliestPhysicalDeliveryDate } from "@/config/physicalLetter";
 import { format } from "date-fns";
 import { Loader2, Lock, AlertCircle } from "lucide-react";
+import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { toast } from "sonner";
 
 interface Props {
