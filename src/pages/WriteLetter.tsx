@@ -141,6 +141,7 @@ const WriteLetter = () => {
     setCurrentDraftId(draft.id);
     setTitle(draft.title || "");
     setRecipientType(draft.recipientType);
+    setIsPhysical((draft as any).isPhysical ?? false);
     setRecipientEmail(draft.recipientEmail || "");
     setRecipientName((draft as any).recipientName || "");
     if (draft.deliveryDate) {
@@ -295,7 +296,8 @@ const WriteLetter = () => {
     paperColor: paperColor.value,
     inkColor: inkColor.value,
     isLined: showLines,
-  }), [currentDraftId, title, deliveryDate, signature, signatureFont, recipientType, recipientEmail, inputMode, paperColor, inkColor, showLines, textPages, sketchPages]); // eslint-disable-line react-hooks/exhaustive-deps
+    isPhysical,
+  }), [currentDraftId, title, deliveryDate, signature, signatureFont, recipientType, recipientEmail, inputMode, paperColor, inkColor, showLines, textPages, sketchPages, isPhysical]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save draft to DB
   const handleSaveDraftToDb = useCallback(async (silent = false) => {

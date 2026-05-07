@@ -114,6 +114,7 @@ export type Database = {
           initial_notification_sent: boolean | null
           ink_color: string | null
           is_lined: boolean | null
+          is_physical: boolean
           is_typed: boolean | null
           notification_sent: boolean | null
           paper_color: string | null
@@ -148,6 +149,7 @@ export type Database = {
           initial_notification_sent?: boolean | null
           ink_color?: string | null
           is_lined?: boolean | null
+          is_physical?: boolean
           is_typed?: boolean | null
           notification_sent?: boolean | null
           paper_color?: string | null
@@ -182,6 +184,7 @@ export type Database = {
           initial_notification_sent?: boolean | null
           ink_color?: string | null
           is_lined?: boolean | null
+          is_physical?: boolean
           is_typed?: boolean | null
           notification_sent?: boolean | null
           paper_color?: string | null

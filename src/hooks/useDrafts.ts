@@ -22,6 +22,7 @@ export interface Draft {
   paperColor?: string;
   inkColor?: string;
   isLined?: boolean;
+  isPhysical?: boolean;
 }
 
 const mapDbToDraft = (row: any): Draft => ({
@@ -42,6 +43,7 @@ const mapDbToDraft = (row: any): Draft => ({
   paperColor: row.paper_color,
   inkColor: row.ink_color,
   isLined: row.is_lined ?? true,
+  isPhysical: row.is_physical ?? false,
 });
 
 export interface SaveDraftInput {
@@ -60,6 +62,7 @@ export interface SaveDraftInput {
   paperColor?: string;
   inkColor?: string;
   isLined?: boolean;
+  isPhysical?: boolean;
 }
 
 export const useDrafts = () => {
@@ -144,6 +147,7 @@ export const useDrafts = () => {
         paper_color: input.paperColor,
         ink_color: input.inkColor,
         is_lined: input.isLined ?? true,
+        is_physical: input.isPhysical ?? false,
       };
 
       if (input.id) {
