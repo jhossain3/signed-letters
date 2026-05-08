@@ -44,6 +44,12 @@ const loadPaddleSdk = () =>
     document.head.appendChild(s);
   });
 
+const handlePaddleEvent = (event: any) => {
+  if (event?.name === "checkout.warning" || event?.name === "checkout.error") {
+    console.warn("[Paddle checkout]", event);
+  }
+};
+
 export const usePaddle = () => {
   const [ready, setReady] = useState(false);
   const [config, setConfig] = useState<PaddleConfig | null>(cachedConfig);
@@ -61,8 +67,10 @@ export const usePaddle = () => {
         if (!mounted) return;
         if (window.Paddle && !window.Paddle.__initialized) {
           window.Paddle.Environment.set(cfg.environment);
-          window.Paddle.Initialize({ token: cfg.clientToken });
+          window.Paddle.Initialize({ token: cfg.clientToken, eventCallback: handlePaddleEvent });
           window.Paddle.__initialized = true;
+        } else if (window.Paddle?.Update) {
+          window.Paddle.Update({ eventCallback: handlePaddleEvent });
         }
         setReady(true);
       } catch (e: any) {
