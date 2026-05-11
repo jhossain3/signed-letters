@@ -27,7 +27,6 @@ async function verifyPaddleSignature(rawBody: string, sigHeader: string | null, 
   const hex = Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-  // Constant-time compare
   if (hex.length !== h1.length) return false;
   let diff = 0;
   for (let i = 0; i < hex.length; i++) diff |= hex.charCodeAt(i) ^ h1.charCodeAt(i);
@@ -35,6 +34,8 @@ async function verifyPaddleSignature(rawBody: string, sigHeader: string | null, 
 }
 
 Deno.serve(async (req) => {
+  console.log("[paddle-webhook] ▶ Incoming", req.method, req.url);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -48,38 +49,68 @@ Deno.serve(async (req) => {
 
     const rawBody = await req.text();
     const sigHeader = req.headers.get("paddle-signature");
+    console.log("[paddle-webhook] sig header present:", !!sigHeader, "secret configured:", !!webhookSecret);
+    console.log("[paddle-webhook] body length:", rawBody.length);
 
-    if (webhookSecret) {
+    if (webhookSecret && sigHeader) {
       const ok = await verifyPaddleSignature(rawBody, sigHeader, webhookSecret);
       if (!ok) {
-        console.warn("[paddle-webhook] Invalid signature");
+        console.warn("[paddle-webhook] ⚠ Invalid signature — rejecting");
         return new Response(JSON.stringify({ error: "invalid signature" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      console.log("[paddle-webhook] ✓ signature verified");
     } else {
-      console.warn("[paddle-webhook] PADDLE_WEBHOOK_SECRET not set — skipping verification (dev only)");
+      console.warn("[paddle-webhook] ⚠ Skipping signature verification (no secret or no header)");
     }
 
-    const event = JSON.parse(rawBody);
-    const eventType: string = event.event_type ?? event.alert_name ?? "";
-    console.log("[paddle-webhook] event:", eventType);
+    let event: any;
+    try {
+      event = JSON.parse(rawBody);
+    } catch (e) {
+      console.error("[paddle-webhook] ✗ Could not parse JSON:", e);
+      return new Response(JSON.stringify({ error: "invalid json" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // We accept transaction.completed (Paddle Billing v2)
+    const eventType: string = event.event_type ?? event.alert_name ?? "";
+    const eventId: string = event.event_id ?? "";
+    console.log("[paddle-webhook] event_type:", eventType, "event_id:", eventId);
+
     if (eventType !== "transaction.completed" && eventType !== "transaction.paid") {
-      return new Response(JSON.stringify({ message: "ignored" }), {
+      console.log("[paddle-webhook] ignored event type:", eventType);
+      return new Response(JSON.stringify({ message: "ignored", eventType }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = event.data ?? {};
-    const customData = data.custom_data ?? {};
-    const physicalLetterId: string | undefined = customData.physical_letter_id;
     const transactionId: string = data.id ?? "";
 
+    // physical_letter_id may live on the top-level custom_data, or on an item's
+    // price.custom_data, depending on how the checkout was opened.
+    let physicalLetterId: string | undefined =
+      data?.custom_data?.physical_letter_id ??
+      data?.checkout?.custom_data?.physical_letter_id;
+
+    if (!physicalLetterId && Array.isArray(data.items)) {
+      for (const item of data.items) {
+        const cd = item?.price?.custom_data ?? item?.custom_data;
+        if (cd?.physical_letter_id) {
+          physicalLetterId = cd.physical_letter_id;
+          break;
+        }
+      }
+    }
+
+    console.log("[paddle-webhook] transactionId:", transactionId, "physicalLetterId:", physicalLetterId);
+
     if (!physicalLetterId) {
-      console.warn("[paddle-webhook] No physical_letter_id in custom_data");
+      console.warn("[paddle-webhook] ⚠ No physical_letter_id in custom_data. Full data:", JSON.stringify(data).slice(0, 2000));
       return new Response(JSON.stringify({ message: "no linked letter" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -98,14 +129,15 @@ Deno.serve(async (req) => {
       .single();
 
     if (plErr) {
-      console.error("[paddle-webhook] Failed to update physical_letter:", plErr);
+      console.error("[paddle-webhook] ✗ Failed to update physical_letter:", plErr);
       throw plErr;
     }
 
-    // Notify admin
+    console.log("[paddle-webhook] ✓ Marked physical_letter paid:", pl.id);
+
     if (resendApiKey && adminEmail) {
       try {
-        await fetch("https://api.resend.com/emails", {
+        const r = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${resendApiKey}`,
@@ -124,16 +156,19 @@ Deno.serve(async (req) => {
               <p><a href="https://signed-letters.lovable.app/admin/physical-letters">Open admin dashboard</a></p>`,
           }),
         });
+        console.log("[paddle-webhook] admin email status:", r.status);
       } catch (e) {
         console.error("[paddle-webhook] Resend failed:", e);
       }
+    } else {
+      console.log("[paddle-webhook] skipping admin email (RESEND_API_KEY or ADMIN_EMAIL missing)");
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, physical_letter_id: pl.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("[paddle-webhook] error:", e);
+    console.error("[paddle-webhook] ✗ uncaught error:", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
