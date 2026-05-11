@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const webhookSecret = Deno.env.get("PADDLE_WEBHOOK_SECRET");
+    const webhookSecret = Deno.env.get("PADDLE_WEBHOOK_SECRET")?.trim();
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
 
