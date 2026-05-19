@@ -7,6 +7,135 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, paddle-signature",
 };
 
+const ALGORITHM = "AES-GCM";
+const KEY_LENGTH = 256;
+const IV_LENGTH = 12;
+const EMAIL_KEY_SALT = new TextEncoder().encode("signed-letters-email-derived-key-v1");
+
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const CHUNK_SIZE = 0x8000;
+  let result = "";
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    result += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  return btoa(result);
+}
+
+async function importAesKey(base64Key: string): Promise<CryptoKey> {
+  const keyData = Uint8Array.from(atob(base64Key), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: ALGORITHM, length: KEY_LENGTH },
+    false,
+    ["encrypt", "decrypt"],
+  );
+}
+
+async function generateAesKey(): Promise<CryptoKey> {
+  return crypto.subtle.generateKey(
+    { name: ALGORITHM, length: KEY_LENGTH },
+    true,
+    ["encrypt", "decrypt"],
+  );
+}
+
+async function exportAesKey(key: CryptoKey): Promise<string> {
+  const raw = await crypto.subtle.exportKey("raw", key);
+  return uint8ArrayToBase64(new Uint8Array(raw));
+}
+
+async function getOrCreateUserKey(admin: ReturnType<typeof createClient>, userId: string): Promise<CryptoKey> {
+  const { data: existingKey, error: fetchError } = await admin
+    .from("user_encryption_keys")
+    .select("encrypted_key")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(`failed to fetch user key: ${fetchError.message}`);
+  }
+
+  if (existingKey?.encrypted_key) {
+    return importAesKey(existingKey.encrypted_key);
+  }
+
+  const key = await generateAesKey();
+  const exportedKey = await exportAesKey(key);
+  const { error: upsertError } = await admin
+    .from("user_encryption_keys")
+    .upsert(
+      {
+        user_id: userId,
+        encrypted_key: exportedKey,
+      },
+      { onConflict: "user_id" },
+    );
+
+  if (upsertError) {
+    throw new Error(`failed to store user key: ${upsertError.message}`);
+  }
+
+  return importAesKey(exportedKey);
+}
+
+async function encryptValueWithKey(value: string, key: CryptoKey): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value);
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+
+  const encrypted = await crypto.subtle.encrypt(
+    { name: ALGORITHM, iv },
+    key,
+    data,
+  );
+
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  return `enc:${uint8ArrayToBase64(combined)}`;
+}
+
+async function deriveKeyFromEmail(email: string): Promise<CryptoKey> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const emailBytes = new TextEncoder().encode(normalizedEmail);
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    emailBytes,
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: EMAIL_KEY_SALT,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: ALGORITHM, length: KEY_LENGTH },
+    false,
+    ["encrypt", "decrypt"],
+  );
+}
+
+type OrderRow = {
+  id: string;
+  user_id: string;
+  letter_id: string | null;
+  sender_name: string;
+  recipient_name: string;
+  recipient_address: string;
+  plaintext_title: string;
+  plaintext_body: string;
+  plaintext_signature: string;
+  delivery_date: string;
+  posting_date: string;
+};
+
 // Paddle signature: header `Paddle-Signature: ts=...;h1=...`
 // h1 = HMAC-SHA256(secret, `${ts}:${rawBody}`)
 async function verifyPaddleSignature(rawBody: string, sigHeader: string | null, secret: string): Promise<{ ok: boolean; diag: string }> {
@@ -133,7 +262,7 @@ Deno.serve(async (req) => {
         paddle_transaction_id: transactionId,
       })
       .eq("id", physicalLetterId)
-      .select()
+      .select("id, user_id, letter_id, sender_name, recipient_name, recipient_address, plaintext_title, plaintext_body, plaintext_signature, delivery_date, posting_date")
       .single();
 
     if (plErr) {
@@ -142,6 +271,64 @@ Deno.serve(async (req) => {
     }
 
     console.log("[paddle-webhook] ✓ Marked physical_letter paid:", pl.id);
+
+    const order = pl as OrderRow;
+
+    if (!order.letter_id) {
+      throw new Error("physical letter has no linked letter_id");
+    }
+
+    const { data: linkedLetter, error: letterFetchErr } = await admin
+      .from("letters")
+      .select("id, recipient_email, recipient_type, sketch_data, signature_font, photos, is_typed, paper_color, ink_color, is_lined")
+      .eq("id", order.letter_id)
+      .single();
+
+    if (letterFetchErr || !linkedLetter) {
+      throw new Error(`failed to fetch linked letter ${order.letter_id}: ${letterFetchErr?.message ?? "not found"}`);
+    }
+
+    const senderKey = await getOrCreateUserKey(admin, order.user_id);
+    const encryptedTitle = await encryptValueWithKey(order.plaintext_title, senderKey);
+    const encryptedBody = await encryptValueWithKey(order.plaintext_body, senderKey);
+    const encryptedSignature = await encryptValueWithKey(order.plaintext_signature, senderKey);
+
+    const letterUpdate: Record<string, unknown> = {
+      title: encryptedTitle,
+      body: encryptedBody,
+      signature: encryptedSignature,
+      delivery_date: order.delivery_date,
+      status: "sealed",
+      is_physical: true,
+      recipient_name: order.recipient_name,
+    };
+
+    if (linkedLetter.recipient_type === "someone" && linkedLetter.recipient_email) {
+      const recipientKey = await deriveKeyFromEmail(linkedLetter.recipient_email);
+      letterUpdate.display_title = order.plaintext_title;
+      letterUpdate.recipient_title = await encryptValueWithKey(order.plaintext_title, recipientKey);
+      letterUpdate.recipient_body = await encryptValueWithKey(order.plaintext_body, recipientKey);
+      letterUpdate.recipient_signature = await encryptValueWithKey(order.plaintext_signature, recipientKey);
+      letterUpdate.recipient_encrypted = true;
+    }
+
+    const { error: letterUpdateErr } = await admin
+      .from("letters")
+      .update(letterUpdate)
+      .eq("id", order.letter_id)
+      .eq("user_id", order.user_id);
+
+    if (letterUpdateErr) {
+      throw new Error(`failed to seal linked letter ${order.letter_id}: ${letterUpdateErr.message}`);
+    }
+
+    console.log("[paddle-webhook] ✓ Sealed linked letter and moved to vault:", order.letter_id);
+
+    const { data: senderAuth, error: senderAuthErr } = await admin.auth.admin.getUserById(order.user_id);
+    const senderEmail = senderAuth?.user?.email ?? "[unknown sender email]";
+    if (senderAuthErr) {
+      console.error("[paddle-webhook] Failed to lookup sender email:", senderAuthErr);
+    }
 
     if (resendApiKey && adminEmail) {
       try {
@@ -154,13 +341,23 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Signed <noreply@signedletters.co.uk>",
             to: [adminEmail],
-            subject: `📮 New physical letter paid — post by ${pl.posting_date}`,
-            html: `<p>A new physical letter has been paid for.</p>
+            subject: `New physical letter paid - Order ${order.id}`,
+            html: `<p>A new physical letter has been paid for and sealed.</p>
               <ul>
-                <li><strong>Recipient:</strong> ${pl.recipient_name}</li>
-                <li><strong>Posting date:</strong> ${pl.posting_date}</li>
-                <li><strong>Delivery date:</strong> ${pl.delivery_date}</li>
+                <li><strong>Order ID:</strong> ${order.id}</li>
+                <li><strong>Source:</strong> Online Order</li>
+                <li><strong>Linked Letter ID:</strong> ${order.letter_id}</li>
+                <li><strong>Scheduled send date:</strong> ${order.delivery_date}</li>
+                <li><strong>Post by:</strong> ${order.posting_date}</li>
+                <li><strong>Recipient name:</strong> ${order.recipient_name}</li>
+                <li><strong>Recipient postal address:</strong><br/>${order.recipient_address.replace(/\n/g, "<br/>")}</li>
+                <li><strong>Sender name:</strong> ${order.sender_name}</li>
+                <li><strong>Sender email:</strong> ${senderEmail}</li>
               </ul>
+              <h3>Letter content (unencrypted, for printing)</h3>
+              <p><strong>Title:</strong> ${order.plaintext_title}</p>
+              <p><strong>Body:</strong><br/>${order.plaintext_body.replace(/\n/g, "<br/>")}</p>
+              <p><strong>Signature:</strong> ${order.plaintext_signature}</p>
               <p><a href="https://signed-letters.lovable.app/admin/physical-letters">Open admin dashboard</a></p>`,
           }),
         });
@@ -172,7 +369,7 @@ Deno.serve(async (req) => {
       console.log("[paddle-webhook] skipping admin email (RESEND_API_KEY or ADMIN_EMAIL missing)");
     }
 
-    return new Response(JSON.stringify({ ok: true, physical_letter_id: pl.id }), {
+    return new Response(JSON.stringify({ ok: true, physical_letter_id: pl.id, letter_id: order.letter_id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
