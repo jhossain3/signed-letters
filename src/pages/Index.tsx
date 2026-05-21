@@ -60,7 +60,7 @@ const Index = () => {
               {/* Description */}
               <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-md font-body">
                 A quiet space to write across time. Reflect, remember, and send words to your future self or someone you
-                hold dear.
+                hold dear. this is a test edit for pushing from github. 
               </p>
 
               {/* Privacy Note */}
