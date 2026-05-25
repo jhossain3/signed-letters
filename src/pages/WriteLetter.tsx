@@ -584,42 +584,67 @@ const WriteLetter = () => {
 
   // After Paddle payment completes, also seal a digital copy for the sender
   // (and recipient if email provided), so the writer has a record in their Vault.
-  const handlePhysicalPaid = async () => {
-    try {
-      // Seal a digital "sent" copy for the sender's vault, scoped to the delivery date.
-      // We treat it as a "myself" letter unless the writer also entered the recipient's email.
-      const finalSketchData = getCombinedSketchData();
-      const hasSketchContent = finalSketchData && finalSketchData !== "[]" && finalSketchData.length > 0;
-      const textBody = getCombinedBody();
-      let photoUrls: string[] = [];
-      if (photos.length > 0 && user) {
-        photoUrls = await uploadPhotosToStorage(photos, user.id);
+  const waitForLinkedLetter = async (physicalLetterId: string, attempts = 6): Promise<string | null> => {
+    for (let i = 0; i < attempts; i++) {
+      const { data } = await supabase
+        .from("physical_letters")
+        .select("letter_id")
+        .eq("id", physicalLetterId)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (data?.letter_id) return data.letter_id;
+      if (i < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-      const useRecipient = recipientEmail.trim().length > 0;
-      const savedLetter = await addLetter({
-        title,
-        body: textBody,
-        date: format(new Date(), "MMMM d, yyyy"),
-        deliveryDate: deliveryDate!.toISOString(),
-        signature,
-        signatureFont: signatureFont.class,
-        recipientEmail: useRecipient ? recipientEmail : undefined,
-        recipientName: recipientName || undefined,
-        recipientType: useRecipient ? "someone" : "myself",
-        photos: photoUrls,
-        sketchData: hasSketchContent ? finalSketchData : undefined,
-        isTyped: true,
-        type: "sent" as const,
-        paperColor: paperColor.value,
-        inkColor: inkColor.value,
-        isLined: showLines,
-        draftId: currentDraftId || undefined,
-      });
+    }
+    return null;
+  };
+
+  const handlePhysicalPaid = async (physicalLetterId: string) => {
+    try {
+      let letterId = await waitForLinkedLetter(physicalLetterId);
+
+      if (!letterId) {
+        const textBody = getCombinedBody();
+        let photoUrls: string[] = [];
+        if (photos.length > 0 && user) {
+          photoUrls = await uploadPhotosToStorage(photos, user.id);
+        }
+        const useRecipient = recipientEmail.trim().length > 0;
+        const savedLetter = await addLetter({
+          title,
+          body: textBody,
+          date: format(new Date(), "MMMM d, yyyy"),
+          deliveryDate: deliveryDate!.toISOString(),
+          signature,
+          signatureFont: signatureFont.class,
+          recipientEmail: useRecipient ? recipientEmail : undefined,
+          recipientName: recipientName || undefined,
+          recipientType: useRecipient ? "someone" : "myself",
+          photos: photoUrls,
+          isTyped: true,
+          type: "sent" as const,
+          paperColor: paperColor.value,
+          inkColor: inkColor.value,
+          isLined: showLines,
+          isPhysical: true,
+          draftId: currentDraftId || undefined,
+        });
+        letterId = savedLetter.id;
+
+        const { error: linkErr } = await supabase
+          .from("physical_letters")
+          .update({ letter_id: letterId })
+          .eq("id", physicalLetterId)
+          .eq("user_id", user!.id);
+        if (linkErr) throw linkErr;
+      }
+
       clearDraft();
-      navigate("/vault", { state: { newLetterId: savedLetter.id } });
+      navigate("/vault", { state: { newLetterId: letterId } });
     } catch (e) {
       console.error("Failed to seal digital copy after physical payment:", e);
-      // Payment already succeeded — don't block. Just navigate.
+      toast.error("Payment succeeded but saving your vault copy failed. Please contact support.");
       navigate("/vault");
     }
   };
@@ -1307,7 +1332,7 @@ const WriteLetter = () => {
         signature={signature}
         deliveryDate={deliveryDate}
         recipientName={recipientName}
-        onPaymentComplete={() => handlePhysicalPaid()}
+        onPaymentComplete={handlePhysicalPaid}
       />
     </div>
   );

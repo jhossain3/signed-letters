@@ -136,6 +136,125 @@ type OrderRow = {
   posting_date: string;
 };
 
+function extractPhysicalLetterId(data: Record<string, unknown>): string | undefined {
+  const fromCustom = (cd: Record<string, unknown> | undefined) => {
+    if (!cd) return undefined;
+    const id = cd.physical_letter_id ?? cd.physicalLetterId;
+    return typeof id === "string" ? id : undefined;
+  };
+
+  let id =
+    fromCustom(data?.custom_data as Record<string, unknown>) ??
+    fromCustom(data?.customData as Record<string, unknown>) ??
+    fromCustom((data?.checkout as Record<string, unknown>)?.custom_data as Record<string, unknown>) ??
+    fromCustom((data?.checkout as Record<string, unknown>)?.customData as Record<string, unknown>);
+
+  if (!id && Array.isArray(data.items)) {
+    for (const item of data.items as Record<string, unknown>[]) {
+      const price = item?.price as Record<string, unknown> | undefined;
+      id =
+        fromCustom(price?.custom_data as Record<string, unknown>) ??
+        fromCustom(price?.customData as Record<string, unknown>) ??
+        fromCustom(item?.custom_data as Record<string, unknown>) ??
+        fromCustom(item?.customData as Record<string, unknown>);
+      if (id) break;
+    }
+  }
+  return id;
+}
+
+function toDeliveryTimestamp(deliveryDate: string): string {
+  return deliveryDate.includes("T") ? deliveryDate : `${deliveryDate}T12:00:00.000Z`;
+}
+
+function formatLetterDate(): string {
+  return new Date().toLocaleDateString("en-GB", { month: "long", day: "numeric", year: "numeric" });
+}
+
+async function sealPhysicalLetter(
+  admin: ReturnType<typeof createClient>,
+  order: OrderRow,
+): Promise<string> {
+  const senderKey = await getOrCreateUserKey(admin, order.user_id);
+  const encryptedTitle = await encryptValueWithKey(order.plaintext_title, senderKey);
+  const encryptedBody = await encryptValueWithKey(order.plaintext_body, senderKey);
+  const encryptedSignature = await encryptValueWithKey(order.plaintext_signature, senderKey);
+  const deliveryTimestamp = toDeliveryTimestamp(order.delivery_date);
+
+  const baseFields: Record<string, unknown> = {
+    title: encryptedTitle,
+    body: encryptedBody,
+    signature: encryptedSignature,
+    delivery_date: deliveryTimestamp,
+    status: "sealed",
+    is_physical: true,
+    recipient_name: order.recipient_name,
+  };
+
+  if (order.letter_id) {
+    const { data: linkedLetter, error: letterFetchErr } = await admin
+      .from("letters")
+      .select("id, recipient_email, recipient_type")
+      .eq("id", order.letter_id)
+      .single();
+
+    if (letterFetchErr || !linkedLetter) {
+      throw new Error(`failed to fetch linked letter ${order.letter_id}: ${letterFetchErr?.message ?? "not found"}`);
+    }
+
+    const letterUpdate = { ...baseFields };
+    if (linkedLetter.recipient_type === "someone" && linkedLetter.recipient_email) {
+      const recipientKey = await deriveKeyFromEmail(linkedLetter.recipient_email);
+      letterUpdate.display_title = order.plaintext_title;
+      letterUpdate.recipient_title = await encryptValueWithKey(order.plaintext_title, recipientKey);
+      letterUpdate.recipient_body = await encryptValueWithKey(order.plaintext_body, recipientKey);
+      letterUpdate.recipient_signature = await encryptValueWithKey(order.plaintext_signature, recipientKey);
+      letterUpdate.recipient_encrypted = true;
+    }
+
+    const { error: letterUpdateErr } = await admin
+      .from("letters")
+      .update(letterUpdate)
+      .eq("id", order.letter_id)
+      .eq("user_id", order.user_id);
+
+    if (letterUpdateErr) {
+      throw new Error(`failed to seal linked letter ${order.letter_id}: ${letterUpdateErr.message}`);
+    }
+
+    return order.letter_id;
+  }
+
+  const { data: inserted, error: insertErr } = await admin
+    .from("letters")
+    .insert({
+      user_id: order.user_id,
+      ...baseFields,
+      date: formatLetterDate(),
+      recipient_type: "myself",
+      type: "sent",
+      is_typed: true,
+    })
+    .select("id")
+    .single();
+
+  if (insertErr || !inserted) {
+    throw new Error(`failed to create vault letter for physical order ${order.id}: ${insertErr?.message ?? "no row"}`);
+  }
+
+  const { error: linkErr } = await admin
+    .from("physical_letters")
+    .update({ letter_id: inserted.id })
+    .eq("id", order.id);
+
+  if (linkErr) {
+    throw new Error(`failed to link letter ${inserted.id} to physical order ${order.id}: ${linkErr.message}`);
+  }
+
+  console.log("[paddle-webhook] ✓ Created and linked vault letter:", inserted.id);
+  return inserted.id;
+}
+
 // Paddle signature: header `Paddle-Signature: ts=...;h1=...`
 // h1 = HMAC-SHA256(secret, `${ts}:${rawBody}`)
 async function verifyPaddleSignature(rawBody: string, sigHeader: string | null, secret: string): Promise<{ ok: boolean; diag: string }> {
@@ -228,21 +347,7 @@ Deno.serve(async (req) => {
     const data = event.data ?? {};
     const transactionId: string = data.id ?? "";
 
-    // physical_letter_id may live on the top-level custom_data, or on an item's
-    // price.custom_data, depending on how the checkout was opened.
-    let physicalLetterId: string | undefined =
-      data?.custom_data?.physical_letter_id ??
-      data?.checkout?.custom_data?.physical_letter_id;
-
-    if (!physicalLetterId && Array.isArray(data.items)) {
-      for (const item of data.items) {
-        const cd = item?.price?.custom_data ?? item?.custom_data;
-        if (cd?.physical_letter_id) {
-          physicalLetterId = cd.physical_letter_id;
-          break;
-        }
-      }
-    }
+    const physicalLetterId = extractPhysicalLetterId(data);
 
     console.log("[paddle-webhook] transactionId:", transactionId, "physicalLetterId:", physicalLetterId);
 
@@ -273,56 +378,8 @@ Deno.serve(async (req) => {
     console.log("[paddle-webhook] ✓ Marked physical_letter paid:", pl.id);
 
     const order = pl as OrderRow;
-
-    if (!order.letter_id) {
-      throw new Error("physical letter has no linked letter_id");
-    }
-
-    const { data: linkedLetter, error: letterFetchErr } = await admin
-      .from("letters")
-      .select("id, recipient_email, recipient_type, sketch_data, signature_font, photos, is_typed, paper_color, ink_color, is_lined")
-      .eq("id", order.letter_id)
-      .single();
-
-    if (letterFetchErr || !linkedLetter) {
-      throw new Error(`failed to fetch linked letter ${order.letter_id}: ${letterFetchErr?.message ?? "not found"}`);
-    }
-
-    const senderKey = await getOrCreateUserKey(admin, order.user_id);
-    const encryptedTitle = await encryptValueWithKey(order.plaintext_title, senderKey);
-    const encryptedBody = await encryptValueWithKey(order.plaintext_body, senderKey);
-    const encryptedSignature = await encryptValueWithKey(order.plaintext_signature, senderKey);
-
-    const letterUpdate: Record<string, unknown> = {
-      title: encryptedTitle,
-      body: encryptedBody,
-      signature: encryptedSignature,
-      delivery_date: order.delivery_date,
-      status: "sealed",
-      is_physical: true,
-      recipient_name: order.recipient_name,
-    };
-
-    if (linkedLetter.recipient_type === "someone" && linkedLetter.recipient_email) {
-      const recipientKey = await deriveKeyFromEmail(linkedLetter.recipient_email);
-      letterUpdate.display_title = order.plaintext_title;
-      letterUpdate.recipient_title = await encryptValueWithKey(order.plaintext_title, recipientKey);
-      letterUpdate.recipient_body = await encryptValueWithKey(order.plaintext_body, recipientKey);
-      letterUpdate.recipient_signature = await encryptValueWithKey(order.plaintext_signature, recipientKey);
-      letterUpdate.recipient_encrypted = true;
-    }
-
-    const { error: letterUpdateErr } = await admin
-      .from("letters")
-      .update(letterUpdate)
-      .eq("id", order.letter_id)
-      .eq("user_id", order.user_id);
-
-    if (letterUpdateErr) {
-      throw new Error(`failed to seal linked letter ${order.letter_id}: ${letterUpdateErr.message}`);
-    }
-
-    console.log("[paddle-webhook] ✓ Sealed linked letter and moved to vault:", order.letter_id);
+    const letterId = await sealPhysicalLetter(admin, order);
+    console.log("[paddle-webhook] ✓ Sealed vault letter:", letterId);
 
     const { data: senderAuth, error: senderAuthErr } = await admin.auth.admin.getUserById(order.user_id);
     const senderEmail = senderAuth?.user?.email ?? "[unknown sender email]";
@@ -346,7 +403,7 @@ Deno.serve(async (req) => {
               <ul>
                 <li><strong>Order ID:</strong> ${order.id}</li>
                 <li><strong>Source:</strong> Online Order</li>
-                <li><strong>Linked Letter ID:</strong> ${order.letter_id}</li>
+                <li><strong>Linked Letter ID:</strong> ${letterId}</li>
                 <li><strong>Scheduled send date:</strong> ${order.delivery_date}</li>
                 <li><strong>Post by:</strong> ${order.posting_date}</li>
                 <li><strong>Recipient name:</strong> ${order.recipient_name}</li>
@@ -369,7 +426,7 @@ Deno.serve(async (req) => {
       console.log("[paddle-webhook] skipping admin email (RESEND_API_KEY or ADMIN_EMAIL missing)");
     }
 
-    return new Response(JSON.stringify({ ok: true, physical_letter_id: pl.id, letter_id: order.letter_id }), {
+    return new Response(JSON.stringify({ ok: true, physical_letter_id: pl.id, letter_id: letterId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

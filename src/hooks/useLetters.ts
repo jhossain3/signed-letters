@@ -65,6 +65,7 @@ export interface CreateLetterInput {
   inkColor?: string;
   isLined?: boolean;
   draftId?: string;
+  isPhysical?: boolean;
 }
 
 // Resolve photo paths to signed URLs
@@ -235,6 +236,7 @@ export const useLetters = () => {
         paper_color: letter.paperColor,
         ink_color: letter.inkColor,
         is_lined: letter.isLined ?? true,
+        is_physical: letter.isPhysical ?? false,
       };
 
       // For "someone" letters, also encrypt with recipient's email-derived key
