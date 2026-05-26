@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, MessageCircle, User } from "lucide-react";
 import Footer from "@/components/Footer";
 
@@ -97,10 +99,13 @@ const DEMO_LETTERS: Letter[] = [
   },
 ];
 
+const PENDING_PHYSICAL_KEY = "pending_physical_letter_id";
+
 const Vault = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const initialTab = searchParams.get("tab") === "received" ? "received" : "sent";
   const [activeTab, setActiveTab] = useState<"received" | "sent">(initialTab);
   const [viewMode, setViewMode] = useState<"grid" | "timeline">("grid");
@@ -110,6 +115,56 @@ const Vault = () => {
 
   const { letters: dbLetters, isLoading, isLetterOpenable, deleteLetter } = useLetters();
   const { signOut, user } = useAuth();
+
+  // Paddle redirects here after physical checkout; refresh vault and highlight the letter.
+  useEffect(() => {
+    if (searchParams.get("physical") !== "success" || !FEATURE_FLAGS.AUTH_ENABLED || !user) return;
+
+    const physicalLetterId =
+      searchParams.get("physical_letter_id") ??
+      sessionStorage.getItem(PENDING_PHYSICAL_KEY);
+
+    const finish = (letterId?: string | null) => {
+      sessionStorage.removeItem(PENDING_PHYSICAL_KEY);
+      queryClient.invalidateQueries({ queryKey: ["letters", user.id] });
+      toast.success("Payment received — your letter is in your Vault.");
+      const next = new URLSearchParams(searchParams);
+      next.delete("physical");
+      next.delete("physical_letter_id");
+      setSearchParams(next, { replace: true });
+      if (letterId) {
+        navigate("/vault", { replace: true, state: { newLetterId: letterId } });
+      }
+    };
+
+    if (!physicalLetterId) {
+      finish();
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      for (let i = 0; i < 8; i++) {
+        const { data } = await supabase
+          .from("physical_letters")
+          .select("letter_id")
+          .eq("id", physicalLetterId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (data?.letter_id) {
+          finish(data.letter_id);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      finish();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, user, queryClient, navigate, setSearchParams]);
 
   // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
   const newLetterId = (location.state as { newLetterId?: string } | null)?.newLetterId;

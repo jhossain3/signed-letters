@@ -53,6 +53,8 @@ export const usePhysicalLetter = () => {
       if (!ready || !config || !window.Paddle) {
         throw new Error("Checkout not ready");
       }
+      sessionStorage.setItem("pending_physical_letter_id", physicalLetterId);
+
       window.Paddle.Checkout.open({
         items: [{ priceId: config.priceId, quantity: 1 }],
         customer: { email: customerEmail },
@@ -60,7 +62,7 @@ export const usePhysicalLetter = () => {
         settings: {
           displayMode: "overlay",
           theme: "light",
-          successUrl: `${window.location.origin}/vault?physical=success`,
+          successUrl: `${window.location.origin}/vault?physical=success&physical_letter_id=${physicalLetterId}`,
         },
         eventCallback: (ev: any) => {
           if (ev?.name === "checkout.completed") {

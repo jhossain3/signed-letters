@@ -582,8 +582,37 @@ const WriteLetter = () => {
     setIsSealing(true);
   };
 
-  // After Paddle payment completes, also seal a digital copy for the sender
-  // (and recipient if email provided), so the writer has a record in their Vault.
+  const createPhysicalVaultLetter = async (): Promise<string> => {
+    const textBody = getCombinedBody();
+    let photoUrls: string[] = [];
+    if (photos.length > 0 && user) {
+      photoUrls = await uploadPhotosToStorage(photos, user.id);
+    }
+    const useRecipient = recipientEmail.trim().length > 0;
+    const savedLetter = await addLetter({
+      title,
+      body: textBody,
+      date: format(new Date(), "MMMM d, yyyy"),
+      deliveryDate: deliveryDate!.toISOString(),
+      signature,
+      signatureFont: signatureFont.class,
+      recipientEmail: useRecipient ? recipientEmail : undefined,
+      recipientName: recipientName || undefined,
+      recipientType: useRecipient ? "someone" : "myself",
+      photos: photoUrls,
+      isTyped: true,
+      type: "sent" as const,
+      paperColor: paperColor.value,
+      inkColor: inkColor.value,
+      isLined: showLines,
+      isPhysical: true,
+      draftId: currentDraftId || undefined,
+      quiet: true,
+    });
+    return savedLetter.id;
+  };
+
+  // After Paddle payment completes, ensure vault letter is linked (created before checkout).
   const waitForLinkedLetter = async (physicalLetterId: string, attempts = 6): Promise<string | null> => {
     for (let i = 0; i < attempts; i++) {
       const { data } = await supabase
@@ -605,33 +634,7 @@ const WriteLetter = () => {
       let letterId = await waitForLinkedLetter(physicalLetterId);
 
       if (!letterId) {
-        const textBody = getCombinedBody();
-        let photoUrls: string[] = [];
-        if (photos.length > 0 && user) {
-          photoUrls = await uploadPhotosToStorage(photos, user.id);
-        }
-        const useRecipient = recipientEmail.trim().length > 0;
-        const savedLetter = await addLetter({
-          title,
-          body: textBody,
-          date: format(new Date(), "MMMM d, yyyy"),
-          deliveryDate: deliveryDate!.toISOString(),
-          signature,
-          signatureFont: signatureFont.class,
-          recipientEmail: useRecipient ? recipientEmail : undefined,
-          recipientName: recipientName || undefined,
-          recipientType: useRecipient ? "someone" : "myself",
-          photos: photoUrls,
-          isTyped: true,
-          type: "sent" as const,
-          paperColor: paperColor.value,
-          inkColor: inkColor.value,
-          isLined: showLines,
-          isPhysical: true,
-          draftId: currentDraftId || undefined,
-        });
-        letterId = savedLetter.id;
-
+        letterId = await createPhysicalVaultLetter();
         const { error: linkErr } = await supabase
           .from("physical_letters")
           .update({ letter_id: letterId })
@@ -1332,6 +1335,7 @@ const WriteLetter = () => {
         signature={signature}
         deliveryDate={deliveryDate}
         recipientName={recipientName}
+        onCreateVaultLetter={createPhysicalVaultLetter}
         onPaymentComplete={handlePhysicalPaid}
       />
     </div>

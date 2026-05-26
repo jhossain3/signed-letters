@@ -66,6 +66,8 @@ export interface CreateLetterInput {
   isLined?: boolean;
   draftId?: string;
   isPhysical?: boolean;
+  /** When true, skip the default success toast (e.g. physical letter checkout). */
+  quiet?: boolean;
 }
 
 // Resolve photo paths to signed URLs
@@ -318,7 +320,9 @@ export const useLetters = () => {
     onSuccess: (savedLetter, originalInput) => {
       queryClient.invalidateQueries({ queryKey: ["letters", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["drafts", user?.id] });
-      toast.success("Letter sealed and saved!");
+      if (!originalInput.quiet) {
+        toast.success("Letter sealed and saved!");
+      }
       
       // For self-sent same-day letters, trigger immediate notification
       const deliveryDate = new Date(savedLetter.deliveryDate);

@@ -22,6 +22,8 @@ interface Props {
   signature: string;
   deliveryDate: Date | undefined;
   recipientName: string;
+  /** Create a sealed vault letter before checkout; returns its id to link on the order. */
+  onCreateVaultLetter: () => Promise<string>;
   /** Called once payment completed and physical letter row marked paid. */
   onPaymentComplete: (physicalLetterId: string) => void;
 }
@@ -34,6 +36,7 @@ const SendPhysicalDialog = ({
   signature,
   deliveryDate,
   recipientName,
+  onCreateVaultLetter,
   onPaymentComplete,
 }: Props) => {
   const { user } = useAuth();
@@ -81,8 +84,10 @@ const SendPhysicalDialog = ({
         await updateDisplayName(senderName.trim());
       }
 
+      const letterId = await onCreateVaultLetter();
+
       const row = await createPendingPhysicalLetter({
-        letterId: null,
+        letterId,
         senderName: senderName.trim(),
         recipientName: recipient.trim(),
         recipientAddress: address.trim(),
