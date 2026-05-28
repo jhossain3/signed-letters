@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useCompletePhysicalOrder } from "@/hooks/useCompletePhysicalOrder";
+import {
+  PENDING_PHYSICAL_ORDER_KEY,
+  PENDING_PHYSICAL_TRANSACTION_KEY,
+} from "@/lib/physicalOrder";
 import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, MessageCircle, User } from "lucide-react";
 import Footer from "@/components/Footer";
 
@@ -99,8 +103,6 @@ const DEMO_LETTERS: Letter[] = [
   },
 ];
 
-const PENDING_PHYSICAL_KEY = "pending_physical_letter_id";
-
 const Vault = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -115,56 +117,58 @@ const Vault = () => {
 
   const { letters: dbLetters, isLoading, isLetterOpenable, deleteLetter } = useLetters();
   const { signOut, user } = useAuth();
+  const { completePhysicalOrder } = useCompletePhysicalOrder();
 
-  // Paddle redirects here after physical checkout; refresh vault and highlight the letter.
+  // Paddle redirects here after physical checkout; create vault letter only after payment.
   useEffect(() => {
     if (searchParams.get("physical") !== "success" || !FEATURE_FLAGS.AUTH_ENABLED || !user) return;
 
-    const physicalLetterId =
+    const physicalOrderId =
+      searchParams.get("physical_order_id") ??
       searchParams.get("physical_letter_id") ??
-      sessionStorage.getItem(PENDING_PHYSICAL_KEY);
+      sessionStorage.getItem(PENDING_PHYSICAL_ORDER_KEY);
 
-    const finish = (letterId?: string | null) => {
-      sessionStorage.removeItem(PENDING_PHYSICAL_KEY);
+    const transactionId = sessionStorage.getItem(PENDING_PHYSICAL_TRANSACTION_KEY) ?? undefined;
+
+    const finish = (letterId?: string | null, failed = false) => {
+      sessionStorage.removeItem(PENDING_PHYSICAL_ORDER_KEY);
+      sessionStorage.removeItem(PENDING_PHYSICAL_TRANSACTION_KEY);
       queryClient.invalidateQueries({ queryKey: ["letters", user.id] });
-      toast.success("Payment received — your letter is in your Vault.");
       const next = new URLSearchParams(searchParams);
       next.delete("physical");
+      next.delete("physical_order_id");
       next.delete("physical_letter_id");
       setSearchParams(next, { replace: true });
+      if (failed) {
+        toast.error("Payment succeeded but saving your vault copy failed. Please contact support.");
+      } else {
+        toast.success("Payment received — your letter is in your Vault.");
+      }
       if (letterId) {
         navigate("/vault", { replace: true, state: { newLetterId: letterId } });
       }
     };
 
-    if (!physicalLetterId) {
+    if (!physicalOrderId) {
       finish();
       return;
     }
 
     let cancelled = false;
     (async () => {
-      for (let i = 0; i < 8; i++) {
-        const { data } = await supabase
-          .from("physical_letters")
-          .select("letter_id")
-          .eq("id", physicalLetterId)
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (cancelled) return;
-        if (data?.letter_id) {
-          finish(data.letter_id);
-          return;
-        }
-        await new Promise((r) => setTimeout(r, 1000));
+      try {
+        const letterId = await completePhysicalOrder(physicalOrderId, { transactionId });
+        if (!cancelled) finish(letterId);
+      } catch (e) {
+        console.error("Failed to complete physical order after redirect:", e);
+        if (!cancelled) finish(null, true);
       }
-      finish();
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [searchParams, user, queryClient, navigate, setSearchParams]);
+  }, [searchParams, user, queryClient, navigate, setSearchParams, completePhysicalOrder]);
 
   // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
   const newLetterId = (location.state as { newLetterId?: string } | null)?.newLetterId;

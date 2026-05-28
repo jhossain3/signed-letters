@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDrafts, Draft } from "@/hooks/useDrafts";
 import DraftsList from "@/components/DraftsList";
 import SendPhysicalDialog from "@/components/SendPhysicalDialog";
+import { useCompletePhysicalOrder } from "@/hooks/useCompletePhysicalOrder";
 
 // Signature font options
 const SIGNATURE_FONTS = [
@@ -582,66 +583,35 @@ const WriteLetter = () => {
     setIsSealing(true);
   };
 
-  const createPhysicalVaultLetter = async (): Promise<string> => {
-    const textBody = getCombinedBody();
-    let photoUrls: string[] = [];
-    if (photos.length > 0 && user) {
-      photoUrls = await uploadPhotosToStorage(photos, user.id);
-    }
-    const useRecipient = recipientEmail.trim().length > 0;
-    const savedLetter = await addLetter({
-      title,
-      body: textBody,
-      date: format(new Date(), "MMMM d, yyyy"),
-      deliveryDate: deliveryDate!.toISOString(),
-      signature,
-      signatureFont: signatureFont.class,
-      recipientEmail: useRecipient ? recipientEmail : undefined,
-      recipientName: recipientName || undefined,
-      recipientType: useRecipient ? "someone" : "myself",
-      photos: photoUrls,
-      isTyped: true,
-      type: "sent" as const,
-      paperColor: paperColor.value,
-      inkColor: inkColor.value,
-      isLined: showLines,
-      isPhysical: true,
-      draftId: currentDraftId || undefined,
-      quiet: true,
-    });
-    return savedLetter.id;
-  };
+  const { completePhysicalOrder } = useCompletePhysicalOrder();
 
-  // After Paddle payment completes, ensure vault letter is linked (created before checkout).
-  const waitForLinkedLetter = async (physicalLetterId: string, attempts = 6): Promise<string | null> => {
-    for (let i = 0; i < attempts; i++) {
-      const { data } = await supabase
-        .from("physical_letters")
-        .select("letter_id")
-        .eq("id", physicalLetterId)
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      if (data?.letter_id) return data.letter_id;
-      if (i < attempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-    return null;
-  };
-
-  const handlePhysicalPaid = async (physicalLetterId: string) => {
+  const handlePhysicalPaid = async (orderId: string, transactionId?: string) => {
     try {
-      let letterId = await waitForLinkedLetter(physicalLetterId);
-
-      if (!letterId) {
-        letterId = await createPhysicalVaultLetter();
-        const { error: linkErr } = await supabase
-          .from("physical_letters")
-          .update({ letter_id: letterId })
-          .eq("id", physicalLetterId)
-          .eq("user_id", user!.id);
-        if (linkErr) throw linkErr;
+      let photoUrls: string[] = [];
+      if (photos.length > 0 && user) {
+        photoUrls = await uploadPhotosToStorage(photos, user.id);
       }
+      const useRecipient = recipientEmail.trim().length > 0;
+      const letterId = await completePhysicalOrder(orderId, {
+        transactionId,
+        richLetter: {
+          title,
+          body: getCombinedBody(),
+          date: format(new Date(), "MMMM d, yyyy"),
+          deliveryDate: deliveryDate!.toISOString(),
+          signature,
+          signatureFont: signatureFont.class,
+          recipientEmail: useRecipient ? recipientEmail : undefined,
+          recipientName: recipientName || undefined,
+          recipientType: useRecipient ? "someone" : "myself",
+          photos: photoUrls,
+          isTyped: true,
+          paperColor: paperColor.value,
+          inkColor: inkColor.value,
+          isLined: showLines,
+          draftId: currentDraftId || undefined,
+        },
+      });
 
       clearDraft();
       navigate("/vault", { state: { newLetterId: letterId } });
@@ -1335,7 +1305,6 @@ const WriteLetter = () => {
         signature={signature}
         deliveryDate={deliveryDate}
         recipientName={recipientName}
-        onCreateVaultLetter={createPhysicalVaultLetter}
         onPaymentComplete={handlePhysicalPaid}
       />
     </div>

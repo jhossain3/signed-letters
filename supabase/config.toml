@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.paddle-config]
 verify_jwt = false
+
+[functions.complete-physical-order]
+verify_jwt = true

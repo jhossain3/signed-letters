@@ -1,5 +1,12 @@
+/// <reference types="deno" />
 // Paddle webhook: verifies signature, marks physical_letters paid, and emails admin.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  extractLegacyPhysicalLetterId,
+  mergeCustomData,
+  parsePhysicalOrderPayload,
+  type PhysicalOrderPayload,
+} from "../_shared/physicalOrder.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -136,31 +143,60 @@ type OrderRow = {
   posting_date: string;
 };
 
-function extractPhysicalLetterId(data: Record<string, unknown>): string | undefined {
-  const fromCustom = (cd: Record<string, unknown> | undefined) => {
-    if (!cd) return undefined;
-    const id = cd.physical_letter_id ?? cd.physicalLetterId;
-    return typeof id === "string" ? id : undefined;
-  };
+async function fulfillPaidPhysicalOrder(
+  admin: ReturnType<typeof createClient>,
+  transactionId: string,
+  payload: PhysicalOrderPayload,
+): Promise<OrderRow> {
+  const selectFields =
+    "id, user_id, letter_id, sender_name, recipient_name, recipient_address, plaintext_title, plaintext_body, plaintext_signature, delivery_date, posting_date";
 
-  let id =
-    fromCustom(data?.custom_data as Record<string, unknown>) ??
-    fromCustom(data?.customData as Record<string, unknown>) ??
-    fromCustom((data?.checkout as Record<string, unknown>)?.custom_data as Record<string, unknown>) ??
-    fromCustom((data?.checkout as Record<string, unknown>)?.customData as Record<string, unknown>);
+  const { data: existing } = await admin
+    .from("physical_letters")
+    .select("id")
+    .eq("id", payload.physical_order_id)
+    .maybeSingle();
 
-  if (!id && Array.isArray(data.items)) {
-    for (const item of data.items as Record<string, unknown>[]) {
-      const price = item?.price as Record<string, unknown> | undefined;
-      id =
-        fromCustom(price?.custom_data as Record<string, unknown>) ??
-        fromCustom(price?.customData as Record<string, unknown>) ??
-        fromCustom(item?.custom_data as Record<string, unknown>) ??
-        fromCustom(item?.customData as Record<string, unknown>);
-      if (id) break;
-    }
+  if (existing) {
+    const { data: pl, error } = await admin
+      .from("physical_letters")
+      .update({
+        payment_status: "paid",
+        fulfillment_status: "queued",
+        paddle_transaction_id: transactionId,
+      })
+      .eq("id", payload.physical_order_id)
+      .select(selectFields)
+      .single();
+    if (error) throw error;
+    return pl as OrderRow;
   }
-  return id;
+
+  const { data: pl, error } = await admin
+    .from("physical_letters")
+    .insert({
+      id: payload.physical_order_id,
+      user_id: payload.user_id,
+      letter_id: null,
+      sender_name: payload.sender_name,
+      recipient_name: payload.recipient_name,
+      recipient_address: payload.recipient_address,
+      plaintext_title: payload.plaintext_title,
+      plaintext_body: payload.plaintext_body,
+      plaintext_signature: payload.plaintext_signature,
+      delivery_date: payload.delivery_date,
+      posting_date: payload.posting_date,
+      payment_status: "paid",
+      fulfillment_status: "queued",
+      paddle_transaction_id: transactionId,
+      paddle_price_id: payload.paddle_price_id ?? null,
+    })
+    .select(selectFields)
+    .single();
+
+  if (error) throw error;
+  console.log("[paddle-webhook] ✓ Created physical_letter after payment:", pl.id);
+  return pl as OrderRow;
 }
 
 function toDeliveryTimestamp(deliveryDate: string): string {
@@ -347,41 +383,60 @@ Deno.serve(async (req) => {
     const data = event.data ?? {};
     const transactionId: string = data.id ?? "";
 
-    const physicalLetterId = extractPhysicalLetterId(data);
+    const customData = mergeCustomData(data as Record<string, unknown>);
+    const orderPayload = parsePhysicalOrderPayload(customData);
+    const legacyPhysicalLetterId = extractLegacyPhysicalLetterId(customData);
 
-    console.log("[paddle-webhook] transactionId:", transactionId, "physicalLetterId:", physicalLetterId);
+    console.log(
+      "[paddle-webhook] transactionId:",
+      transactionId,
+      "orderPayload:",
+      !!orderPayload,
+      "legacyId:",
+      legacyPhysicalLetterId,
+    );
 
-    if (!physicalLetterId) {
-      console.warn("[paddle-webhook] ⚠ No physical_letter_id in custom_data. Full data:", JSON.stringify(data).slice(0, 2000));
-      return new Response(JSON.stringify({ message: "no linked letter" }), {
+    const admin = createClient(supabaseUrl, serviceRoleKey);
+    let order: OrderRow;
+
+    if (orderPayload) {
+      order = await fulfillPaidPhysicalOrder(admin, transactionId, orderPayload);
+      console.log("[paddle-webhook] ✓ Fulfilled physical order:", order.id);
+    } else if (legacyPhysicalLetterId) {
+      const { data: pl, error: plErr } = await admin
+        .from("physical_letters")
+        .update({
+          payment_status: "paid",
+          fulfillment_status: "queued",
+          paddle_transaction_id: transactionId,
+        })
+        .eq("id", legacyPhysicalLetterId)
+        .select(
+          "id, user_id, letter_id, sender_name, recipient_name, recipient_address, plaintext_title, plaintext_body, plaintext_signature, delivery_date, posting_date",
+        )
+        .single();
+
+      if (plErr) {
+        console.error("[paddle-webhook] ✗ Failed to update legacy physical_letter:", plErr);
+        throw plErr;
+      }
+      order = pl as OrderRow;
+      console.log("[paddle-webhook] ✓ Marked legacy physical_letter paid:", order.id);
+    } else {
+      console.warn(
+        "[paddle-webhook] ⚠ No physical order in custom_data. Sample:",
+        JSON.stringify(customData).slice(0, 2000),
+      );
+      return new Response(JSON.stringify({ message: "no linked order" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const admin = createClient(supabaseUrl, serviceRoleKey);
-    const { data: pl, error: plErr } = await admin
-      .from("physical_letters")
-      .update({
-        payment_status: "paid",
-        fulfillment_status: "queued",
-        paddle_transaction_id: transactionId,
-      })
-      .eq("id", physicalLetterId)
-      .select("id, user_id, letter_id, sender_name, recipient_name, recipient_address, plaintext_title, plaintext_body, plaintext_signature, delivery_date, posting_date")
-      .single();
-
-    if (plErr) {
-      console.error("[paddle-webhook] ✗ Failed to update physical_letter:", plErr);
-      throw plErr;
-    }
-
-    console.log("[paddle-webhook] ✓ Marked physical_letter paid:", pl.id);
-
-    const order = pl as OrderRow;
-    const letterId = await sealPhysicalLetter(admin, order);
+    const pl = order;
+    const letterId = await sealPhysicalLetter(admin, pl);
     console.log("[paddle-webhook] ✓ Sealed vault letter:", letterId);
 
-    const { data: senderAuth, error: senderAuthErr } = await admin.auth.admin.getUserById(order.user_id);
+    const { data: senderAuth, error: senderAuthErr } = await admin.auth.admin.getUserById(pl.user_id);
     const senderEmail = senderAuth?.user?.email ?? "[unknown sender email]";
     if (senderAuthErr) {
       console.error("[paddle-webhook] Failed to lookup sender email:", senderAuthErr);
@@ -398,23 +453,23 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Signed <noreply@signedletters.co.uk>",
             to: [adminEmail],
-            subject: `New physical letter paid - Order ${order.id}`,
+            subject: `New physical letter paid - Order ${pl.id}`,
             html: `<p>A new physical letter has been paid for and sealed.</p>
               <ul>
-                <li><strong>Order ID:</strong> ${order.id}</li>
+                <li><strong>Order ID:</strong> ${pl.id}</li>
                 <li><strong>Source:</strong> Online Order</li>
                 <li><strong>Linked Letter ID:</strong> ${letterId}</li>
-                <li><strong>Scheduled send date:</strong> ${order.delivery_date}</li>
-                <li><strong>Post by:</strong> ${order.posting_date}</li>
-                <li><strong>Recipient name:</strong> ${order.recipient_name}</li>
-                <li><strong>Recipient postal address:</strong><br/>${order.recipient_address.replace(/\n/g, "<br/>")}</li>
-                <li><strong>Sender name:</strong> ${order.sender_name}</li>
+                <li><strong>Scheduled send date:</strong> ${pl.delivery_date}</li>
+                <li><strong>Post by:</strong> ${pl.posting_date}</li>
+                <li><strong>Recipient name:</strong> ${pl.recipient_name}</li>
+                <li><strong>Recipient postal address:</strong><br/>${pl.recipient_address.replace(/\n/g, "<br/>")}</li>
+                <li><strong>Sender name:</strong> ${pl.sender_name}</li>
                 <li><strong>Sender email:</strong> ${senderEmail}</li>
               </ul>
               <h3>Letter content (unencrypted, for printing)</h3>
-              <p><strong>Title:</strong> ${order.plaintext_title}</p>
-              <p><strong>Body:</strong><br/>${order.plaintext_body.replace(/\n/g, "<br/>")}</p>
-              <p><strong>Signature:</strong> ${order.plaintext_signature}</p>
+              <p><strong>Title:</strong> ${pl.plaintext_title}</p>
+              <p><strong>Body:</strong><br/>${pl.plaintext_body.replace(/\n/g, "<br/>")}</p>
+              <p><strong>Signature:</strong> ${pl.plaintext_signature}</p>
               <p><a href="https://signed-letters.lovable.app/admin/physical-letters">Open admin dashboard</a></p>`,
           }),
         });

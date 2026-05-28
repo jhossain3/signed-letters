@@ -1,11 +1,20 @@
 import { useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaddle } from "@/hooks/usePaddle";
 import { calculatePostingDate } from "@/config/physicalLetter";
+import {
+  buildPhysicalOrderCustomData,
+  createPhysicalOrderId,
+  PENDING_PHYSICAL_ORDER_KEY,
+  PENDING_PHYSICAL_TRANSACTION_KEY,
+  PhysicalOrderDraft,
+  PhysicalOrderId,
+  PhysicalOrderPaddleCustomData,
+  savePhysicalOrderDraft,
+  validatePhysicalOrderCustomDataSize,
+} from "@/lib/physicalOrder";
 
-export interface PhysicalLetterDraft {
-  letterId: string | null;
+export interface PhysicalLetterCheckoutInput {
   senderName: string;
   recipientName: string;
   recipientAddress: string;
@@ -19,54 +28,68 @@ export const usePhysicalLetter = () => {
   const { user } = useAuth();
   const { ready, config } = usePaddle();
 
-  const createPendingPhysicalLetter = useCallback(
-    async (input: PhysicalLetterDraft) => {
+  /** Prepare checkout (no DB writes). Returns order id + Paddle custom_data. */
+  const preparePhysicalCheckout = useCallback(
+    (input: PhysicalLetterCheckoutInput): { orderId: PhysicalOrderId; customData: PhysicalOrderPaddleCustomData } => {
       if (!user) throw new Error("Not authenticated");
+
       const postingDate = calculatePostingDate(input.deliveryDate);
-      const { data, error } = await supabase
-        .from("physical_letters")
-        .insert({
-          user_id: user.id,
-          letter_id: input.letterId,
-          sender_name: input.senderName,
-          recipient_name: input.recipientName,
-          recipient_address: input.recipientAddress,
-          plaintext_title: input.plaintextTitle,
-          plaintext_body: input.plaintextBody,
-          plaintext_signature: input.plaintextSignature,
-          delivery_date: input.deliveryDate.toISOString().split("T")[0],
-          posting_date: postingDate.toISOString().split("T")[0],
-          payment_status: "pending",
-          fulfillment_status: "awaiting_payment",
-          paddle_price_id: config?.priceId,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const orderId = createPhysicalOrderId();
+      const draft: PhysicalOrderDraft = {
+        senderName: input.senderName,
+        recipientName: input.recipientName,
+        recipientAddress: input.recipientAddress,
+        plaintextTitle: input.plaintextTitle,
+        plaintextBody: input.plaintextBody,
+        plaintextSignature: input.plaintextSignature,
+        deliveryDate: input.deliveryDate.toISOString().split("T")[0],
+        postingDate: postingDate.toISOString().split("T")[0],
+        paddlePriceId: config?.priceId,
+      };
+
+      const customData = buildPhysicalOrderCustomData(orderId, user.id, draft);
+      validatePhysicalOrderCustomDataSize(customData);
+      savePhysicalOrderDraft(orderId, draft);
+
+      return { orderId, customData };
     },
     [user, config],
   );
 
   const openCheckout = useCallback(
-    (physicalLetterId: string, customerEmail: string, onComplete: () => void, onClose?: () => void) => {
+    (
+      orderId: PhysicalOrderId,
+      customData: PhysicalOrderPaddleCustomData,
+      customerEmail: string,
+      onComplete: (transactionId?: string) => void,
+      onClose?: () => void,
+    ) => {
       if (!ready || !config || !window.Paddle) {
         throw new Error("Checkout not ready");
       }
-      sessionStorage.setItem("pending_physical_letter_id", physicalLetterId);
+
+      sessionStorage.setItem(PENDING_PHYSICAL_ORDER_KEY, orderId);
+      sessionStorage.removeItem(PENDING_PHYSICAL_TRANSACTION_KEY);
 
       window.Paddle.Checkout.open({
         items: [{ priceId: config.priceId, quantity: 1 }],
         customer: { email: customerEmail },
-        customData: { physical_letter_id: physicalLetterId },
+        customData,
         settings: {
           displayMode: "overlay",
           theme: "light",
-          successUrl: `${window.location.origin}/vault?physical=success&physical_letter_id=${physicalLetterId}`,
+          successUrl: `${window.location.origin}/vault?physical=success&physical_order_id=${orderId}`,
         },
-        eventCallback: (ev: any) => {
+        eventCallback: (ev: { name?: string; data?: Record<string, unknown> }) => {
           if (ev?.name === "checkout.completed") {
-            onComplete();
+            const transactionId =
+              (typeof ev.data?.transaction_id === "string" && ev.data.transaction_id) ||
+              (typeof ev.data?.id === "string" && ev.data.id) ||
+              undefined;
+            if (transactionId) {
+              sessionStorage.setItem(PENDING_PHYSICAL_TRANSACTION_KEY, transactionId);
+            }
+            onComplete(transactionId);
           } else if (ev?.name === "checkout.closed") {
             onClose?.();
           }
@@ -76,5 +99,5 @@ export const usePhysicalLetter = () => {
     [ready, config],
   );
 
-  return { ready, createPendingPhysicalLetter, openCheckout };
+  return { ready, preparePhysicalCheckout, openCheckout };
 };
