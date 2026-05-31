@@ -91,6 +91,8 @@ const SendPhysicalDialog = ({
         deliveryDate,
       });
 
+      onOpenChange(false);
+
       openCheckout(
         orderId,
         customData,
