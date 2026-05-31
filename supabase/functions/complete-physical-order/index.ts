@@ -15,10 +15,11 @@ const corsHeaders = {
 async function fetchPaddleTransaction(
   transactionId: string,
 ): Promise<Record<string, unknown> | null> {
-  const apiKey = Deno.env.get("PADDLE_API_KEY")?.trim();
+  const environment = (Deno.env.get("PADDLE_ENVIRONMENT") ?? "sandbox").trim();
+  const suffix = environment === "production" ? "_LIVE" : "_SANDBOX";
+  const apiKey = Deno.env.get(`PADDLE_API_KEY${suffix}`)?.trim();
   if (!apiKey) return null;
 
-  const environment = (Deno.env.get("PADDLE_ENVIRONMENT") ?? "sandbox").trim();
   const base =
     environment === "production" ? "https://api.paddle.com" : "https://sandbox-api.paddle.com";
 

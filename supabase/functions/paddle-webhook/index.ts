@@ -335,7 +335,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const webhookSecret = Deno.env.get("PADDLE_WEBHOOK_SECRET")?.trim();
+    const environment = (Deno.env.get("PADDLE_ENVIRONMENT") ?? "sandbox").trim();
+    const suffix = environment === "production" ? "_LIVE" : "_SANDBOX";
+    const webhookSecret = Deno.env.get(`PADDLE_WEBHOOK_SECRET${suffix}`)?.trim();
+    console.log("[paddle-webhook] environment:", environment);
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
 
