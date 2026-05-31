@@ -1,54 +1,49 @@
+# Paddle sandbox/live environment switch
 
+Make `PADDLE_ENVIRONMENT` (`sandbox` | `production`) the single switch that selects between two parallel sets of Paddle credentials in all edge functions.
 
-## Plan: Event Submission Flow
+## 1. Secret changes (Lovable Cloud)
 
-### Overview
-Add a multi-step event flow at `/event/:slug` where live event attendees authenticate and submit physical letter posting details. This is completely separate from the existing letter-writing flow.
+Rename existing sandbox secrets (delete old + add new with same value):
+- `PADDLE_CLIENT_TOKEN` → `PADDLE_CLIENT_TOKEN_SANDBOX`
+- `PADDLE_API_KEY` → `PADDLE_API_KEY_SANDBOX` *(note: `PADDLE_API_KEY` is not currently set in this project — will skip if absent)*
+- `PADDLE_PRICE_ID` → `PADDLE_PRICE_ID_SANDBOX`
+- `PADDLE_WEBHOOK_SECRET` → `PADDLE_WEBHOOK_SECRET_SANDBOX`
 
-### 1. Database Migration
+Then prompt you one-by-one for and add:
+- `PADDLE_CLIENT_TOKEN_LIVE`
+- `PADDLE_API_KEY_LIVE`
+- `PADDLE_PRICE_ID_LIVE`
+- `PADDLE_WEBHOOK_SECRET_LIVE`
 
-Create two tables (`events`, `event_submissions`) with the exact schema provided. RLS policies allow anyone to view active events, and authenticated users to manage their own submissions. Also insert the test event row.
+`PADDLE_ENVIRONMENT` stays as the single switch (values: `sandbox` or `production`). `PADDLE_SELLER_ID` is left untouched — it's the same seller account for both modes. Please confirm if you actually have a separate live seller ID; if so we'll split it too.
 
-Add `updated_at` trigger for both tables reusing the existing `update_updated_at_column()` function.
+## 2. Code changes
 
-### 2. New Files
+Add a small helper at the top of each affected edge function:
 
-**`src/pages/EventFlow.tsx`** — Single page component managing the entire 5-step flow:
-- Reads `:slug` from URL params
-- Fetches event by slug; shows inactive message if not found
-- Manages step state (1: Auth, 2: Details, 3: Letter, 4: Recipient, 5: Confirm)
-
-**Step 1 — Auth Landing**: If user not authenticated, show event name/date with Sign In / Create Account forms (inline, reusing the same auth logic from `useAuth`). On successful auth, auto-advance to step 2.
-
-**Step 2 — Event Details**: Name (required), DOB (optional date picker), Gender (optional select), Marketing consent (pre-ticked checkbox). Heading contextualises it for returning users.
-
-**Step 3 — Letter Details**: Letter date (default today, editable date picker), Posting date (date picker, min 24h from now) with tooltip about Royal Mail delivery.
-
-**Step 4 — Recipient Details**: Recipient name (required), address (required textarea) with tooltip about editing window.
-
-**Step 5 — Confirmation**: Summary of all details including estimated arrival (posting date + 3-5 working days, skipping weekends/bank holidays). "Seal It" button inserts into `event_submissions`, then shows success screen.
-
-### 3. Routing
-
-Add route in `App.tsx`:
-```
-<Route path="/event/:slug" element={<EventFlow />} />
+```ts
+const env = (Deno.env.get("PADDLE_ENVIRONMENT") ?? "sandbox").trim();
+const suffix = env === "production" ? "_LIVE" : "_SANDBOX";
+const pick = (name: string) => Deno.env.get(`${name}${suffix}`)?.trim();
 ```
 
-### 4. Key Design Decisions
+Then resolve credentials via `pick("PADDLE_CLIENT_TOKEN")`, etc.
 
-- Auth is handled inline on the event page (not redirecting to `/auth`) so the event context is preserved
-- All form state held in component state, submitted in one insert at confirmation
-- UK bank holidays for 2026 hardcoded for arrival estimate calculation
-- Uses existing UI components: Calendar, Popover, Input, Textarea, Select, Checkbox, Button, Tooltip
-- Mobile-first, consistent with app's warm cream/maroon aesthetic
-- No changes to any existing tables, data, or routes
+Files updated:
+- `supabase/functions/paddle-config/index.ts` — read `PADDLE_CLIENT_TOKEN_{SANDBOX|LIVE}` and `PADDLE_PRICE_ID_{SANDBOX|LIVE}`; still return `environment` to the client so Paddle.js picks the right runtime.
+- `supabase/functions/paddle-webhook/index.ts` — read `PADDLE_WEBHOOK_SECRET_{SANDBOX|LIVE}` for signature verification.
+- `supabase/functions/complete-physical-order/index.ts` — read `PADDLE_API_KEY_{SANDBOX|LIVE}` and continue to pick `api.paddle.com` vs `sandbox-api.paddle.com` from `PADDLE_ENVIRONMENT`.
 
-### 5. Files Changed
+No frontend changes (`usePaddle.ts` already gets `environment` from `paddle-config`). No DB, RLS, UI, encryption, or Vault changes.
 
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add `/event/:slug` route |
-| `src/pages/EventFlow.tsx` | New — full multi-step flow |
-| Migration SQL | Create tables, RLS, insert test event |
+## 3. Deploy & verify
 
+- Redeploy `paddle-config`, `paddle-webhook`, `complete-physical-order`.
+- With `PADDLE_ENVIRONMENT=sandbox`: confirm checkout still loads and a sandbox test transaction flips `physical_letters.payment_status` to `paid`.
+- Flip `PADDLE_ENVIRONMENT=production` only after you confirm all four `_LIVE` secrets are set and the live webhook endpoint is registered in Paddle's live dashboard pointing at the same `/functions/v1/paddle-webhook` URL.
+
+## Open questions before I start
+
+1. Confirm you want me to delete the un-suffixed secrets after copying them to `_SANDBOX` (vs. leaving them in place as duplicates).
+2. Confirm `PADDLE_SELLER_ID` is shared across sandbox and live (most setups: no — sandbox and live have different seller IDs). If different, I'll add `PADDLE_SELLER_ID_SANDBOX`/`_LIVE` too.
