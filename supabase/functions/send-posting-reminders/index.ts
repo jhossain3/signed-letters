@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ADMIN_EMAIL = "yasminshahid1711@gmail.com";
+const ADMIN_EMAIL = "teamjaya.signed@gmail.com";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -83,10 +83,9 @@ Deno.serve(async (req) => {
       throw new Error(`Resend API failed [${emailRes.status}]: ${errBody}`);
     }
 
-    return new Response(
-      JSON.stringify({ message: `Reminder sent for ${count} letter(s)` }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ message: `Reminder sent for ${count} letter(s)` }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("Error in send-posting-reminders:", err);
     return new Response(JSON.stringify({ error: err.message }), {

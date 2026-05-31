@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ADMIN_EMAIL = "yasminshahid1711@gmail.com";
+const ADMIN_EMAIL = "teamjaya.signed@gmail.com";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,7 +30,10 @@ Deno.serve(async (req) => {
     const anonClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: userError } = await anonClient.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await anonClient.auth.getUser();
     if (userError || !user || user.email !== ADMIN_EMAIL) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
@@ -54,9 +57,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
 
         // Get submission counts
-        const { data: counts, error: countError } = await admin
-          .from("event_submissions")
-          .select("event_id");
+        const { data: counts, error: countError } = await admin.from("event_submissions").select("event_id");
         if (countError) throw countError;
 
         const countMap: Record<string, number> = {};
@@ -135,12 +136,7 @@ Deno.serve(async (req) => {
 
       if (body.action === "toggle-active") {
         const { event_id, active } = body;
-        const { data, error } = await admin
-          .from("events")
-          .update({ active })
-          .eq("id", event_id)
-          .select()
-          .single();
+        const { data, error } = await admin.from("events").update({ active }).eq("id", event_id).select().single();
         if (error) throw error;
         return new Response(JSON.stringify(data), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
