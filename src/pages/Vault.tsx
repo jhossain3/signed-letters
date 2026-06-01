@@ -121,6 +121,7 @@ const Vault = () => {
   useEffect(() => {
     if (searchParams.get("physical") !== "success" || !FEATURE_FLAGS.AUTH_ENABLED || !user) return;
     if (physicalOrderHandled.current) return; // ← prevent re-runs
+    physicalOrderHandled.current = true;
     const physicalOrderId =
       searchParams.get("physical_order_id") ??
       searchParams.get("physical_letter_id") ??
