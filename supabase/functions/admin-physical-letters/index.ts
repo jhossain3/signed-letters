@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const adminEmail = Deno.env.get("ADMIN_EMAIL")!;
+    const adminEmail = "teamjaya.signed@gmail.com";
 
     const auth = req.headers.get("Authorization") ?? "";
     const token = auth.replace("Bearer ", "");
