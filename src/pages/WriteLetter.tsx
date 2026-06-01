@@ -1,19 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  ArrowLeft,
-  Calendar,
-  Image,
-  PenTool,
-  Type,
-  X,
-  Check,
-  Plus,
-  Trash2,
-  MessageCircle,
-  Save,
-} from "lucide-react";
+import { ArrowLeft, Calendar, Image, PenTool, Type, X, Check, Plus, Trash2, MessageCircle, Save } from "lucide-react";
 import Footer from "@/components/Footer";
 import SketchCanvas, { SketchCanvasRef } from "@/components/SketchCanvas";
 import { Button } from "@/components/ui/button";
@@ -57,7 +45,6 @@ const INK_COLORS = [
   { name: "Navy", value: "hsl(220, 40%, 25%)", class: "text-blue-900" },
 ];
 
-
 const DRAFT_STORAGE_KEY = "letter-draft";
 
 interface LetterDraft {
@@ -76,17 +63,12 @@ interface LetterDraft {
   sketchPages: string[];
 }
 
-const uploadPhotosToStorage = async (
-  files: File[],
-  userId: string
-): Promise<string[]> => {
+const uploadPhotosToStorage = async (files: File[], userId: string): Promise<string[]> => {
   const paths: string[] = [];
   for (const file of files) {
     const ext = file.name.split(".").pop() || "jpg";
     const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("letter-photos")
-      .upload(path, file, { contentType: file.type });
+    const { error } = await supabase.storage.from("letter-photos").upload(path, file, { contentType: file.type });
     if (error) throw error;
     // Store the storage path, not a URL — signed URLs are generated on read
     paths.push(path);
@@ -150,15 +132,15 @@ const WriteLetter = () => {
     }
     setSignature(draft.signature || "");
     if (draft.signatureFont) {
-      const found = SIGNATURE_FONTS.find(f => f.class === draft.signatureFont);
+      const found = SIGNATURE_FONTS.find((f) => f.class === draft.signatureFont);
       if (found) setSignatureFont(found);
     }
     if (draft.paperColor) {
-      const found = PAPER_COLORS.find(c => c.value === draft.paperColor);
+      const found = PAPER_COLORS.find((c) => c.value === draft.paperColor);
       if (found) setPaperColor(found);
     }
     if (draft.inkColor) {
-      const found = INK_COLORS.find(c => c.value === draft.inkColor);
+      const found = INK_COLORS.find((c) => c.value === draft.inkColor);
       if (found) setInkColor(found);
     }
     setShowLines(draft.isLined ?? true);
@@ -176,7 +158,7 @@ const WriteLetter = () => {
     if (draft.sketchData) {
       const pages = deserializeMultiPage(draft.sketchData);
       if (pages && pages.length > 0) {
-        const sketchPagesData = pages.map(p => JSON.stringify(p.strokes));
+        const sketchPagesData = pages.map((p) => JSON.stringify(p.strokes));
         setSketchPages(sketchPagesData);
       } else {
         setSketchPages([""]);
@@ -281,56 +263,78 @@ const WriteLetter = () => {
   }, []);
 
   // Build a draft input object from current state
-  const buildDraftInput = useCallback(() => ({
-    id: currentDraftId || undefined,
-    title: title || "Untitled Letter",
-    body: getCombinedBody(),
-    date: format(new Date(), "MMMM d, yyyy"),
-    deliveryDate: deliveryDate?.toISOString(),
-    signature,
-    signatureFont: signatureFont.class,
-    recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
-    recipientType,
-    photos: [] as string[], // Photos are File objects, can't save to draft without uploading
-    sketchData: getCombinedSketchData() || undefined,
-    isTyped: inputMode === "type",
-    paperColor: paperColor.value,
-    inkColor: inkColor.value,
-    isLined: showLines,
-    isPhysical,
-  }), [currentDraftId, title, deliveryDate, signature, signatureFont, recipientType, recipientEmail, inputMode, paperColor, inkColor, showLines, textPages, sketchPages, isPhysical]); // eslint-disable-line react-hooks/exhaustive-deps
+  const buildDraftInput = useCallback(
+    () => ({
+      id: currentDraftId || undefined,
+      title: title || "Untitled Letter",
+      body: getCombinedBody(),
+      date: format(new Date(), "MMMM d, yyyy"),
+      deliveryDate: deliveryDate?.toISOString(),
+      signature,
+      signatureFont: signatureFont.class,
+      recipientEmail: recipientType === "someone" ? recipientEmail : undefined,
+      recipientType,
+      photos: [] as string[], // Photos are File objects, can't save to draft without uploading
+      sketchData: getCombinedSketchData() || undefined,
+      isTyped: inputMode === "type",
+      paperColor: paperColor.value,
+      inkColor: inkColor.value,
+      isLined: showLines,
+      isPhysical,
+    }),
+    [
+      currentDraftId,
+      title,
+      deliveryDate,
+      signature,
+      signatureFont,
+      recipientType,
+      recipientEmail,
+      inputMode,
+      paperColor,
+      inkColor,
+      showLines,
+      textPages,
+      sketchPages,
+      isPhysical,
+    ],
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save draft to DB
-  const handleSaveDraftToDb = useCallback(async (silent = false) => {
-    if (!user) {
-      // Not signed in — redirect to auth
-      saveDraft(); // Save to localStorage first
-      navigate("/auth", { state: { from: { pathname: "/write" } } });
-      toast.info("Please sign in to save your draft");
-      return;
-    }
+  const handleSaveDraftToDb = useCallback(
+    async (silent = false) => {
+      if (!user) {
+        // Not signed in — redirect to auth
+        saveDraft(); // Save to localStorage first
+        navigate("/auth", { state: { from: { pathname: "/write" } } });
+        toast.info("Please sign in to save your draft");
+        return;
+      }
 
-    try {
-      const result = await saveDraftToDb(buildDraftInput());
-      setCurrentDraftId(result.id);
-      // Clear localStorage since it's now in DB
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-      if (!silent) {
-        toast.success("Draft saved");
+      try {
+        const result = await saveDraftToDb(buildDraftInput());
+        setCurrentDraftId(result.id);
+        // Clear localStorage since it's now in DB
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        if (!silent) {
+          toast.success("Draft saved");
+        }
+      } catch (error: any) {
+        if (!silent) {
+          toast.error("Failed to save draft: " + error.message);
+        }
       }
-    } catch (error: any) {
-      if (!silent) {
-        toast.error("Failed to save draft: " + error.message);
-      }
-    }
-  }, [user, saveDraftToDb, buildDraftInput, saveDraft, navigate]);
+    },
+    [user, saveDraftToDb, buildDraftInput, saveDraft, navigate],
+  );
 
   // Auto-save to DB every 60 seconds if signed in
   useEffect(() => {
     if (!user || !draftLoaded) return;
     const interval = setInterval(() => {
       // Only auto-save if there's content
-      const hasContent = title.trim() || textPages.some(p => p.trim()) || sketchPages.some(p => p && p !== "" && p !== "[]");
+      const hasContent =
+        title.trim() || textPages.some((p) => p.trim()) || sketchPages.some((p) => p && p !== "" && p !== "[]");
       if (hasContent) {
         handleSaveDraftToDb(true);
       }
@@ -617,11 +621,18 @@ const WriteLetter = () => {
       navigate("/vault", { state: { newLetterId: letterId } });
     } catch (e) {
       console.error("Failed to seal digital copy after physical payment:", e);
-      toast.error("Payment succeeded but saving your vault copy failed. Please contact support.");
-      navigate("/vault");
+
+      if (letterId) {
+        // Letter was saved — the error came from something after (draft cleanup, etc.)
+        // Navigate normally, don't alarm the user
+        navigate("/vault", { state: { newLetterId: letterId } });
+      } else {
+        // Letter genuinely failed to save
+        toast.error("Payment succeeded but saving your vault copy failed. Please contact support.");
+        navigate("/vault");
+      }
     }
   };
-
 
   const completeSeal = async () => {
     // Get sketch data from state (works regardless of current mode)
@@ -848,21 +859,30 @@ const WriteLetter = () => {
           <div className="flex flex-wrap justify-center gap-3 mb-8 relative">
             <Button
               variant={!isPhysical && recipientType === "myself" ? "default" : "outline"}
-              onClick={() => { setIsPhysical(false); setRecipientType("myself"); }}
+              onClick={() => {
+                setIsPhysical(false);
+                setRecipientType("myself");
+              }}
               className="rounded-full px-6"
             >
               To Myself
             </Button>
             <Button
               variant={!isPhysical && recipientType === "someone" ? "default" : "outline"}
-              onClick={() => { setIsPhysical(false); setRecipientType("someone"); }}
+              onClick={() => {
+                setIsPhysical(false);
+                setRecipientType("someone");
+              }}
               className="rounded-full px-6"
             >
               To Someone Else
             </Button>
             <Button
               variant={isPhysical ? "default" : "outline"}
-              onClick={() => { setIsPhysical(true); setRecipientType("someone"); }}
+              onClick={() => {
+                setIsPhysical(true);
+                setRecipientType("someone");
+              }}
               className="rounded-full px-6"
             >
               Send Physical Letter
@@ -1190,7 +1210,10 @@ const WriteLetter = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block font-body">
-                  Recipient Email {isPhysical && <span className="text-muted-foreground font-normal">(optional — for the digital copy)</span>}
+                  Recipient Email{" "}
+                  {isPhysical && (
+                    <span className="text-muted-foreground font-normal">(optional — for the digital copy)</span>
+                  )}
                 </label>
                 <Input
                   type="email"
