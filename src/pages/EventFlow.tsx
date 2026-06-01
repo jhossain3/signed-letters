@@ -212,7 +212,7 @@ const EventFlow = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-start justify-center px-4 py-8 md:py-16">
+    <div className="min-h-screen bg-background flex items-start justify-center px-4 pt-2 pb-8 md:pt-6 md:pb-12">
       <div className="w-full max-w-md">
         {/* Progress */}
         {step > 1 && (
@@ -325,7 +325,14 @@ const EventFlow = () => {
                           {dob ? format(dob, "PPP") : "Optional"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent
+                        className="w-auto max-h-[70vh] overflow-y-auto p-0"
+                        align="start"
+                        side="top"
+                        sideOffset={8}
+                        avoidCollisions
+                        collisionPadding={12}
+                      >
                         <Calendar
                           mode="single"
                           selected={dob}
@@ -391,7 +398,14 @@ const EventFlow = () => {
                           {format(letterDate, "PPP")}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent
+                        className="w-auto max-h-[70vh] overflow-y-auto p-0"
+                        align="start"
+                        side="top"
+                        sideOffset={8}
+                        avoidCollisions
+                        collisionPadding={12}
+                      >
                         <Calendar
                           mode="single"
                           selected={letterDate}
@@ -416,7 +430,14 @@ const EventFlow = () => {
                           {postingDate ? format(postingDate, "PPP") : "Pick a date"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent
+                        className="w-auto max-h-[70vh] overflow-y-auto p-0"
+                        align="start"
+                        side="top"
+                        sideOffset={8}
+                        avoidCollisions
+                        collisionPadding={12}
+                      >
                         <Calendar
                           mode="single"
                           selected={postingDate}
