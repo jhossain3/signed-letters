@@ -26,6 +26,7 @@ import { useLetters } from "@/hooks/useLetters";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEncryptionReady } from "@/hooks/useEncryptionReady";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
+import { isDeliveryDateInAllowedRange } from "@/lib/deliveryDate";
 import { toast } from "sonner";
 import { serializeMultiPage, deserializeMultiPage } from "@/lib/sketchSerialization";
 import { supabase } from "@/integrations/supabase/client";
@@ -551,6 +552,16 @@ const WriteLetter = () => {
 
     if (!deliveryDate) {
       toast.error("Please select a delivery date");
+      return;
+    }
+
+    const allowToday = FEATURE_FLAGS.BYPASS_DELIVERY_DATE;
+    if (!isDeliveryDateInAllowedRange(deliveryDate, allowToday)) {
+      toast.error(
+        allowToday
+          ? "Please choose today or a future delivery date"
+          : "Please choose a future delivery date",
+      );
       return;
     }
 
@@ -1154,19 +1165,20 @@ const WriteLetter = () => {
                   showDateInput
                   dateInputLabel="Or type a date"
                   disabled={(date) => {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const compareDate = new Date(date);
-                    compareDate.setHours(0, 0, 0, 0);
-                    const maxDate = addYears(today, 20);
-                    // When bypass is disabled, don't allow selecting today
-                    const minDate = FEATURE_FLAGS.BYPASS_DELIVERY_DATE ? today : addDays(today, 1);
-                    return compareDate < minDate || compareDate > maxDate;
+                    return !isDeliveryDateInAllowedRange(date, FEATURE_FLAGS.BYPASS_DELIVERY_DATE);
                   }}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
+
+            {deliveryDate && !isDeliveryDateInAllowedRange(deliveryDate, FEATURE_FLAGS.BYPASS_DELIVERY_DATE) && (
+              <p className="text-sm text-destructive mt-2 font-body">
+                {FEATURE_FLAGS.BYPASS_DELIVERY_DATE
+                  ? "This date is in the past. Choose today or a future date."
+                  : "This date is no longer valid. Choose a future date."}
+              </p>
+            )}
 
             {deliveryDate && (
               <p className="text-sm text-muted-foreground mt-2 font-body">

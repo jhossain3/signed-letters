@@ -205,7 +205,14 @@ const MyEvents = () => {
                                 {editPostingDate ? format(new Date(editPostingDate + "T00:00:00"), "d MMM yyyy") : "Pick a date"}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent
+                              className="w-auto max-h-[70vh] overflow-y-auto p-0"
+                              align="start"
+                              side="top"
+                              sideOffset={8}
+                              avoidCollisions
+                              collisionPadding={12}
+                            >
                               <Calendar
                                 mode="single"
                                 selected={new Date(editPostingDate + "T00:00:00")}

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { encryptLetterFields, decryptLetterFields } from "@/lib/encryption";
 import { encryptLetterFieldsForRecipient, decryptLetterFieldsForRecipient } from "@/lib/emailDerivedEncryption";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
+import { isDeliveryDateInAllowedRange } from "@/lib/deliveryDate";
 
 // Trigger immediate notification for same-day self-sent letters
 // Pass the plaintext title since the stored title is encrypted
@@ -210,6 +211,18 @@ export const useLetters = () => {
   const addLetterMutation = useMutation({
     mutationFn: async (letter: CreateLetterInput) => {
       if (!user) throw new Error("User not authenticated");
+
+      const parsedDeliveryDate = new Date(letter.deliveryDate);
+      if (Number.isNaN(parsedDeliveryDate.getTime())) {
+        throw new Error("Delivery date is invalid");
+      }
+      if (!isDeliveryDateInAllowedRange(parsedDeliveryDate, FEATURE_FLAGS.BYPASS_DELIVERY_DATE)) {
+        throw new Error(
+          FEATURE_FLAGS.BYPASS_DELIVERY_DATE
+            ? "Delivery date must be today or in the future"
+            : "Delivery date must be in the future",
+        );
+      }
 
       const isSomeoneElse = letter.recipientType === "someone";
       
