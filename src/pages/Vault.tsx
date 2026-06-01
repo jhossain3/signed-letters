@@ -3,10 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useCompletePhysicalOrder } from "@/hooks/useCompletePhysicalOrder";
-import {
-  PENDING_PHYSICAL_ORDER_KEY,
-  PENDING_PHYSICAL_TRANSACTION_KEY,
-} from "@/lib/physicalOrder";
+import { PENDING_PHYSICAL_ORDER_KEY, PENDING_PHYSICAL_TRANSACTION_KEY } from "@/lib/physicalOrder";
 import { ArrowLeft, Inbox, Send, LayoutGrid, GitBranch, MessageCircle, User } from "lucide-react";
 import Footer from "@/components/Footer";
 
@@ -122,7 +119,7 @@ const Vault = () => {
   // Paddle redirects here after physical checkout; create vault letter only after payment.
   useEffect(() => {
     if (searchParams.get("physical") !== "success" || !FEATURE_FLAGS.AUTH_ENABLED || !user) return;
-
+    if (physicalOrderHandled.current) return; // ← prevent re-runs
     const physicalOrderId =
       searchParams.get("physical_order_id") ??
       searchParams.get("physical_letter_id") ??
@@ -168,7 +165,7 @@ const Vault = () => {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, user, queryClient, navigate, setSearchParams, completePhysicalOrder]);
+  }, [searchParams, user]);
 
   // Check if we're waiting for a new letter to appear (after redirect from WriteLetter)
   const newLetterId = (location.state as { newLetterId?: string } | null)?.newLetterId;
@@ -219,9 +216,7 @@ const Vault = () => {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground font-body">
-            {isWaitingForLetter
-              ? "Sealing your words..."
-              : "Loading your entries..."}
+            {isWaitingForLetter ? "Sealing your words..." : "Loading your entries..."}
           </p>
         </div>
       </div>
@@ -296,14 +291,16 @@ const Vault = () => {
             viewMode === "grid" ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 {filteredLetters.map((letter, index) => {
-                  const displayTitle = activeTab === "sent" && letter.recipientType === "someone"
-                    ? (letter.displayTitle || letter.title || "A letter")
-                    : letter.title;
-                  const sublabel = activeTab === "sent" && letter.recipientType === "someone"
-                    ? `To ${letter.recipientName || letter.recipientEmail}`
-                    : activeTab === "sent" && letter.recipientType === "myself"
-                    ? "To Myself"
-                    : undefined;
+                  const displayTitle =
+                    activeTab === "sent" && letter.recipientType === "someone"
+                      ? letter.displayTitle || letter.title || "A letter"
+                      : letter.title;
+                  const sublabel =
+                    activeTab === "sent" && letter.recipientType === "someone"
+                      ? `To ${letter.recipientName || letter.recipientEmail}`
+                      : activeTab === "sent" && letter.recipientType === "myself"
+                        ? "To Myself"
+                        : undefined;
 
                   return (
                     <motion.div
@@ -337,14 +334,16 @@ const Vault = () => {
               <div className="relative max-w-2xl mx-auto">
                 <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border -translate-x-1/2" />
                 {filteredLetters.map((letter, index) => {
-                  const displayTitle = activeTab === "sent" && letter.recipientType === "someone"
-                    ? (letter.displayTitle || letter.title || "A letter")
-                    : letter.title;
-                  const sublabel = activeTab === "sent" && letter.recipientType === "someone"
-                    ? `To ${letter.recipientName || letter.recipientEmail}`
-                    : activeTab === "sent" && letter.recipientType === "myself"
-                    ? "To Myself"
-                    : undefined;
+                  const displayTitle =
+                    activeTab === "sent" && letter.recipientType === "someone"
+                      ? letter.displayTitle || letter.title || "A letter"
+                      : letter.title;
+                  const sublabel =
+                    activeTab === "sent" && letter.recipientType === "someone"
+                      ? `To ${letter.recipientName || letter.recipientEmail}`
+                      : activeTab === "sent" && letter.recipientType === "myself"
+                        ? "To Myself"
+                        : undefined;
 
                   return (
                     <motion.div
