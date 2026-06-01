@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -115,11 +115,13 @@ const Vault = () => {
   const { letters: dbLetters, isLoading, isLetterOpenable, deleteLetter } = useLetters();
   const { signOut, user } = useAuth();
   const { completePhysicalOrder } = useCompletePhysicalOrder();
+  const physicalOrderHandled = useRef(false);
 
   // Paddle redirects here after physical checkout; create vault letter only after payment.
   useEffect(() => {
     if (searchParams.get("physical") !== "success" || !FEATURE_FLAGS.AUTH_ENABLED || !user) return;
     if (physicalOrderHandled.current) return; // ← prevent re-runs
+    physicalOrderHandled.current = true;
     const physicalOrderId =
       searchParams.get("physical_order_id") ??
       searchParams.get("physical_letter_id") ??

@@ -590,13 +590,14 @@ const WriteLetter = () => {
   const { completePhysicalOrder } = useCompletePhysicalOrder();
 
   const handlePhysicalPaid = async (orderId: string, transactionId?: string) => {
+    let letterId: string | null = null;
     try {
       let photoUrls: string[] = [];
       if (photos.length > 0 && user) {
         photoUrls = await uploadPhotosToStorage(photos, user.id);
       }
       const useRecipient = recipientEmail.trim().length > 0;
-      const letterId = await completePhysicalOrder(orderId, {
+      letterId = await completePhysicalOrder(orderId, {
         transactionId,
         richLetter: {
           title,
