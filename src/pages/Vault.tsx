@@ -115,6 +115,7 @@ const Vault = () => {
   const { letters: dbLetters, isLoading, isLetterOpenable, deleteLetter } = useLetters();
   const { signOut, user } = useAuth();
   const { completePhysicalOrder } = useCompletePhysicalOrder();
+  const physicalOrderHandled = useRef(false);
 
   // Paddle redirects here after physical checkout; create vault letter only after payment.
   useEffect(() => {
