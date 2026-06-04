@@ -63,6 +63,7 @@ const PrivacyPolicy = () => {
                 <li>Reflections or content you create within the platform</li>
                 <li>Optional demographic information (such as year of birth or gender), if you choose to provide it</li>
                 <li>Communications you send to us</li>
+                <li>Recipient name and postal address (for physical letter delivery)</li>
               </ul>
               <p className="mt-3">We do not use analytics tracking tools at this time.</p>
               <p className="mt-2">Providing optional demographic information is entirely voluntary.</p>
