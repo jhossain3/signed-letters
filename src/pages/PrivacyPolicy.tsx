@@ -40,11 +40,16 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="font-editorial text-xl text-foreground mb-3">1. Who We Are</h2>
               <p>signed is currently operated as a partnership based in the United Kingdom ("we", "us", "our").</p>
-              <p className="mt-2">For the purposes of UK data protection law, we act as the data controller of your personal data.</p>
+              <p className="mt-2">
+                For the purposes of UK data protection law, we act as the data controller of your personal data.
+              </p>
               <p className="mt-2">
                 If you have any questions about this policy or your data, you can contact us at:{" "}
-                <a href="mailto:support@signedletter.com" className="underline underline-offset-4 text-foreground hover:text-primary transition-colors">
-                  support@signedletter.com
+                <a
+                  href="mailto:team@signedletter.com"
+                  className="underline underline-offset-4 text-foreground hover:text-primary transition-colors"
+                >
+                  team@signedletter.com
                 </a>
               </p>
             </section>
@@ -81,18 +86,29 @@ const PrivacyPolicy = () => {
               <h2 className="font-editorial text-xl text-foreground mb-3">4. Lawful Basis for Processing</h2>
               <p>Under UK data protection law, we rely on:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li><strong>Contractual necessity</strong> – to provide your account and deliver the service</li>
-                <li><strong>Legitimate interests</strong> – to improve and secure the platform</li>
-                <li><strong>Consent</strong> – for marketing emails and any optional information you choose to provide</li>
+                <li>
+                  <strong>Contractual necessity</strong> – to provide your account and deliver the service
+                </li>
+                <li>
+                  <strong>Legitimate interests</strong> – to improve and secure the platform
+                </li>
+                <li>
+                  <strong>Consent</strong> – for marketing emails and any optional information you choose to provide
+                </li>
               </ul>
               <p className="mt-3">You may withdraw consent for marketing at any time by unsubscribing.</p>
             </section>
 
             <section>
               <h2 className="font-editorial text-xl text-foreground mb-3">5. How We Store and Protect Your Data</h2>
-              <p>Your reflections and account information are stored securely using third-party infrastructure providers.</p>
+              <p>
+                Your reflections and account information are stored securely using third-party infrastructure providers.
+              </p>
               <p className="mt-2">Reflection content is encrypted at rest.</p>
-              <p className="mt-2">We implement appropriate technical and organisational measures to protect your personal data against unauthorised access, loss, misuse, or alteration.</p>
+              <p className="mt-2">
+                We implement appropriate technical and organisational measures to protect your personal data against
+                unauthorised access, loss, misuse, or alteration.
+              </p>
               <p className="mt-2">Access to user data is restricted.</p>
             </section>
 
@@ -100,17 +116,26 @@ const PrivacyPolicy = () => {
               <h2 className="font-editorial text-xl text-foreground mb-3">6. Third-Party Service Providers</h2>
               <p>We use trusted third-party providers to operate the platform, including:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li><strong>Supabase</strong> – for database hosting and infrastructure</li>
-                <li><strong>EmailOctopus</strong> – for sending newsletter communications (if you subscribe)</li>
+                <li>
+                  <strong>Supabase</strong> – for database hosting and infrastructure
+                </li>
+                <li>
+                  <strong>EmailOctopus</strong> – for sending newsletter communications (if you subscribe)
+                </li>
               </ul>
               <p className="mt-3">These providers process data on our behalf under contractual safeguards.</p>
-              <p className="mt-2">Some data may be processed outside the UK. Where this occurs, we rely on appropriate legal safeguards.</p>
+              <p className="mt-2">
+                Some data may be processed outside the UK. Where this occurs, we rely on appropriate legal safeguards.
+              </p>
             </section>
 
             <section>
               <h2 className="font-editorial text-xl text-foreground mb-3">7. Data Retention</h2>
               <p>We retain account data for as long as your account is active.</p>
-              <p className="mt-2">If you delete your account, we will delete or anonymise your personal data within a reasonable period, except where we are required to retain it for legal or security purposes.</p>
+              <p className="mt-2">
+                If you delete your account, we will delete or anonymise your personal data within a reasonable period,
+                except where we are required to retain it for legal or security purposes.
+              </p>
               <p className="mt-2">Marketing email data is retained until you unsubscribe.</p>
             </section>
 
@@ -125,7 +150,9 @@ const PrivacyPolicy = () => {
                 <li>Withdraw consent (where applicable)</li>
               </ul>
               <p className="mt-3">To exercise these rights, contact us at the email above.</p>
-              <p className="mt-2">You also have the right to lodge a complaint with the UK Information Commissioner's Office.</p>
+              <p className="mt-2">
+                You also have the right to lodge a complaint with the UK Information Commissioner's Office.
+              </p>
             </section>
 
             <section>
