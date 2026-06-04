@@ -25,8 +25,18 @@ const Footer = () => {
             <div className="flex flex-col space-y-3">
               <span className="text-foreground text-sm font-editorial tracking-wide">Explore</span>
               <div className="flex flex-col gap-2">
-                <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">About</Link>
-                <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body">FAQ</Link>
+                <Link
+                  to="/about"
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body"
+                >
+                  About
+                </Link>
+                <Link
+                  to="/faq"
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body"
+                >
+                  FAQ
+                </Link>
               </div>
             </div>
 
@@ -63,16 +73,16 @@ const Footer = () => {
                 </a>
               </div>
               <a
-                href="mailto:support@signedletter.com"
+                href="mailto:team@signedletter.com"
                 onClick={(e) => {
                   const timeout = setTimeout(() => {
-                    navigator.clipboard.writeText("support@signedletter.com").catch(() => {});
+                    navigator.clipboard.writeText("team@signedletter.com").catch(() => {});
                   }, 500);
                   window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
                 }}
                 className="text-muted-foreground hover:text-foreground transition-colors text-xs font-body"
               >
-                support@signedletter.com
+                team@signedletter.com
               </a>
             </div>
           </div>
