@@ -110,7 +110,7 @@ const faqs = [
   {
     question: "Is signed free to use?",
     answer:
-      "signed is currently available to write and send emails digitally for free.\n\nWe're focused on building something meaningful and learning from our community. You can also send a physical letter at the cost of £9.99, you can see the full breakdown at checkout before you confirm anything.",
+      "signed is currently available to write and send letters digitally for free.\n\nWe're focused on building something meaningful and learning from our community. You can also send a physical letter at the cost of £9.99, you can see the full breakdown at checkout before you confirm anything.",
   },
   {
     question: "Why should I try this?",
