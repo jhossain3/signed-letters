@@ -122,6 +122,9 @@ const PrivacyPolicy = () => {
                 <li>
                   <strong>EmailOctopus</strong> – for sending newsletter communications (if you subscribe)
                 </li>
+                <li>
+                  <strong>Paddle</strong> – for payment processing
+                </li>
               </ul>
               <p className="mt-3">These providers process data on our behalf under contractual safeguards.</p>
               <p className="mt-2">
