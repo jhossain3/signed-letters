@@ -3,19 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import Footer from "@/components/Footer";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -42,7 +31,9 @@ const ContactModal = ({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
-            <Label htmlFor="contact-email" className="font-body">Your email</Label>
+            <Label htmlFor="contact-email" className="font-body">
+              Your email
+            </Label>
             <Input
               id="contact-email"
               type="email"
@@ -53,7 +44,9 @@ const ContactModal = ({ open, onOpenChange }: { open: boolean; onOpenChange: (op
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="contact-message" className="font-body">How can we help?</Label>
+            <Label htmlFor="contact-message" className="font-body">
+              How can we help?
+            </Label>
             <Textarea
               id="contact-message"
               placeholder="Tell us what happened..."
@@ -77,27 +70,33 @@ const ContactModal = ({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 const faqs = [
   {
     question: "What is signed?",
-    answer: "signed is a reflection tool that helps you pause, capture a moment, and revisit it later — with time, distance, and clarity.\n\nYou write something once, choose when you'll receive it, and we deliver it back to you in the future.\n\nIt's reflection with hindsight built in.",
+    answer:
+      "signed is a reflection tool that helps you pause, capture a moment, and revisit it later — with time, distance, and clarity.\n\nYou write something once, choose when you'll receive it, and we deliver it back to you in the future.\n\nIt's reflection with hindsight built in.",
   },
   {
     question: "How does it work?",
-    answer: "It's simple:\n\n• You write a message to yourself\n• Choose a future delivery date\n• Sign and seal it\n• We send it back to you when the time comes\n\nUntil then, it stays unopened. No peeking and no editing!",
+    answer:
+      "It's simple:\n\n• You write a message to yourself\n• Choose a future delivery date\n• Sign and seal it\n• We send it back to you when the time comes\n\nUntil then, it stays unopened. No peeking and no editing!",
   },
   {
     question: "Is this journalling?",
-    answer: "Not quite.\n\nJournalling is often about processing thoughts in real time. signed is about writing for a future version of yourself — so when you read it back, you're able to reflect with perspective, growth, and honesty.\n\nMany people use both. They serve different purposes.",
+    answer:
+      "Not quite.\n\nJournalling is often about processing thoughts in real time. signed is about writing for a future version of yourself — so when you read it back, you're able to reflect with perspective, growth, and honesty.\n\nMany people use both. They serve different purposes.",
   },
   {
     question: "What do people usually write?",
-    answer: "Anything that matters to them. Common examples include:\n\n• Goals they're working towards\n• Reflections on a big life moment\n• Duas, intentions, or reminders\n• Notes to their future self during transitions\n• Check-ins at milestones (before Ramadan, after exams, career changes, graduation, weddings etc.)\n\nThere's no \"right\" way to use it.",
+    answer:
+      "Anything that matters to them. Common examples include:\n\n• Goals they're working towards\n• Reflections on a big life moment\n• Duas, intentions, or reminders\n• Notes to their future self during transitions\n• Check-ins at milestones (before Ramadan, after exams, career changes, graduation, weddings etc.)\n\nThere's no \"right\" way to use it.",
   },
   {
     question: "When do I get my message back?",
-    answer: "You choose the delivery date when you write it — whether that's weeks, months, or a year from now.\n\nOnce it's written and signed, it's sealed until delivery.",
+    answer:
+      "You choose the delivery date when you write it — whether that's weeks, months, or a year from now.\n\nOnce it's written and signed, it's sealed until delivery.",
   },
   {
     question: "Can I edit a message after I've sent it?",
-    answer: "No — and that's intentional.\n\nPart of the power of signed is honesty in the moment. Locking it in preserves that truth, so when you read it back, you're meeting your past self exactly as they were.",
+    answer:
+      "No — and that's intentional.\n\nPart of the power of signed is honesty in the moment. Locking it in preserves that truth, so when you read it back, you're meeting your past self exactly as they were.",
   },
   {
     question: "Is my writing private?",
@@ -105,15 +104,18 @@ const faqs = [
   },
   {
     question: "Can I write to someone else?",
-    answer: "Right now, signed is focused on writing to yourself.\n\nWriting to others is something we're exploring carefully for the future.",
+    answer:
+      "Right now, signed is focused on writing to yourself.\n\nWriting to others is something we're exploring carefully for the future.",
   },
   {
     question: "Is signed free to use?",
-    answer: "signed is currently available as part of our early access period.\n\nWe're focused on building something meaningful and learning from our community. Any future changes will be communicated clearly and well in advance.",
+    answer:
+      "signed is currently available as part of our early access period.\n\nWe're focused on building something meaningful and learning from our community. Any future changes will be communicated clearly and well in advance.",
   },
   {
     question: "Why should I try this?",
-    answer: "Because most of us move through life without stopping long enough to notice how far we've come.\n\nsigned creates that pause — and gives you the gift of perspective later.",
+    answer:
+      "Because most of us move through life without stopping long enough to notice how far we've come.\n\nsigned creates that pause — and gives you the gift of perspective later.",
   },
 ];
 
@@ -177,30 +179,34 @@ const FAQ = () => {
                         {"\n\n"}
                         We store your data securely using encrypted infrastructure.
                         {"\n\n"}
-                        We implement appropriate technical and organisational safeguards to protect your data against unauthorised access, loss, or misuse.
+                        We implement appropriate technical and organisational safeguards to protect your data against
+                        unauthorised access, loss, or misuse.
                         {"\n\n"}
                         Please view our{" "}
                         <a
                           href="/privacy"
-                          onClick={(e) => { e.preventDefault(); navigate("/privacy"); }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate("/privacy");
+                          }}
                           className="underline underline-offset-4 text-foreground hover:text-primary transition-colors"
                         >
                           privacy policy
-                        </a>
-                        {" "}for further detail.
+                        </a>{" "}
+                        for further detail.
                         {"\n\n"}
                         You can delete your account any time by emailing us at{" "}
                         <a
-                          href="mailto:support@signedletter.com"
+                          href="mailto:team@signedletter.com"
                           onClick={() => {
                             const timeout = setTimeout(() => {
-                              navigator.clipboard.writeText("support@signedletter.com").catch(() => {});
+                              navigator.clipboard.writeText("team@signedletter.com").catch(() => {});
                             }, 500);
                             window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
                           }}
                           className="underline underline-offset-4 text-foreground hover:text-primary transition-colors"
                         >
-                          support@signedletter.com
+                          team@signedletter.com
                         </a>
                         .
                       </>
@@ -210,10 +216,10 @@ const FAQ = () => {
                         {"\n\n"}
                         You can{" "}
                         <a
-                          href="mailto:support@signedletter.com"
+                          href="mailto:team@signedletter.com"
                           onClick={() => {
                             const timeout = setTimeout(() => {
-                              navigator.clipboard.writeText("support@signedletter.com").catch(() => {});
+                              navigator.clipboard.writeText("team@signedletter.com").catch(() => {});
                             }, 500);
                             window.addEventListener("blur", () => clearTimeout(timeout), { once: true });
                           }}
@@ -221,7 +227,8 @@ const FAQ = () => {
                         >
                           reach us directly
                         </a>
-                        , and we'll get back to you as quickly as possible. As an early product, feedback also helps us improve, and we genuinely appreciate it.
+                        , and we'll get back to you as quickly as possible. As an early product, feedback also helps us
+                        improve, and we genuinely appreciate it.
                       </>
                     )}
                   </AccordionContent>
