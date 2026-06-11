@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEncryptionReady } from "@/hooks/useEncryptionReady";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { isDeliveryDateInAllowedRange } from "@/lib/deliveryDate";
+import { earliestPhysicalDeliveryDate, PHYSICAL_LETTER_CONFIG } from "@/config/physicalLetter";
 import { toast } from "sonner";
 import { serializeMultiPage, deserializeMultiPage } from "@/lib/sketchSerialization";
 import { supabase } from "@/integrations/supabase/client";
