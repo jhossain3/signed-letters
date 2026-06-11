@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEncryptionReady } from "@/hooks/useEncryptionReady";
 import { FEATURE_FLAGS } from "@/config/featureFlags";
 import { isDeliveryDateInAllowedRange } from "@/lib/deliveryDate";
+import { earliestPhysicalDeliveryDate, PHYSICAL_LETTER_CONFIG } from "@/config/physicalLetter";
 import { toast } from "sonner";
 import { serializeMultiPage, deserializeMultiPage } from "@/lib/sketchSerialization";
 import { supabase } from "@/integrations/supabase/client";
@@ -1186,7 +1187,12 @@ const WriteLetter = () => {
                   showDateInput
                   dateInputLabel="Or type a date"
                   disabled={(date) => {
-                    return !isDeliveryDateInAllowedRange(date, FEATURE_FLAGS.BYPASS_DELIVERY_DATE);
+                    if (!isDeliveryDateInAllowedRange(date, FEATURE_FLAGS.BYPASS_DELIVERY_DATE)) return true;
+                    if (isPhysical && !FEATURE_FLAGS.BYPASS_DELIVERY_DATE) {
+                      const earliest = earliestPhysicalDeliveryDate();
+                      if (date < earliest) return true;
+                    }
+                    return false;
                   }}
                   initialFocus
                 />
@@ -1198,6 +1204,12 @@ const WriteLetter = () => {
                 {FEATURE_FLAGS.BYPASS_DELIVERY_DATE
                   ? "This date is in the past. Choose today or a future date."
                   : "This date is no longer valid. Choose a future date."}
+              </p>
+            )}
+
+            {isPhysical && deliveryDate && isDeliveryDateInAllowedRange(deliveryDate, FEATURE_FLAGS.BYPASS_DELIVERY_DATE) && deliveryDate < earliestPhysicalDeliveryDate() && !FEATURE_FLAGS.BYPASS_DELIVERY_DATE && (
+              <p className="text-sm text-destructive mt-2 font-body">
+                Physical letters need at least {PHYSICAL_LETTER_CONFIG.MIN_DELIVERY_LEAD_DAYS} days lead time. Earliest available: {format(earliestPhysicalDeliveryDate(), "MMMM d, yyyy")}.
               </p>
             )}
 
