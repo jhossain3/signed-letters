@@ -13,6 +13,8 @@ import Vault from "./pages/Vault";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import RefundPolicy from "./pages/RefundPolicy";
 import Auth from "./pages/Auth";
 import Drafts from "./pages/Drafts";
 import EventFlow from "./pages/EventFlow";

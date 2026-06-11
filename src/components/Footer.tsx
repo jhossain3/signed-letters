@@ -19,7 +19,7 @@ const Footer = () => {
             <span className="text-muted-foreground text-sm font-editorial tracking-wide">Write through time</span>
           </div>
 
-          {/* Right — Explore + Contact */}
+          {/* Right — Explore + Legal + Contact */}
           <div className="flex gap-12 sm:gap-16">
             {/* Explore */}
             <div className="flex flex-col space-y-3">
@@ -36,6 +36,31 @@ const Footer = () => {
                   className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body"
                 >
                   FAQ
+                </Link>
+              </div>
+            </div>
+
+            {/* Legal */}
+            <div className="flex flex-col space-y-3">
+              <span className="text-foreground text-sm font-editorial tracking-wide">Legal</span>
+              <div className="flex flex-col gap-2">
+                <Link
+                  to="/terms"
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body"
+                >
+                  Terms & conditions
+                </Link>
+                <Link
+                  to="/privacy"
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body"
+                >
+                  Privacy policy
+                </Link>
+                <Link
+                  to="/refund"
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm font-body"
+                >
+                  Refund policy
                 </Link>
               </div>
             </div>
