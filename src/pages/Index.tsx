@@ -60,7 +60,7 @@ const Index = () => {
               {/* Description */}
               <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-md font-body">
                 A quiet space to write across time. Reflect, remember, and send words to your future self or someone you
-                hold dear. this is a test edit for pushing from github. 
+                hold dear.
               </p>
 
               {/* Privacy Note */}
@@ -76,9 +76,7 @@ const Index = () => {
                   </div>
                   <div className="space-y-1.5">
                     <h2 className="font-editorial text-xl text-foreground">Your notes are for your eyes only</h2>
-                    <p className="text-muted-foreground text-sm font-body">
-                      Private & encrypted · Stored securely
-                    </p>
+                    <p className="text-muted-foreground text-sm font-body">Private & encrypted · Stored securely</p>
                   </div>
                 </div>
                 <Button
