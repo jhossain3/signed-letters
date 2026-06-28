@@ -377,8 +377,16 @@ const WriteLetter = () => {
   // Add a new page to the current mode only
   const addNewPage = useCallback(() => {
     if (inputMode === "type") {
+      if (isPhysical && textPages.length >= 2) {
+        toast.error("Physical letters are limited to 2 pages.");
+        return;
+      }
       setTextPages((prev) => [...prev, ""]);
     } else {
+      if (isPhysical && sketchPages.length >= 2) {
+        toast.error("Physical letters are limited to 2 pages.");
+        return;
+      }
       setSketchPages((prev) => [...prev, ""]);
     }
 
@@ -388,7 +396,8 @@ const WriteLetter = () => {
       if (!el) return;
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }, 0);
-  }, [inputMode]);
+  }, [inputMode, isPhysical, textPages.length, sketchPages.length]);
+
 
   // Delete a page if it's empty (and not the only page)
   const deletePage = useCallback(
