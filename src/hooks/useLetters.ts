@@ -310,20 +310,8 @@ export const useLetters = () => {
         } catch (lookupError) {
           console.error('Error looking up existing recipient:', lookupError);
         }
-
-        // Send initial notification to recipient
-        try {
-          const response = await supabase.functions.invoke('send-recipient-notification', {
-            body: { letterId: data.id, plaintextTitle: letter.title }
-          });
-          if (response.error) {
-            console.error('Failed to send initial recipient notification:', response.error);
-          } else {
-            console.log('Initial recipient notification sent:', response.data);
-          }
-        } catch (notifyError) {
-          console.error('Error sending initial recipient notification:', notifyError);
-        }
+        // Note: No early notification is sent to the recipient at letter creation.
+        // The recipient receives exactly one email on the delivery date when the letter unlocks.
       }
       
       // Return the mapped letter decrypted with sender's key

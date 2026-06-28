@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
             <p style="font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
               Log in to your admin dashboard to view the details and manage posting.
             </p>
-            <a href="https://signed-letters.lovable.app/admin/events"
+            <a href="${(Deno.env.get("SITE_URL") || "https://signedletter.com").replace(/\/$/, "")}/admin/events"
                style="display: inline-block; padding: 12px 24px; background-color: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px;">
               View Admin Dashboard →
             </a>

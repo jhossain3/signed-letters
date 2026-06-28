@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
         subject: `📮 ${rows.length} physical letter${rows.length === 1 ? "" : "s"} to post today`,
         html: `<p>You have <strong>${rows.length}</strong> physical letter${rows.length === 1 ? "" : "s"} to post today.</p>
           <ul>${list}</ul>
-          <p><a href="https://signed-letters.lovable.app/admin/physical-letters">Open admin dashboard</a></p>`,
+          <p><a href="${(Deno.env.get("SITE_URL") || "https://signedletter.com").replace(/\/$/, "")}/admin/physical-letters">Open admin dashboard</a></p>`,
       }),
     });
 
