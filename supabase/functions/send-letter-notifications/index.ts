@@ -115,14 +115,18 @@ const generateAuthorEmailHtml = (title: string) => `
 </html>
 `;
 
-// Email template for external recipients when delivery date arrives (letter ready to open)
-const generateRecipientDeliveryEmailHtml = (title: string) => `
+// Account-aware recipient email templates. These deliberately do NOT reveal:
+// - who sent the letter
+// - the letter title or any content
+// so the moment isn't spoiled before the recipient logs in.
+
+const recipientEmailShell = (heading: string, body: string, ctaLabel: string, ctaHref: string) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Letter is Ready to Open</title>
+  <title>${heading}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap');
   </style>
@@ -132,10 +136,8 @@ const generateRecipientDeliveryEmailHtml = (title: string) => `
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background: linear-gradient(180deg, #fffcf7 0%, #faf8f5 100%); border-radius: 16px; box-shadow: 0 4px 24px rgba(139, 69, 69, 0.08); overflow: hidden;">
-          <!-- Header -->
           <tr>
             <td style="padding: 48px 40px 24px; text-align: center;">
-              <!-- Logo mark -->
               <div style="margin-bottom: 32px;">
                 <svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <line x1="4" y1="16" x2="32" y2="16" stroke="#8b4545" stroke-width="2" stroke-linecap="square"/>
@@ -143,73 +145,42 @@ const generateRecipientDeliveryEmailHtml = (title: string) => `
                 </svg>
               </div>
               <h1 style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 500; color: #2d2522; letter-spacing: -0.02em;">
-                Your Letter is Ready to Open!
+                ${heading}
               </h1>
-              <p style="margin: 0; font-size: 15px; color: #7a6f6a; line-height: 1.5;">
-                The moment you've been waiting for has arrived
-              </p>
             </td>
           </tr>
-
-          <!-- Envelope illustration - open/ready -->
           <tr>
             <td style="padding: 16px 40px 24px; text-align: center;">
-              <div style="display: inline-block; position: relative;">
-                <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <!-- Envelope body -->
-                  <rect x="10" y="30" width="100" height="45" rx="4" fill="#f5ebe0" stroke="#d4c4b5" stroke-width="1.5"/>
-                  <!-- Envelope flap (open) -->
-                  <path d="M10 34 L60 10 L110 34" fill="#faf5ef" stroke="#d4c4b5" stroke-width="1.5" stroke-linejoin="round"/>
-                  <!-- Letter peeking out -->
-                  <rect x="20" y="25" width="80" height="40" rx="2" fill="#ffffff" stroke="#ebe5de" stroke-width="1"/>
-                  <line x1="30" y1="35" x2="90" y2="35" stroke="#e0d8d0" stroke-width="2"/>
-                  <line x1="30" y1="42" x2="80" y2="42" stroke="#e0d8d0" stroke-width="2"/>
-                  <line x1="30" y1="49" x2="70" y2="49" stroke="#e0d8d0" stroke-width="2"/>
-                  <!-- Broken seal pieces -->
-                  <circle cx="55" cy="58" r="6" fill="#8b4545" opacity="0.7"/>
-                  <circle cx="65" cy="60" r="5" fill="#a05656" opacity="0.7"/>
-                </svg>
-              </div>
+              <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="30" width="100" height="45" rx="4" fill="#f5ebe0" stroke="#d4c4b5" stroke-width="1.5"/>
+                <path d="M10 34 L60 10 L110 34" fill="#faf5ef" stroke="#d4c4b5" stroke-width="1.5" stroke-linejoin="round"/>
+                <rect x="20" y="25" width="80" height="40" rx="2" fill="#ffffff" stroke="#ebe5de" stroke-width="1"/>
+                <line x1="30" y1="35" x2="90" y2="35" stroke="#e0d8d0" stroke-width="2"/>
+                <line x1="30" y1="42" x2="80" y2="42" stroke="#e0d8d0" stroke-width="2"/>
+                <line x1="30" y1="49" x2="70" y2="49" stroke="#e0d8d0" stroke-width="2"/>
+                <circle cx="55" cy="58" r="6" fill="#8b4545" opacity="0.7"/>
+                <circle cx="65" cy="60" r="5" fill="#a05656" opacity="0.7"/>
+              </svg>
             </td>
           </tr>
-
-          <!-- Letter title -->
           <tr>
             <td style="padding: 0 40px 32px; text-align: center;">
-              <div style="background: #ffffff; border: 1px solid #ebe5de; border-radius: 12px; padding: 20px 24px;">
-                <p style="margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #a09590;">
-                  Letter Title
-                </p>
-                <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 18px; color: #2d2522; font-style: italic;">
-                  "${title}"
-                </p>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Intro text -->
-          <tr>
-            <td style="padding: 0 40px 24px; text-align: center;">
-              <p style="margin: 0; font-size: 14px; color: #7a6f6a; line-height: 1.6;">
-                Your letter has arrived and is waiting to be read. Sign in to your vault to open it.
+              <p style="margin: 0; font-size: 15px; color: #2d2522; line-height: 1.6;">
+                ${body}
               </p>
             </td>
           </tr>
-
-          <!-- CTA Button -->
           <tr>
             <td style="padding: 0 40px 40px; text-align: center;">
-              <a href="${VAULT_URL}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
-                Open Your Letter
+              <a href="${ctaHref}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #8b4545 0%, #6d3535 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 500; border-radius: 50px; letter-spacing: 0.02em; box-shadow: 0 4px 16px rgba(139, 69, 69, 0.25);">
+                ${ctaLabel}
               </a>
             </td>
           </tr>
-
-          <!-- Footer -->
           <tr>
             <td style="padding: 24px 40px 32px; text-align: center; border-top: 1px solid #ebe5de;">
               <p style="margin: 0 0 8px; font-size: 13px; color: #a09590;">
-                This letter was written with intention, sealed with care
+                Written with intention, sealed with care
               </p>
               <p style="margin: 0; font-size: 12px; color: #c4bbb5;">
                 signed • letters for later
@@ -217,8 +188,6 @@ const generateRecipientDeliveryEmailHtml = (title: string) => `
             </td>
           </tr>
         </table>
-
-        <!-- Unsubscribe -->
         <p style="margin: 24px 0 0; font-size: 11px; color: #c4bbb5;">
           You received this because someone sent you a letter through signed.
         </p>
@@ -228,6 +197,24 @@ const generateRecipientDeliveryEmailHtml = (title: string) => `
 </body>
 </html>
 `;
+
+const generateRecipientWithAccountHtml = () =>
+  recipientEmailShell(
+    "Your letter has arrived",
+    "A letter written for you has unlocked today. Sign in to your vault to read it.",
+    "Read Your Letter",
+    VAULT_URL,
+  );
+
+const generateRecipientNoAccountHtml = (recipientEmail: string) => {
+  const authHref = `${AUTH_URL}?mode=signup&email=${encodeURIComponent(recipientEmail)}&tab=received`;
+  return recipientEmailShell(
+    "A letter has arrived for you",
+    "Someone has written you a letter, and it's ready to read today. Create your account to open it.",
+    "Create an Account to Read Your Letter",
+    authHref,
+  );
+};
 
 // Detect if a title is encrypted (has 'enc:' prefix from client-side encryption)
 function isEncryptedTitle(title: string): boolean {
