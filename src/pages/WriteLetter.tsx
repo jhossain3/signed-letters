@@ -377,8 +377,16 @@ const WriteLetter = () => {
   // Add a new page to the current mode only
   const addNewPage = useCallback(() => {
     if (inputMode === "type") {
+      if (isPhysical && textPages.length >= 2) {
+        toast.error("Physical letters are limited to 2 pages.");
+        return;
+      }
       setTextPages((prev) => [...prev, ""]);
     } else {
+      if (isPhysical && sketchPages.length >= 2) {
+        toast.error("Physical letters are limited to 2 pages.");
+        return;
+      }
       setSketchPages((prev) => [...prev, ""]);
     }
 
@@ -388,7 +396,8 @@ const WriteLetter = () => {
       if (!el) return;
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }, 0);
-  }, [inputMode]);
+  }, [inputMode, isPhysical, textPages.length, sketchPages.length]);
+
 
   // Delete a page if it's empty (and not the only page)
   const deletePage = useCallback(
@@ -1096,12 +1105,21 @@ const WriteLetter = () => {
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30 select-none">
                 <span className="text-sm text-muted-foreground font-body">
                   {currentPages.length} {currentPages.length === 1 ? "page" : "pages"}
+                  {isPhysical && <span className="ml-1 opacity-70">(max 2 for physical)</span>}
                 </span>
-                <Button type="button" variant="outline" size="sm" onClick={addNewPage} className="rounded-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addNewPage}
+                  disabled={isPhysical && currentPages.length >= 2}
+                  className="rounded-full"
+                >
                   <Plus className="w-4 h-4 mr-1" />
                   Add New Page
                 </Button>
               </div>
+
             </div>
           </div>
 
