@@ -473,7 +473,7 @@ Deno.serve(async (req) => {
               <p><strong>Title:</strong> ${pl.plaintext_title}</p>
               <p><strong>Body:</strong><br/>${pl.plaintext_body.replace(/\n/g, "<br/>")}</p>
               <p><strong>Signature:</strong> ${pl.plaintext_signature}</p>
-              <p><a href="https://signed-letters.lovable.app/admin/physical-letters">Open admin dashboard</a></p>`,
+              <p><a href="${(Deno.env.get("SITE_URL") || "https://signedletter.com").replace(/\/$/, "")}/admin/physical-letters">Open admin dashboard</a></p>`,
           }),
         });
         console.log("[paddle-webhook] admin email status:", r.status);
