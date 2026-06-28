@@ -1105,12 +1105,21 @@ const WriteLetter = () => {
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30 select-none">
                 <span className="text-sm text-muted-foreground font-body">
                   {currentPages.length} {currentPages.length === 1 ? "page" : "pages"}
+                  {isPhysical && <span className="ml-1 opacity-70">(max 2 for physical)</span>}
                 </span>
-                <Button type="button" variant="outline" size="sm" onClick={addNewPage} className="rounded-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addNewPage}
+                  disabled={isPhysical && currentPages.length >= 2}
+                  className="rounded-full"
+                >
                   <Plus className="w-4 h-4 mr-1" />
                   Add New Page
                 </Button>
               </div>
+
             </div>
           </div>
 
