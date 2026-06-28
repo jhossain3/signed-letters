@@ -323,16 +323,31 @@ const handler = async (req: Request): Promise<Response> => {
         let emailSubject: string;
 
         if (isForSomeoneElse) {
-          // For "someone" letters, only send delivery notification if letter has been re-encrypted for recipient
-          if (!letter.recipient_encrypted) {
-            console.log(`Skipping delivery notification for letter ${letter.id}: not yet re-encrypted for recipient`);
-            continue;
-          }
-          // Letter is for an external recipient - delivery date has arrived
           targetEmail = letter.recipient_email!;
-          emailHtml = generateRecipientDeliveryEmailHtml(displayTitle);
-          emailSubject = `Your letter "${displayTitle}" is ready to open!`;
-          console.log(`Sending delivery notification to recipient: ${targetEmail}`);
+
+          // Detect whether the recipient already has an account.
+          // Prefer the linked recipient_user_id (set silently on creation or via the
+          // signup trigger). Fall back to a live email lookup just in case.
+          let recipientHasAccount = !!letter.recipient_user_id;
+          if (!recipientHasAccount) {
+            try {
+              const { data: foundUserId } = await supabase.rpc("find_user_by_email", {
+                lookup_email: targetEmail,
+              });
+              recipientHasAccount = !!foundUserId;
+            } catch (e) {
+              console.error(`find_user_by_email failed for ${targetEmail}:`, e);
+            }
+          }
+
+          if (recipientHasAccount) {
+            emailHtml = generateRecipientWithAccountHtml();
+            emailSubject = "Your letter has arrived";
+          } else {
+            emailHtml = generateRecipientNoAccountHtml(targetEmail);
+            emailSubject = "A letter has arrived for you";
+          }
+          console.log(`Sending delivery notification to recipient: ${targetEmail} (hasAccount=${recipientHasAccount})`);
         } else {
           // Letter is for the author (self-sent)
           const { data: userData, error: userError } = await supabase.auth.admin.getUserById(letter.user_id);
